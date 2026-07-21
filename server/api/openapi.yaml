@@ -116,6 +116,247 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /tenants:
+    post:
+      operationId: createTenant
+      summary: Onboard a new tenant with its first warehouse; creator becomes owner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTenantRequest"
+      responses:
+        "201":
+          description: Tenant created and activated for this session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /tenant:
+    get:
+      operationId: getTenant
+      summary: Profile of the session's active tenant
+      responses:
+        "200":
+          description: Active tenant profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    patch:
+      operationId: updateTenant
+      summary: Update tenant profile (owner only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTenantRequest"
+      responses:
+        "200":
+          description: Updated tenant profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /tenant/members:
+    get:
+      operationId: listMembers
+      summary: List tenant members
+      responses:
+        "200":
+          description: Members of the active tenant
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /tenant/members/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      operationId: updateMember
+      summary: Change a member's role (owner only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMemberRequest"
+      responses:
+        "200":
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+    delete:
+      operationId: removeMember
+      summary: Remove a member (owner only)
+      responses:
+        "204":
+          description: Member removed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /tenant/invites:
+    get:
+      operationId: listInvites
+      summary: List open invites (owner or admin)
+      responses:
+        "200":
+          description: Open invites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invite"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createInvite
+      summary: Create a shareable invite link (owner or admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInviteRequest"
+      responses:
+        "201":
+          description: Invite created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /tenant/invites/{inviteId}:
+    parameters:
+      - name: inviteId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      operationId: revokeInvite
+      summary: Revoke an invite (owner or admin)
+      responses:
+        "204":
+          description: Invite revoked
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /invites/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getInvite
+      summary: Public invite details for the landing page
+      security: []
+      responses:
+        "200":
+          description: Invite details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitePublic"
+        "404":
+          description: Unknown or revoked invite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "410":
+          description: Invite expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /invites/{token}/accept:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: acceptInvite
+      summary: Join the inviting tenant with the invite's role
+      responses:
+        "200":
+          description: Joined; tenant activated for this session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Unknown or revoked invite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "410":
+          description: Invite expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     sessionCookie:
@@ -239,6 +480,125 @@ components:
       properties:
         tenant:
           $ref: "#/components/schemas/Tenant"
+        role:
+          $ref: "#/components/schemas/Role"
+
+    CostingMethod:
+      type: string
+      enum: [weightedAverage, fifo]
+      description: Locked at onboarding; switchable only at a fiscal year boundary (ADR-0002)
+
+    CreateTenantRequest:
+      type: object
+      required: [name, costingMethod, warehouse]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        legalName:
+          type: string
+        costingMethod:
+          $ref: "#/components/schemas/CostingMethod"
+        fiscalYearStartMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+          default: 1
+        warehouse:
+          $ref: "#/components/schemas/WarehouseInput"
+
+    WarehouseInput:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+
+    TenantProfile:
+      type: object
+      required: [id, name, legalName, costingMethod, fiscalYearStartMonth, myRole]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        legalName:
+          type: string
+        costingMethod:
+          $ref: "#/components/schemas/CostingMethod"
+        fiscalYearStartMonth:
+          type: integer
+        myRole:
+          $ref: "#/components/schemas/Role"
+
+    UpdateTenantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        legalName:
+          type: string
+        fiscalYearStartMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+
+    Member:
+      type: object
+      required: [userId, name, email, role]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: "#/components/schemas/Role"
+
+    UpdateMemberRequest:
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: "#/components/schemas/Role"
+
+    CreateInviteRequest:
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: "#/components/schemas/Role"
+
+    Invite:
+      type: object
+      required: [id, role, token, expiresAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          $ref: "#/components/schemas/Role"
+        token:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    InvitePublic:
+      type: object
+      required: [tenantName, role]
+      properties:
+        tenantName:
+          type: string
         role:
           $ref: "#/components/schemas/Role"
 

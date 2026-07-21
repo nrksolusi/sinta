@@ -14,10 +14,30 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// Defines values for CostingMethod.
+const (
+	Fifo            CostingMethod = "fifo"
+	WeightedAverage CostingMethod = "weightedAverage"
+)
+
+// Valid indicates whether the value is a known member of the CostingMethod enum.
+func (e CostingMethod) Valid() bool {
+	switch e {
+	case Fifo:
+		return true
+	case WeightedAverage:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for HealthStatus.
 const (
@@ -61,6 +81,24 @@ func (e Role) Valid() bool {
 	}
 }
 
+// CostingMethod Locked at onboarding; switchable only at a fiscal year boundary (ADR-0002)
+type CostingMethod string
+
+// CreateInviteRequest defines model for CreateInviteRequest.
+type CreateInviteRequest struct {
+	Role Role `json:"role"`
+}
+
+// CreateTenantRequest defines model for CreateTenantRequest.
+type CreateTenantRequest struct {
+	// CostingMethod Locked at onboarding; switchable only at a fiscal year boundary (ADR-0002)
+	CostingMethod        CostingMethod  `json:"costingMethod"`
+	FiscalYearStartMonth *int           `json:"fiscalYearStartMonth,omitempty"`
+	LegalName            *string        `json:"legalName,omitempty"`
+	Name                 string         `json:"name"`
+	Warehouse            WarehouseInput `json:"warehouse"`
+}
+
 // Error defines model for Error.
 type Error struct {
 	Code string `json:"code"`
@@ -78,10 +116,32 @@ type Health struct {
 // HealthStatus defines model for Health.Status.
 type HealthStatus string
 
+// Invite defines model for Invite.
+type Invite struct {
+	ExpiresAt time.Time          `json:"expiresAt"`
+	Id        openapi_types.UUID `json:"id"`
+	Role      Role               `json:"role"`
+	Token     string             `json:"token"`
+}
+
+// InvitePublic defines model for InvitePublic.
+type InvitePublic struct {
+	Role       Role   `json:"role"`
+	TenantName string `json:"tenantName"`
+}
+
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
 	Email    openapi_types.Email `json:"email"`
 	Password string              `json:"password"`
+}
+
+// Member defines model for Member.
+type Member struct {
+	Email  openapi_types.Email `json:"email"`
+	Name   string              `json:"name"`
+	Role   Role                `json:"role"`
+	UserId openapi_types.UUID  `json:"userId"`
 }
 
 // Membership defines model for Membership.
@@ -119,11 +179,40 @@ type Tenant struct {
 	Name string             `json:"name"`
 }
 
+// TenantProfile defines model for TenantProfile.
+type TenantProfile struct {
+	// CostingMethod Locked at onboarding; switchable only at a fiscal year boundary (ADR-0002)
+	CostingMethod        CostingMethod      `json:"costingMethod"`
+	FiscalYearStartMonth int                `json:"fiscalYearStartMonth"`
+	Id                   openapi_types.UUID `json:"id"`
+	LegalName            string             `json:"legalName"`
+	MyRole               Role               `json:"myRole"`
+	Name                 string             `json:"name"`
+}
+
+// UpdateMemberRequest defines model for UpdateMemberRequest.
+type UpdateMemberRequest struct {
+	Role Role `json:"role"`
+}
+
+// UpdateTenantRequest defines model for UpdateTenantRequest.
+type UpdateTenantRequest struct {
+	FiscalYearStartMonth *int    `json:"fiscalYearStartMonth,omitempty"`
+	LegalName            *string `json:"legalName,omitempty"`
+	Name                 *string `json:"name,omitempty"`
+}
+
 // User defines model for User.
 type User struct {
 	Email openapi_types.Email `json:"email"`
 	Id    openapi_types.UUID  `json:"id"`
 	Name  string              `json:"name"`
+}
+
+// WarehouseInput defines model for WarehouseInput.
+type WarehouseInput struct {
+	Code string `json:"code"`
+	Name string `json:"name"`
 }
 
 // Conflict defines model for Conflict.
@@ -147,6 +236,18 @@ type RegisterJSONRequestBody = RegisterRequest
 // SwitchTenantJSONRequestBody defines body for SwitchTenant for application/json ContentType.
 type SwitchTenantJSONRequestBody = SwitchTenantRequest
 
+// UpdateTenantJSONRequestBody defines body for UpdateTenant for application/json ContentType.
+type UpdateTenantJSONRequestBody = UpdateTenantRequest
+
+// CreateInviteJSONRequestBody defines body for CreateInvite for application/json ContentType.
+type CreateInviteJSONRequestBody = CreateInviteRequest
+
+// UpdateMemberJSONRequestBody defines body for UpdateMember for application/json ContentType.
+type UpdateMemberJSONRequestBody = UpdateMemberRequest
+
+// CreateTenantJSONRequestBody defines body for CreateTenant for application/json ContentType.
+type CreateTenantJSONRequestBody = CreateTenantRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Login Authenticate and start a session
@@ -167,6 +268,39 @@ type ServerInterface interface {
 	// GetHealth Liveness check
 	// (GET /health)
 	GetHealth(w http.ResponseWriter, r *http.Request)
+	// GetInvite Public invite details for the landing page
+	// (GET /invites/{token})
+	GetInvite(w http.ResponseWriter, r *http.Request, token string)
+	// AcceptInvite Join the inviting tenant with the invite's role
+	// (POST /invites/{token}/accept)
+	AcceptInvite(w http.ResponseWriter, r *http.Request, token string)
+	// GetTenant Profile of the session's active tenant
+	// (GET /tenant)
+	GetTenant(w http.ResponseWriter, r *http.Request)
+	// UpdateTenant Update tenant profile (owner only)
+	// (PATCH /tenant)
+	UpdateTenant(w http.ResponseWriter, r *http.Request)
+	// ListInvites List open invites (owner or admin)
+	// (GET /tenant/invites)
+	ListInvites(w http.ResponseWriter, r *http.Request)
+	// CreateInvite Create a shareable invite link (owner or admin)
+	// (POST /tenant/invites)
+	CreateInvite(w http.ResponseWriter, r *http.Request)
+	// RevokeInvite Revoke an invite (owner or admin)
+	// (DELETE /tenant/invites/{inviteId})
+	RevokeInvite(w http.ResponseWriter, r *http.Request, inviteId openapi_types.UUID)
+	// ListMembers List tenant members
+	// (GET /tenant/members)
+	ListMembers(w http.ResponseWriter, r *http.Request)
+	// RemoveMember Remove a member (owner only)
+	// (DELETE /tenant/members/{userId})
+	RemoveMember(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID)
+	// UpdateMember Change a member's role (owner only)
+	// (PATCH /tenant/members/{userId})
+	UpdateMember(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID)
+	// CreateTenant Onboard a new tenant with its first warehouse; creator becomes owner
+	// (POST /tenants)
+	CreateTenant(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -253,6 +387,220 @@ func (siw *ServerInterfaceWrapper) GetHealth(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHealth(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetInvite operation middleware
+func (siw *ServerInterfaceWrapper) GetInvite(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetInvite(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AcceptInvite operation middleware
+func (siw *ServerInterfaceWrapper) AcceptInvite(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AcceptInvite(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTenant operation middleware
+func (siw *ServerInterfaceWrapper) GetTenant(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTenant(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTenant operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTenant(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTenant(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListInvites operation middleware
+func (siw *ServerInterfaceWrapper) ListInvites(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListInvites(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateInvite operation middleware
+func (siw *ServerInterfaceWrapper) CreateInvite(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateInvite(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeInvite operation middleware
+func (siw *ServerInterfaceWrapper) RevokeInvite(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "inviteId" -------------
+	var inviteId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "inviteId", r.PathValue("inviteId"), &inviteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "inviteId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeInvite(w, r, inviteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMembers operation middleware
+func (siw *ServerInterfaceWrapper) ListMembers(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMembers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveMember operation middleware
+func (siw *ServerInterfaceWrapper) RemoveMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveMember(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMember operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMember(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTenant operation middleware
+func (siw *ServerInterfaceWrapper) CreateTenant(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTenant(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -388,6 +736,17 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/logout", wrapper.Logout)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/session", wrapper.GetSession)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/switch-tenant", wrapper.SwitchTenant)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/tenants", wrapper.CreateTenant)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant", wrapper.GetTenant)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/tenant", wrapper.UpdateTenant)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant/members", wrapper.ListMembers)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/tenant/members/{userId}", wrapper.RemoveMember)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/tenant/members/{userId}", wrapper.UpdateMember)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant/invites", wrapper.ListInvites)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/tenant/invites", wrapper.CreateInvite)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/tenant/invites/{inviteId}", wrapper.RevokeInvite)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/invites/{token}", wrapper.GetInvite)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/invites/{token}/accept", wrapper.AcceptInvite)
 
 	return m
 }
@@ -397,28 +756,43 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"zFhvb9u2E/4qBH8/YAmgxE7bN/O7zsi6YG1a1GnfdMFAU2frGolUyaNTr/B3H46UZdlW4i5Ltr2KLN2f",
-	"h3fPkQ/zTWpb1daAIS9H36QDX1vjIf4YWzMrURM/a2sITHxUdV2iVoTWDD57a/id1wVUip/+72AmR/J/",
-	"g03gQfrqB+fOWSdXq1Umc/DaYc1B5Ei+B2+D0yBU6UDlSwFf0ZOXq0z+bN0U8xzM06N4GagAQxwVcjEN",
-	"JIwlUYOrkAhyRvPBqECFdfgH5E8P6NKSUF1QDOGjKjGPaZLfP9CcLwE8iZnCEnKxaPNLtm3cOXqLp3a2",
-	"BkeYaKRtDvyXljXIkfTk0Mx5JTOEMo8mKs+RI6ry3Zbrnss2snfgTmKQDihRgfdqDj4TtwUY0RRkWoLM",
-	"1vHs9DNo4niNcU+uVSYdfAnouNGf0iI29tc9sX4BVVKxv35PikJ8AhMqDmZvOgHuSNh49SV6bedomq7s",
-	"p4NKYckPM+sqRXLUvMn2q1kr72+ty7es25eHEK7Dtg59WN9ANQXnC6z3kTpbwiFWvmebVSYJjEoMv8/6",
-	"KlntIm2cs5SxD+Z7mKMncI9RVaOquKwKzWswc6bE2QOK33Uf/uVeNDB619qUvWXjrQEnM6nyCo3M5K1y",
-	"UNjgme9eleBlJhcIt+B6WJvJCXiP1lyYmd0vm9KEC0htuYhL3dlypx4MiWAIS6FEapRALzyUoHnHyzbF",
-	"CQHzvoJXLcdiTiSo/CGmdHi5akMq59SSfwcP7lCED2yz24fouI2orwWTWyRdpLLcSTnqVO1ADXr5ftE/",
-	"kVftJG2nw+9JtGH3/QjwXgZ+aMr74BF7fKzrVHdg5oMOdHBIywn3v9nZE/XH1t5gTITMaZ1+rtNLj4bU",
-	"743tBqaq8VdYpgMXm+HZHo43oSQ8Wc+EWYAh65aiUkbNoeK5mVknLkxuDXhURkzenIsceZnTQNb5UzG2",
-	"hpzSdDJD52kkqEAvZlgCzxgVIDyaeQmikV92JsgFKmLgqaUi2ryywoNbgBNHVtV4wmfhHMyxUCaPBlfL",
-	"GiYRuNAlMrAjW4NhW15sWtNxRMOLQGv8SGhVQTlWHkTSAZm4gamanmh+VZfBqVLUigqficHiTNQOZvhV",
-	"HOVW+8H47eXH88uri7eXk9MqPz79LdYViTc2OeF6i5fvLnjfAudTMYenZ6dDJkWDTI7k89Ph6fO4aVIR",
-	"+zlgsTUo+XiN9LRpLJmkUVvwLKbTVyYKgaefbL58NA22dbKvtolKLkB80VHoz4bDR8vd3cd7VGDzWXhS",
-	"juXxUUNokeguPNAxl/fF8OyuTC30wZaM7g6XHH26zqQPVaXcckeSR7rF9EKJ9Tixc9s2G+jevvH3vQq+",
-	"2B+89VrB5ElzP3BR7TLOm0HRwTkej330rhEgd+NfS5Qnot6uAvou9p09WvrmNN2/k2ltgyGhHawvQC+G",
-	"Px5uRnt3ZYdnzw477F6r7mPlOIIRSvBxL1SC2Gnmur2jb3IOPa18BTRpj4N/a6DHu1z8+zRfh+SyZKIj",
-	"grI4u0kMNiKvW66ohk42Er9/ALqi6YmGoE+X/be24ZfdGgpdKDN/8BbFTs8PO23+A7PT7Zg8qYgE+gff",
-	"1+OivRffNQzNzfkJq9pk6D3X3AJ11EOhvnfqX+MCDHgvdAH6JsXq2O7JwU/XK/aPyslHg+BKOZKDxZlc",
-	"Xa/+DAAA//8=",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

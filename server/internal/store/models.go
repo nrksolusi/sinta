@@ -9,6 +9,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Invitation struct {
+	ID        uuid.UUID
+	TenantID  uuid.UUID
+	Role      string
+	Token     string
+	CreatedBy uuid.UUID
+	ExpiresAt pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+}
+
 type Membership struct {
 	ID        uuid.UUID
 	UserID    uuid.UUID
@@ -44,4 +54,13 @@ type User struct {
 	Status       string
 	CreatedAt    pgtype.Timestamptz
 	UpdatedAt    pgtype.Timestamptz
+}
+
+type Warehouse struct {
+	ID        uuid.UUID
+	TenantID  uuid.UUID
+	Code      string
+	Name      string
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }

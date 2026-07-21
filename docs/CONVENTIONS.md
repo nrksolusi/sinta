@@ -35,6 +35,8 @@ have ADRs (see `adr/`); everything here is binding either way.
 - Files: kebab-case (`theme-provider.tsx`), as already established.
 - shadcn components stay under `src/components/ui` (excluded from Biome).
 - Formatting and lint: Biome as configured - double quotes, spaces.
+- Form inputs carry smart defaults where safe; auth forms are the exception
+  (ADR-0011).
 
 ## Go
 

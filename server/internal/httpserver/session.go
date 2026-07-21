@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/nrksolusi/sinta/internal/api"
@@ -16,6 +17,10 @@ const (
 	sessionCookieName = "sinta_session"
 	sessionTTL        = 30 * 24 * time.Hour
 )
+
+func pgUUID(id uuid.UUID) pgtype.UUID {
+	return pgtype.UUID{Bytes: id, Valid: true}
+}
 
 // isSecureRequest reports whether the client reached us over TLS, either
 // directly or via the TLS-terminating proxy (Caddy sets X-Forwarded-Proto).

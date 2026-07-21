@@ -161,6 +161,10 @@ Exit: you can log in, switch tenants, and both codegens run in CI.
 - Deploy: Docker compose (app + postgres + caddy) on the VPS, nightly pg_dump
   shipped offsite
 
+Decomposed for parallel development (a contract/schema-freeze step + tracks
+around the journal/costing spine) in `plans/m1-parallel.md`. Tracks fork only
+after M0 is complete.
+
 Exit / validation gate: one real distributor runs receiving, delivery, and an
 opname on it. **If no distributor will pilot at this point, stop building and
 start selling - that is the D1 risk coming due.**

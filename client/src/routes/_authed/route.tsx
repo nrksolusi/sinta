@@ -1,5 +1,6 @@
 import {
   createFileRoute,
+  Link,
   Outlet,
   redirect,
   useRouter,
@@ -12,10 +13,17 @@ import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/_authed")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const session = await queryClient.ensureQueryData(sessionQueryOptions);
     if (!session) {
-      throw redirect({ to: "/login" });
+      throw redirect({ to: "/login", search: { redirect: location.href } });
+    }
+    // A user with no memberships has nothing to see except the wizard.
+    if (
+      session.memberships.length === 0 &&
+      location.pathname !== "/onboarding"
+    ) {
+      throw redirect({ to: "/onboarding" });
     }
     return { session };
   },
@@ -39,13 +47,23 @@ function AuthedLayout() {
   const logout = async () => {
     await api.POST("/auth/logout");
     queryClient.setQueryData(["session"], null);
-    await router.navigate({ to: "/login" });
+    await router.navigate({ to: "/login", search: { redirect: undefined } });
   };
 
   return (
     <div className="min-h-svh">
       <header className="flex items-center gap-4 border-b px-4 py-2">
         <span className="font-semibold">{m.app_name()}</span>
+        {session.memberships.length > 0 && (
+          <nav className="flex gap-3 text-sm">
+            <Link to="/" className="[&.active]:font-semibold">
+              {m.nav_dashboard()}
+            </Link>
+            <Link to="/settings" className="[&.active]:font-semibold">
+              {m.nav_settings()}
+            </Link>
+          </nav>
+        )}
 
         {session.memberships.length > 0 ? (
           <label className="ml-auto flex items-center gap-2 text-sm">
