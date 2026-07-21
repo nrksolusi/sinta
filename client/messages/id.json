@@ -1,4 +1,14 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_name": "SINTA"
+  "app_name": "SINTA",
+  "login_title": "Masuk",
+  "login_email": "Email",
+  "login_password": "Kata sandi",
+  "login_submit": "Masuk",
+  "login_failed": "Email atau kata sandi salah",
+  "logout": "Keluar",
+  "tenant_select_label": "Perusahaan",
+  "tenant_none": "Belum ada keanggotaan perusahaan",
+  "dashboard_welcome": "Selamat datang, {name}",
+  "dashboard_pick_tenant": "Pilih perusahaan untuk memulai"
 }

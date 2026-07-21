@@ -1,4 +1,14 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_name": "SINTA"
+  "app_name": "SINTA",
+  "login_title": "Sign in",
+  "login_email": "Email",
+  "login_password": "Password",
+  "login_submit": "Sign in",
+  "login_failed": "Email or password is incorrect",
+  "logout": "Sign out",
+  "tenant_select_label": "Company",
+  "tenant_none": "No company memberships yet",
+  "dashboard_welcome": "Welcome, {name}",
+  "dashboard_pick_tenant": "Choose a company to start"
 }

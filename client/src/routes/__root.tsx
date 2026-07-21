@@ -1,14 +1,11 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { queryClient } from "@/lib/query";
 import { m } from "@/paraglide/messages";
 import { getLocale } from "../paraglide/runtime.js";
 
 import appCss from "../styles.css?url";
-
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
-});
 
 export const Route = createRootRoute({
   head: () => ({

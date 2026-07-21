@@ -10,10 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedIndexRoute = AuthedIndexRouteImport.update({
@@ -24,25 +30,29 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
+  '/login': typeof LoginRoute
 }
 export interface FileRoutesByTo {
+  '/login': typeof LoginRoute
   '/': typeof AuthedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteRouteWithChildren
+  '/login': typeof LoginRoute
   '/_authed/': typeof AuthedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/_authed' | '/_authed/'
+  to: '/login' | '/'
+  id: '__root__' | '/_authed' | '/login' | '/_authed/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -52,6 +62,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed/': {
@@ -78,6 +95,7 @@ const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -44,6 +44,7 @@
     "@eslint/js": "^10",
     "@inlang/cli": "^3.0.0",
     "@inlang/paraglide-js": "^2.22.0",
+    "@tanstack/router-cli": "^1.167.21",
     "@tanstack/router-plugin": "^1.168.23",
     "@types/node": "^24",
     "@types/react": "^19",
