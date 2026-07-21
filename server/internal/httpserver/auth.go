@@ -88,7 +88,7 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setSessionCookie(w, session.ID, expires)
+	setSessionCookie(w, r, session.ID, expires)
 	writeJSON(w, http.StatusOK, info)
 }
 
@@ -102,7 +102,7 @@ func (s *Server) Logout(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal", "could not end session")
 		return
 	}
-	clearSessionCookie(w)
+	clearSessionCookie(w, r)
 	w.WriteHeader(http.StatusNoContent)
 }
 

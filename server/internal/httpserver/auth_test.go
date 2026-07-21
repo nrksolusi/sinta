@@ -249,3 +249,41 @@ func TestLogoutEndsSession(t *testing.T) {
 		t.Fatalf("session after logout = %d, want 401 - session was not invalidated", resp.StatusCode)
 	}
 }
+
+func TestLoginCookieSecureFlagFollowsRequestScheme(t *testing.T) {
+	ts := newTestServer(t)
+	registerUser(t, ts, "budi@toko-makmur.co.id", "kata-sandi-panjang")
+
+	// Plain http (local dev): Secure must be off or Safari drops the cookie.
+	resp, err := http.Post(ts.URL+"/v1/auth/login", "application/json",
+		strings.NewReader(jsonBody("email", "budi@toko-makmur.co.id", "password", "kata-sandi-panjang")))
+	if err != nil {
+		t.Fatalf("login: %v", err)
+	}
+	resp.Body.Close()
+	for _, c := range resp.Cookies() {
+		if c.Name == "sinta_session" && c.Secure {
+			t.Error("Secure cookie set on plain-http request - browsers will drop it")
+		}
+	}
+
+	// Behind the TLS-terminating proxy (production): Secure must be on.
+	req, _ := http.NewRequest(http.MethodPost, ts.URL+"/v1/auth/login",
+		strings.NewReader(jsonBody("email", "budi@toko-makmur.co.id", "password", "kata-sandi-panjang")))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Forwarded-Proto", "https")
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("login via https proxy: %v", err)
+	}
+	resp.Body.Close()
+	secure := false
+	for _, c := range resp.Cookies() {
+		if c.Name == "sinta_session" && c.Secure {
+			secure = true
+		}
+	}
+	if !secure {
+		t.Error("Secure flag missing when request came via https (X-Forwarded-Proto)")
+	}
+}

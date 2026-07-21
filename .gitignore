@@ -8,6 +8,9 @@ client/.nitro/
 client/.output/
 server/bin/
 
+# dev.sh runtime (pids, logs)
+.run/
+
 # Environment - secrets never enter git (CONVENTIONS.md)
 .env
 .env.*

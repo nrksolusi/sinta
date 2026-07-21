@@ -17,7 +17,15 @@ const (
 	sessionTTL        = 30 * 24 * time.Hour
 )
 
-func setSessionCookie(w http.ResponseWriter, sessionID uuid.UUID, expires time.Time) {
+// isSecureRequest reports whether the client reached us over TLS, either
+// directly or via the TLS-terminating proxy (Caddy sets X-Forwarded-Proto).
+// Secure cookies over plain http are silently dropped by browsers - Safari
+// even on localhost - so the flag must follow the actual scheme.
+func isSecureRequest(r *http.Request) bool {
+	return r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
+}
+
+func setSessionCookie(w http.ResponseWriter, r *http.Request, sessionID uuid.UUID, expires time.Time) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookieName,
 		Value:    sessionID.String(),
@@ -25,11 +33,11 @@ func setSessionCookie(w http.ResponseWriter, sessionID uuid.UUID, expires time.T
 		Expires:  expires,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
-		Secure:   true,
+		Secure:   isSecureRequest(r),
 	})
 }
 
-func clearSessionCookie(w http.ResponseWriter) {
+func clearSessionCookie(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookieName,
 		Value:    "",
@@ -37,7 +45,7 @@ func clearSessionCookie(w http.ResponseWriter) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
-		Secure:   true,
+		Secure:   isSecureRequest(r),
 	})
 }
 
