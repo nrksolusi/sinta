@@ -128,5 +128,39 @@ func (s *Server) GetSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) SwitchTenant(w http.ResponseWriter, r *http.Request) {
-	writeError(w, http.StatusNotImplemented, "not_implemented", "not implemented")
+	session, user, err := s.currentSession(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "unauthenticated", "no valid session")
+		return
+	}
+
+	var req api.SwitchTenantRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusUnprocessableEntity, "invalid_body", "request body is not valid JSON")
+		return
+	}
+
+	// Membership is the authorization boundary (ADR-0005): no row, no access.
+	if _, err := s.queries.GetMembership(r.Context(), store.GetMembershipParams{
+		UserID:   user.ID,
+		TenantID: req.TenantId,
+	}); err != nil {
+		writeError(w, http.StatusForbidden, "not_a_member", "you are not a member of this tenant")
+		return
+	}
+
+	if err := s.queries.SetSessionActiveTenant(r.Context(), store.SetSessionActiveTenantParams{
+		ID:             session.ID,
+		ActiveTenantID: pgtype.UUID{Bytes: req.TenantId, Valid: true},
+	}); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal", "could not switch tenant")
+		return
+	}
+
+	info, err := s.sessionInfo(r.Context(), user, &req.TenantId)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal", "could not load session")
+		return
+	}
+	writeJSON(w, http.StatusOK, info)
 }
