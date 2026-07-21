@@ -2,8 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { m } from "@/paraglide/messages";
-import { getLocale } from '../paraglide/runtime.js'
-
+import { getLocale } from "../paraglide/runtime.js";
 
 import appCss from "../styles.css?url";
 
