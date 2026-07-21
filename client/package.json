@@ -41,6 +41,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.5",
     "@eslint/js": "^10",
+    "@inlang/cli": "^3.0.0",
     "@inlang/paraglide-js": "^2.22.0",
     "@tanstack/router-plugin": "^1.168.23",
     "@types/node": "^24",
@@ -50,9 +51,9 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17",
+    "openapi-typescript": "^7.13.0",
     "typescript": "~6",
     "typescript-eslint": "^8",
-    "vite": "^8",
-    "@inlang/cli": "^3.0.0"
+    "vite": "^8"
   }
 }
