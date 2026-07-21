@@ -1,37 +1,19 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { queryClient } from "@/lib/query";
-import { m } from "@/paraglide/messages";
-import { getLocale } from "../paraglide/runtime.js";
 
-import appCss from "../styles.css?url";
-
+// Plain SPA root: index.html owns the document (html/head/body). Rendering a
+// nested document here breaks event handling in real browsers.
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: m.app_name() },
-    ],
-    links: [{ rel: "stylesheet", href: appCss }],
-  }),
-  shellComponent: RootDocument,
+  component: RootLayout,
 });
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootLayout() {
   return (
-    <html lang={getLocale()} suppressHydrationWarning>
-      <head>
-        <HeadContent />
-      </head>
-      <body className="antialiased">
-        <QueryClientProvider client={queryClient}>
-          {children}
-          <Toaster />
-        </QueryClientProvider>
-        <Scripts />
-      </body>
-    </html>
+    <QueryClientProvider client={queryClient}>
+      <Outlet />
+      <Toaster />
+    </QueryClientProvider>
   );
 }
