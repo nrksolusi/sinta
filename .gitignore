@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+client/.tanstack/
+client/.nitro/
+client/.output/
+server/bin/
+
+# Environment - secrets never enter git (CONVENTIONS.md)
+.env
+.env.*
+
+# Claude Code personal overrides
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store

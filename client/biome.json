@@ -1,0 +1,31 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.4/schema.json",
+	"files": {
+		"includes": [
+			"**",
+			"!src/routeTree.gen.ts",
+			"!src/paraglide",
+			"!src/lib/api-types.ts",
+			"!src/components/ui",
+			"!src/styles.css",
+			"!.output",
+			"!.nitro",
+			"!.tanstack"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "space"
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "double"
+		}
+	}
+}
