@@ -24,9 +24,13 @@ pace - keep changes small and scoped.
   without one is a security bug (ADR-0004).
 - Quantities and money are Postgres `numeric`, never floats; quantities are
   stored in base units.
-- API is spec-first: edit `server/api/openapi.yaml`, then regenerate both
-  sides (`oapi-codegen` for Go, `pnpm generate-api` in client). Never edit
-  generated files (`api-types.ts`, `routeTree.gen.ts`, `src/paraglide/`).
+- API is spec-first: edit `server/api/openapi.yaml`, then run `go generate .`
+  in server/ (oapi-codegen + sqlc) and `pnpm generate-api` in client. Never
+  edit generated files (`api-types.ts`, `routeTree.gen.ts`, `src/paraglide/`,
+  `server/internal/api/`, sqlc output in `server/internal/store/` - the
+  `queries/*.sql` files are the hand-written source).
+- Migrations: goose format in `server/migrations/`, applied with
+  `go run ./cmd/migrate up`; sqlc reads the same files as schema.
 - Primary keys are UUIDv7 everywhere (ADR-0009). Document numbers are a
   separate, human-facing concept assigned at posting (ADR-0010).
 - Posted documents are immutable; cancellation is a reversal document.

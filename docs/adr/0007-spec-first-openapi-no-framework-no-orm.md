@@ -17,5 +17,6 @@ bindings.
 
 - The spec is edited first; handlers that do not match the spec fail codegen,
   not code review.
-- No ORM means migrations and queries are hand-written SQL; golang-migrate owns
-  schema evolution.
+- No ORM means migrations and queries are hand-written SQL; goose owns schema
+  evolution (embedded goose-format migrations, run via `cmd/migrate`), and sqlc
+  reads the same migration files as its schema source.

@@ -50,7 +50,7 @@ Two artifacts everything hangs off:
 Defaults chosen for boring reliability - change only with a reason:
 
 - HTTP: stdlib `net/http` with Go 1.22+ method routing (no framework)
-- DB: `pgx/v5` + `sqlc` for queries, `golang-migrate` for migrations
+- DB: `pgx/v5` + `sqlc` for queries, `goose` for migrations
 - API: `oapi-codegen` server interfaces from `api/openapi.yaml`
 - Layout: `cmd/sinta/` (main), `internal/domain/` (pure logic: costing, journal,
   documents - no DB imports), `internal/store/` (sqlc + repositories),

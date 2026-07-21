@@ -3,3 +3,4 @@
 package server
 
 //go:generate go tool oapi-codegen -config api/oapi-codegen.yaml api/openapi.yaml
+//go:generate go tool sqlc generate

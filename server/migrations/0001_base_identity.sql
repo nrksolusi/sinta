@@ -7,6 +7,8 @@
 -- tables in M1 (warehouses, products, ...). Membership rows are additionally
 -- protected by a policy that applies once a tenant context is set.
 
+-- +goose Up
+
 CREATE TABLE users (
     id uuid PRIMARY KEY DEFAULT uuidv7(),
     email text NOT NULL UNIQUE,
@@ -71,6 +73,7 @@ CREATE POLICY memberships_tenant_isolation ON memberships
 
 -- The application connects as a dedicated non-superuser role so RLS applies
 -- (superusers and table owners with BYPASSRLS would silently skip policies).
+-- +goose StatementBegin
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'sinta_app') THEN
@@ -78,8 +81,21 @@ BEGIN
     END IF;
 END
 $$;
+-- +goose StatementEnd
 
 GRANT USAGE ON SCHEMA public TO sinta_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO sinta_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO sinta_app;
+
+-- +goose Down
+
+DROP POLICY IF EXISTS memberships_tenant_isolation ON memberships;
+
+DROP TABLE sessions;
+DROP TABLE memberships;
+DROP TABLE tenants;
+DROP TABLE users;
+
+-- The sinta_app role is intentionally kept: other databases or a re-run of the
+-- up migration may depend on it, and DROP ROLE fails while grants exist.

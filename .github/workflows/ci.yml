@@ -44,7 +44,7 @@ jobs:
       - run: go build ./...
       - run: go vet ./...
       - run: go test ./...
-      - name: Check generated API code is in sync with the OpenAPI spec
+      - name: Check generated code is in sync (oapi-codegen + sqlc)
         run: |
           go generate .
-          git diff --exit-code internal/api/api.gen.go
+          git diff --exit-code internal/api internal/store
