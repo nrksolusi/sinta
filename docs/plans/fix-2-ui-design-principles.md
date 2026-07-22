@@ -45,6 +45,17 @@ or tables; banned words: ledger, workspace, organization, stocktake, item.
    partner, warehouse rows open detail pages wired to stock-on-hand, kartu stok,
    and their document lists. Why: depth comes from cross-links, not more fields
    (UX-D8).
+9. **Progressive disclosure over dumping the screen; peek linked documents
+   inline.** Prefer a collapsible/accordion to forcing every detail onto the
+   page at once, and when a record links to another document (PO <-> receipt,
+   SO <-> delivery, opname <-> kartu stok), expand an inline accordion showing
+   that document's **line detail only** in place, with a link to open the full
+   document - rather than navigating straight away. Component selection follows
+   the same rule: reach for `ui/collapsible` / `ui/accordion` (or DataTable's
+   expandable row) before adding another always-visible panel. Why: a linked-doc
+   preview answers "what was on that receipt?" without losing the current
+   context, and collapsible sections keep dense records scannable (extends
+   principle 8; posting and primary nav still navigate per principle 1).
 
 ---
 
@@ -274,3 +285,7 @@ Restatement of UX-D10 as a checklist. Every PR self-checks before review:
       typed search.
 - [ ] Every noun (product/partner/warehouse) row and every report `Dokumen` cell
       is a link to the relevant detail (via docType/docId).
+- [ ] Progressive disclosure preferred: dense or secondary detail sits in a
+      collapsible/accordion (or DataTable expandable row), not forced onto the
+      screen; a linked document peeks its line detail inline before offering a
+      full-page navigation to open it.

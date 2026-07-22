@@ -125,3 +125,12 @@ pilot polish) | `M2` (deferred by plan) | `scale` (only matters as data grows).
 M1 candidates (INC-1, INC-2, INC-3) are small, additive server changes that
 directly unlock specified UI (delete-draft, timeline actor/time, berita acara
 variance). INC-4/5/6 are deferrable until data volume warrants them.
+
+**Status:** INC-1/2/3 are now specced for build in
+[fix-3-lifecycle-and-slice-a.md](../plans/fix-3-lifecycle-and-slice-a.md), with
+the hard-to-reverse choices recorded in ADR-0013 (draft delete) and ADR-0014
+(opname `systemQty` snapshot). INC-4/5/6 are **no longer deferred** - the fix-4
+UI/UX revamp ([fix-4-ui-ux-revamp.md](../plans/fix-4-ui-ux-revamp.md)) depends on
+them and pulls them forward: INC-4 fulfillment rollup becomes a server-enforced
+guard (ADR-0016), and INC-5 list query + INC-6 search become the locked
+read-query contract (ADR-0019).

@@ -169,6 +169,22 @@ Exit / validation gate: one real distributor runs receiving, delivery, and an
 opname on it. **If no distributor will pilot at this point, stop building and
 start selling - that is the D1 risk coming due.**
 
+### Post-M1 fix slices
+
+The fix-2 UI redesign shipped M1-complete and surfaced gaps in the process.
+These are tracked as `fix-*` slices sequenced against M2. The two newest are
+**planning docs, not yet implemented** (decisions recorded in `adr/`):
+
+- `plans/fix-1-ui-stack-retrofit.md`, `plans/fix-2-ui-redesign.md` - UI stack
+  and redesign (shipped).
+- `plans/fix-3-lifecycle-and-slice-a.md` - draft delete, lifecycle timeline
+  actor, opname `systemQty`, approval gate, surat jalan printing, numbering
+  config UI (ADR-0013..0015). Proposed.
+- `plans/fix-4-ui-ux-revamp.md` - AppShell/dashboard/orders revamp, server-side
+  fulfillment + over-receipt tolerance, receiving-cost authority, order
+  cancellation, read-query contract (filter/pagination/search), line-heavy form
+  wizard (ADR-0016..0020). Proposed; larger than fix-3, its own milestone.
+
 ### M2 - FIFO + reconciliation hardening
 
 - FIFO engine, tenant costing selection at onboarding (D3 becomes real here)
@@ -177,6 +193,10 @@ start selling - that is the D1 risk coming due.**
 - Document number template configuration UI, year-rollover activation (D16)
 - SMTP + email verification and password reset (completes ADR-0006; login
   rate limiting shipped with the M0 review polish)
+- Tenant settings surface: unify the per-feature configs the fix-3/fix-4 ADRs
+  each propose (approval, numbering, over-receipt tolerance, receiving-cost
+  authority) into one tenant-scoped `tenant_settings` store. See
+  `plans/tenant-configurability-catalog.md`.
 
 Decomposed for parallel development (3 isolated tracks + a contract-freeze step)
 in `plans/m2-parallel.md`. Tracks fork only after the M1 baseline is on `main`.
@@ -187,6 +207,10 @@ in `plans/m2-parallel.md`. Tracks fork only after the M1 baseline is on `main`.
 - Auditor/viewer reporting pack, CSV/Excel exports
 - TOTP 2FA, Google sign-in
 - Ops: monitoring/alerting, restore drill
+- Granular configurability: a scoped policy/settings mechanism resolving below
+  tenant scope (per warehouse / doc-type / product / category), custom roles,
+  separation-of-duties, period locks. Needs a mechanism ADR before the first
+  sub-tenant setting is built. See `plans/tenant-configurability-catalog.md`.
 
 ## 6. Cross-cutting rules
 

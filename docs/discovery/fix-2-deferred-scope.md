@@ -50,3 +50,10 @@ volume grows.
 2. M2 slice A (printing + numbering) - the most-requested SME artifact.
 3. Approval gate (needs a role/permission decision first).
 4. Excel round-trip, backorder prompts, invoicing - as separate slices.
+
+**Status:** items 1-3 are now planned in
+[fix-3-lifecycle-and-slice-a.md](../plans/fix-3-lifecycle-and-slice-a.md). The
+approval gate's role/permission decision is settled in ADR-0015 (opt-in per
+tenant per document type; owner/admin approve via the fixed D10 roles;
+approve-then-post; self-approval allowed; reject-with-reason). Item 4 stays
+deferred.
