@@ -40,20 +40,6 @@ func pgText(p *string) pgtype.Text {
 	return pgtype.Text{String: *p, Valid: true}
 }
 
-// numericToString renders a pgtype.Numeric as its decimal string, or "" when
-// the column is null. factor_to_base is NOT NULL, so "" never occurs there.
-func numericToString(n pgtype.Numeric) string {
-	if !n.Valid {
-		return ""
-	}
-	v, err := n.Value()
-	if err != nil {
-		return ""
-	}
-	s, _ := v.(string)
-	return s
-}
-
 // numericFromDecimal converts a domain decimal to pgtype.Numeric at the store
 // boundary. Quantities and money are numeric, never float (CLAUDE.md).
 func numericFromDecimal(d decimal.Decimal) (pgtype.Numeric, error) {

@@ -1,6 +1,1084 @@
 # Documents domain (Track C - docs/plans/m1-parallel.md). A spec fragment merged
 # into api/openapi.gen.yaml by cmd/bundle. Owns the order-document paths (PO,
-# goods receipt, SO, delivery, transfer, adjustment, opname) and their schemas;
-# may reference shared root components (they resolve after the merge). Track C
-# authors the contents; keep all document endpoints under this file.
-paths: {}
+# goods receipt, SO, delivery, transfer, adjustment, opname) and their schemas.
+#
+# Every document shares the draft -> posted lifecycle (PLAN.md section 3): create
+# and edit while draft, post to assign the gapless number and write movements,
+# then reverse to cancel by posting opposite movements (ADR-0010, glossary). Post
+# and reverse take no body; a posted document is immutable so edits are rejected.
+paths:
+  /purchase-orders:
+    get:
+      operationId: listPurchaseOrders
+      summary: List purchase orders
+      tags: [documents]
+      responses:
+        "200":
+          description: Purchase orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createPurchaseOrder
+      summary: Create a draft purchase order
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PurchaseOrderInput" }
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /purchase-orders/{id}:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    get:
+      operationId: getPurchaseOrder
+      summary: Get a purchase order
+      tags: [documents]
+      responses:
+        "200":
+          description: Purchase order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updatePurchaseOrder
+      summary: Replace a draft purchase order (rejected once posted)
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PurchaseOrderInput" }
+      responses:
+        "200":
+          description: Draft updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /purchase-orders/{id}/post:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: postPurchaseOrder
+      summary: Post a draft purchase order (assigns the gapless number)
+      tags: [documents]
+      responses:
+        "200":
+          description: Posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /purchase-orders/{id}/reverse:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: reversePurchaseOrder
+      summary: Reverse a posted purchase order (posts a cancelling document)
+      tags: [documents]
+      responses:
+        "201":
+          description: Reversal document posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /goods-receipts:
+    get:
+      operationId: listGoodsReceipts
+      summary: List goods receipts
+      tags: [documents]
+      responses:
+        "200":
+          description: Goods receipts
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/GoodsReceipt" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createGoodsReceipt
+      summary: Create a draft goods receipt
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GoodsReceiptInput" }
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GoodsReceipt" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /goods-receipts/{id}:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    get:
+      operationId: getGoodsReceipt
+      summary: Get a goods receipt
+      tags: [documents]
+      responses:
+        "200":
+          description: Goods receipt
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GoodsReceipt" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateGoodsReceipt
+      summary: Replace a draft goods receipt (rejected once posted)
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GoodsReceiptInput" }
+      responses:
+        "200":
+          description: Draft updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GoodsReceipt" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /goods-receipts/{id}/post:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: postGoodsReceipt
+      summary: Post a draft goods receipt (receives stock, cost enters the journal)
+      tags: [documents]
+      responses:
+        "200":
+          description: Posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GoodsReceipt" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /goods-receipts/{id}/reverse:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: reverseGoodsReceipt
+      summary: Reverse a posted goods receipt (posts issue movements back out)
+      tags: [documents]
+      responses:
+        "201":
+          description: Reversal document posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GoodsReceipt" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /sales-orders:
+    get:
+      operationId: listSalesOrders
+      summary: List sales orders
+      tags: [documents]
+      responses:
+        "200":
+          description: Sales orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SalesOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createSalesOrder
+      summary: Create a draft sales order
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SalesOrderInput" }
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SalesOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /sales-orders/{id}:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    get:
+      operationId: getSalesOrder
+      summary: Get a sales order
+      tags: [documents]
+      responses:
+        "200":
+          description: Sales order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SalesOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateSalesOrder
+      summary: Replace a draft sales order (rejected once posted)
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SalesOrderInput" }
+      responses:
+        "200":
+          description: Draft updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SalesOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /sales-orders/{id}/post:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: postSalesOrder
+      summary: Post a draft sales order (assigns the gapless number)
+      tags: [documents]
+      responses:
+        "200":
+          description: Posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SalesOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /sales-orders/{id}/reverse:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: reverseSalesOrder
+      summary: Reverse a posted sales order (posts a cancelling document)
+      tags: [documents]
+      responses:
+        "201":
+          description: Reversal document posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SalesOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /deliveries:
+    get:
+      operationId: listDeliveries
+      summary: List deliveries
+      tags: [documents]
+      responses:
+        "200":
+          description: Deliveries
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Delivery" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createDelivery
+      summary: Create a draft delivery
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeliveryInput" }
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Delivery" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /deliveries/{id}:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    get:
+      operationId: getDelivery
+      summary: Get a delivery
+      tags: [documents]
+      responses:
+        "200":
+          description: Delivery
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Delivery" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateDelivery
+      summary: Replace a draft delivery (rejected once posted)
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeliveryInput" }
+      responses:
+        "200":
+          description: Draft updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Delivery" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /deliveries/{id}/post:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: postDelivery
+      summary: Post a draft delivery (issues stock out)
+      tags: [documents]
+      responses:
+        "200":
+          description: Posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Delivery" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /deliveries/{id}/reverse:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: reverseDelivery
+      summary: Reverse a posted delivery (posts receipt movements back in)
+      tags: [documents]
+      responses:
+        "201":
+          description: Reversal document posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Delivery" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /stock-transfers:
+    get:
+      operationId: listStockTransfers
+      summary: List stock transfers
+      tags: [documents]
+      responses:
+        "200":
+          description: Stock transfers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StockTransfer" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createStockTransfer
+      summary: Create a draft stock transfer
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StockTransferInput" }
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockTransfer" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /stock-transfers/{id}:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    get:
+      operationId: getStockTransfer
+      summary: Get a stock transfer
+      tags: [documents]
+      responses:
+        "200":
+          description: Stock transfer
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockTransfer" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateStockTransfer
+      summary: Replace a draft stock transfer (rejected once posted)
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StockTransferInput" }
+      responses:
+        "200":
+          description: Draft updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockTransfer" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /stock-transfers/{id}/post:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: postStockTransfer
+      summary: Post a draft stock transfer (transfer_out + transfer_in pair)
+      tags: [documents]
+      responses:
+        "200":
+          description: Posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockTransfer" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /stock-transfers/{id}/reverse:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: reverseStockTransfer
+      summary: Reverse a posted stock transfer (swaps the movement pair)
+      tags: [documents]
+      responses:
+        "201":
+          description: Reversal document posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockTransfer" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /stock-adjustments:
+    get:
+      operationId: listStockAdjustments
+      summary: List stock adjustments
+      tags: [documents]
+      responses:
+        "200":
+          description: Stock adjustments
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StockAdjustment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createStockAdjustment
+      summary: Create a draft stock adjustment
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StockAdjustmentInput" }
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockAdjustment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /stock-adjustments/{id}:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    get:
+      operationId: getStockAdjustment
+      summary: Get a stock adjustment
+      tags: [documents]
+      responses:
+        "200":
+          description: Stock adjustment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockAdjustment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateStockAdjustment
+      summary: Replace a draft stock adjustment (rejected once posted)
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StockAdjustmentInput" }
+      responses:
+        "200":
+          description: Draft updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockAdjustment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /stock-adjustments/{id}/post:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: postStockAdjustment
+      summary: Post a draft stock adjustment (signed adjustment movements)
+      tags: [documents]
+      responses:
+        "200":
+          description: Posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockAdjustment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /stock-adjustments/{id}/reverse:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: reverseStockAdjustment
+      summary: Reverse a posted stock adjustment (posts the negated movements)
+      tags: [documents]
+      responses:
+        "201":
+          description: Reversal document posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockAdjustment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /stock-opnames:
+    get:
+      operationId: listStockOpnames
+      summary: List stock opnames
+      tags: [documents]
+      responses:
+        "200":
+          description: Stock opnames
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StockOpname" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createStockOpname
+      summary: Create a draft stock opname
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StockOpnameInput" }
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockOpname" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /stock-opnames/{id}:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    get:
+      operationId: getStockOpname
+      summary: Get a stock opname
+      tags: [documents]
+      responses:
+        "200":
+          description: Stock opname
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockOpname" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateStockOpname
+      summary: Replace a draft stock opname (rejected once posted)
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StockOpnameInput" }
+      responses:
+        "200":
+          description: Draft updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockOpname" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /stock-opnames/{id}/post:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: postStockOpname
+      summary: Post a draft stock opname (variance vs current stock -> adjustments)
+      tags: [documents]
+      responses:
+        "200":
+          description: Posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockOpname" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /stock-opnames/{id}/reverse:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: reverseStockOpname
+      summary: Reverse a posted stock opname (posts the negated variance)
+      tags: [documents]
+      responses:
+        "201":
+          description: Reversal document posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StockOpname" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+components:
+  parameters:
+    DocumentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    DocumentStatus:
+      type: string
+      enum: [draft, posted, reversed]
+      description: draft is editable; posted is immutable; reversed was cancelled by a reversal
+
+    DecimalString:
+      type: string
+      description: A decimal quantity or money value, string-encoded to avoid float loss
+      example: "12.500"
+
+    PurchaseOrderLineInput:
+      type: object
+      required: [productId, uom, qty]
+      properties:
+        productId: { type: string, format: uuid }
+        uom: { type: string, minLength: 1 }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+        unitCost: { $ref: "#/components/schemas/DecimalString" }
+    PurchaseOrderLine:
+      type: object
+      required: [id, lineNo, productId, uom, qty, unitCost]
+      properties:
+        id: { type: string, format: uuid }
+        lineNo: { type: integer }
+        productId: { type: string, format: uuid }
+        uom: { type: string }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+        unitCost: { $ref: "#/components/schemas/DecimalString" }
+    PurchaseOrderInput:
+      type: object
+      required: [supplierId, warehouseId, docDate, lines]
+      properties:
+        supplierId: { type: string, format: uuid }
+        warehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        lines:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/PurchaseOrderLineInput" }
+    PurchaseOrder:
+      type: object
+      required: [id, status, supplierId, warehouseId, docDate, notes, lines]
+      properties:
+        id: { type: string, format: uuid }
+        docNumber: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/DocumentStatus" }
+        supplierId: { type: string, format: uuid }
+        warehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        reversesId: { type: string, format: uuid, nullable: true }
+        reversedById: { type: string, format: uuid, nullable: true }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/PurchaseOrderLine" }
+
+    GoodsReceiptLineInput:
+      type: object
+      required: [productId, uom, qty]
+      properties:
+        purchaseOrderLineId: { type: string, format: uuid, nullable: true }
+        productId: { type: string, format: uuid }
+        batchId: { type: string, format: uuid, nullable: true }
+        uom: { type: string, minLength: 1 }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+        unitCost: { $ref: "#/components/schemas/DecimalString" }
+    GoodsReceiptLine:
+      type: object
+      required: [id, lineNo, productId, uom, qty, unitCost]
+      properties:
+        id: { type: string, format: uuid }
+        lineNo: { type: integer }
+        purchaseOrderLineId: { type: string, format: uuid, nullable: true }
+        productId: { type: string, format: uuid }
+        batchId: { type: string, format: uuid, nullable: true }
+        uom: { type: string }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+        unitCost: { $ref: "#/components/schemas/DecimalString" }
+    GoodsReceiptInput:
+      type: object
+      required: [supplierId, warehouseId, docDate, lines]
+      properties:
+        purchaseOrderId: { type: string, format: uuid, nullable: true }
+        supplierId: { type: string, format: uuid }
+        warehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        lines:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/GoodsReceiptLineInput" }
+    GoodsReceipt:
+      type: object
+      required: [id, status, supplierId, warehouseId, docDate, notes, lines]
+      properties:
+        id: { type: string, format: uuid }
+        docNumber: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/DocumentStatus" }
+        purchaseOrderId: { type: string, format: uuid, nullable: true }
+        supplierId: { type: string, format: uuid }
+        warehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        reversesId: { type: string, format: uuid, nullable: true }
+        reversedById: { type: string, format: uuid, nullable: true }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/GoodsReceiptLine" }
+
+    SalesOrderLineInput:
+      type: object
+      required: [productId, uom, qty]
+      properties:
+        productId: { type: string, format: uuid }
+        uom: { type: string, minLength: 1 }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+        unitPrice: { $ref: "#/components/schemas/DecimalString" }
+    SalesOrderLine:
+      type: object
+      required: [id, lineNo, productId, uom, qty, unitPrice]
+      properties:
+        id: { type: string, format: uuid }
+        lineNo: { type: integer }
+        productId: { type: string, format: uuid }
+        uom: { type: string }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+        unitPrice: { $ref: "#/components/schemas/DecimalString" }
+    SalesOrderInput:
+      type: object
+      required: [customerId, warehouseId, docDate, lines]
+      properties:
+        customerId: { type: string, format: uuid }
+        warehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        lines:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/SalesOrderLineInput" }
+    SalesOrder:
+      type: object
+      required: [id, status, customerId, warehouseId, docDate, notes, lines]
+      properties:
+        id: { type: string, format: uuid }
+        docNumber: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/DocumentStatus" }
+        customerId: { type: string, format: uuid }
+        warehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        reversesId: { type: string, format: uuid, nullable: true }
+        reversedById: { type: string, format: uuid, nullable: true }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/SalesOrderLine" }
+
+    DeliveryLineInput:
+      type: object
+      required: [productId, uom, qty]
+      properties:
+        salesOrderLineId: { type: string, format: uuid, nullable: true }
+        productId: { type: string, format: uuid }
+        batchId: { type: string, format: uuid, nullable: true }
+        uom: { type: string, minLength: 1 }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+    DeliveryLine:
+      type: object
+      required: [id, lineNo, productId, uom, qty]
+      properties:
+        id: { type: string, format: uuid }
+        lineNo: { type: integer }
+        salesOrderLineId: { type: string, format: uuid, nullable: true }
+        productId: { type: string, format: uuid }
+        batchId: { type: string, format: uuid, nullable: true }
+        uom: { type: string }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+    DeliveryInput:
+      type: object
+      required: [customerId, warehouseId, docDate, lines]
+      properties:
+        salesOrderId: { type: string, format: uuid, nullable: true }
+        customerId: { type: string, format: uuid }
+        warehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        lines:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/DeliveryLineInput" }
+    Delivery:
+      type: object
+      required: [id, status, customerId, warehouseId, docDate, notes, lines]
+      properties:
+        id: { type: string, format: uuid }
+        docNumber: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/DocumentStatus" }
+        salesOrderId: { type: string, format: uuid, nullable: true }
+        customerId: { type: string, format: uuid }
+        warehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        reversesId: { type: string, format: uuid, nullable: true }
+        reversedById: { type: string, format: uuid, nullable: true }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/DeliveryLine" }
+
+    StockTransferLineInput:
+      type: object
+      required: [productId, uom, qty]
+      properties:
+        productId: { type: string, format: uuid }
+        batchId: { type: string, format: uuid, nullable: true }
+        uom: { type: string, minLength: 1 }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+    StockTransferLine:
+      type: object
+      required: [id, lineNo, productId, uom, qty]
+      properties:
+        id: { type: string, format: uuid }
+        lineNo: { type: integer }
+        productId: { type: string, format: uuid }
+        batchId: { type: string, format: uuid, nullable: true }
+        uom: { type: string }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+    StockTransferInput:
+      type: object
+      required: [fromWarehouseId, toWarehouseId, docDate, lines]
+      properties:
+        fromWarehouseId: { type: string, format: uuid }
+        toWarehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        lines:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/StockTransferLineInput" }
+    StockTransfer:
+      type: object
+      required: [id, status, fromWarehouseId, toWarehouseId, docDate, notes, lines]
+      properties:
+        id: { type: string, format: uuid }
+        docNumber: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/DocumentStatus" }
+        fromWarehouseId: { type: string, format: uuid }
+        toWarehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        reversesId: { type: string, format: uuid, nullable: true }
+        reversedById: { type: string, format: uuid, nullable: true }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/StockTransferLine" }
+
+    StockAdjustmentLineInput:
+      type: object
+      required: [productId, uom, qty]
+      properties:
+        productId: { type: string, format: uuid }
+        batchId: { type: string, format: uuid, nullable: true }
+        uom: { type: string, minLength: 1 }
+        qty:
+          allOf: [{ $ref: "#/components/schemas/DecimalString" }]
+          description: Signed - positive is found stock, negative is waste/damage; nonzero
+        unitCost: { $ref: "#/components/schemas/DecimalString" }
+    StockAdjustmentLine:
+      type: object
+      required: [id, lineNo, productId, uom, qty, unitCost]
+      properties:
+        id: { type: string, format: uuid }
+        lineNo: { type: integer }
+        productId: { type: string, format: uuid }
+        batchId: { type: string, format: uuid, nullable: true }
+        uom: { type: string }
+        qty: { $ref: "#/components/schemas/DecimalString" }
+        unitCost: { $ref: "#/components/schemas/DecimalString" }
+    StockAdjustmentInput:
+      type: object
+      required: [warehouseId, docDate, lines]
+      properties:
+        warehouseId: { type: string, format: uuid }
+        reason: { type: string }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        lines:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/StockAdjustmentLineInput" }
+    StockAdjustment:
+      type: object
+      required: [id, status, warehouseId, reason, docDate, notes, lines]
+      properties:
+        id: { type: string, format: uuid }
+        docNumber: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/DocumentStatus" }
+        warehouseId: { type: string, format: uuid }
+        reason: { type: string }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        reversesId: { type: string, format: uuid, nullable: true }
+        reversedById: { type: string, format: uuid, nullable: true }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/StockAdjustmentLine" }
+
+    StockOpnameLineInput:
+      type: object
+      required: [productId, uom, countedQty]
+      properties:
+        productId: { type: string, format: uuid }
+        batchId: { type: string, format: uuid, nullable: true }
+        uom: { type: string, minLength: 1 }
+        countedQty: { $ref: "#/components/schemas/DecimalString" }
+    StockOpnameLine:
+      type: object
+      required: [id, lineNo, productId, uom, countedQty]
+      properties:
+        id: { type: string, format: uuid }
+        lineNo: { type: integer }
+        productId: { type: string, format: uuid }
+        batchId: { type: string, format: uuid, nullable: true }
+        uom: { type: string }
+        countedQty: { $ref: "#/components/schemas/DecimalString" }
+    StockOpnameInput:
+      type: object
+      required: [warehouseId, docDate, lines]
+      properties:
+        warehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        lines:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/StockOpnameLineInput" }
+    StockOpname:
+      type: object
+      required: [id, status, warehouseId, docDate, notes, lines]
+      properties:
+        id: { type: string, format: uuid }
+        docNumber: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/DocumentStatus" }
+        warehouseId: { type: string, format: uuid }
+        docDate: { type: string, format: date }
+        notes: { type: string }
+        reversesId: { type: string, format: uuid, nullable: true }
+        reversedById: { type: string, format: uuid, nullable: true }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/StockOpnameLine" }

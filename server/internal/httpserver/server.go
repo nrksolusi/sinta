@@ -9,16 +9,28 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/nrksolusi/sinta/internal/api"
+	"github.com/nrksolusi/sinta/internal/domain/costing"
+	"github.com/nrksolusi/sinta/internal/domain/posting"
 	"github.com/nrksolusi/sinta/internal/store"
 )
 
 type Server struct {
 	pool    *pgxpool.Pool
 	queries *store.Queries
+	// poster finalizes a draft document into the journal (Track B): it appends
+	// movements, assigns the gapless number, and refreshes stock levels in one
+	// transaction under a per-key advisory lock (ADR-0010).
+	poster posting.Poster
 }
 
+// New wires the server with the M1 weighted-average posting path. Document
+// handlers build a posting.Request and call the poster to post (Track C).
 func New(pool *pgxpool.Pool) *Server {
-	return &Server{pool: pool, queries: store.New(pool)}
+	return &Server{
+		pool:    pool,
+		queries: store.New(pool),
+		poster:  store.NewPoster(pool, costing.NewAverage()),
+	}
 }
 
 // Handler mounts the API under /v1 as declared in the OpenAPI spec.
