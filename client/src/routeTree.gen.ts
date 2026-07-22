@@ -43,6 +43,9 @@ import { Route as AuthedPurchasesReceiptsNewRouteImport } from './routes/_authed
 import { Route as AuthedSalesDeliveriesIndexRouteImport } from './routes/_authed/sales/deliveries/index'
 import { Route as AuthedSalesDeliveriesIdRouteImport } from './routes/_authed/sales/deliveries/$id'
 import { Route as AuthedSalesDeliveriesNewRouteImport } from './routes/_authed/sales/deliveries/new'
+import { Route as AuthedSalesOrdersIndexRouteImport } from './routes/_authed/sales/orders/index'
+import { Route as AuthedSalesOrdersIdRouteImport } from './routes/_authed/sales/orders/$id'
+import { Route as AuthedSalesOrdersNewRouteImport } from './routes/_authed/sales/orders/new'
 import { Route as AuthedStockAdjustmentsIndexRouteImport } from './routes/_authed/stock/adjustments/index'
 import { Route as AuthedStockAdjustmentsIdRouteImport } from './routes/_authed/stock/adjustments/$id'
 import { Route as AuthedStockAdjustmentsNewRouteImport } from './routes/_authed/stock/adjustments/new'
@@ -231,6 +234,21 @@ const AuthedSalesDeliveriesNewRoute =
     path: '/sales/deliveries/new',
     getParentRoute: () => AuthedRouteRoute,
   } as any)
+const AuthedSalesOrdersIndexRoute = AuthedSalesOrdersIndexRouteImport.update({
+  id: '/sales/orders/',
+  path: '/sales/orders/',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedSalesOrdersIdRoute = AuthedSalesOrdersIdRouteImport.update({
+  id: '/sales/orders/$id',
+  path: '/sales/orders/$id',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedSalesOrdersNewRoute = AuthedSalesOrdersNewRouteImport.update({
+  id: '/sales/orders/new',
+  path: '/sales/orders/new',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
 const AuthedStockAdjustmentsIndexRoute =
   AuthedStockAdjustmentsIndexRouteImport.update({
     id: '/stock/adjustments/',
@@ -312,6 +330,8 @@ export interface FileRoutesByFullPath {
   '/purchases/receipts/new': typeof AuthedPurchasesReceiptsNewRoute
   '/sales/deliveries/$id': typeof AuthedSalesDeliveriesIdRoute
   '/sales/deliveries/new': typeof AuthedSalesDeliveriesNewRoute
+  '/sales/orders/$id': typeof AuthedSalesOrdersIdRoute
+  '/sales/orders/new': typeof AuthedSalesOrdersNewRoute
   '/stock/adjustments/$id': typeof AuthedStockAdjustmentsIdRoute
   '/stock/adjustments/new': typeof AuthedStockAdjustmentsNewRoute
   '/stock/opnames/$id': typeof AuthedStockOpnamesIdRoute
@@ -321,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/purchases/orders/': typeof AuthedPurchasesOrdersIndexRoute
   '/purchases/receipts/': typeof AuthedPurchasesReceiptsIndexRoute
   '/sales/deliveries/': typeof AuthedSalesDeliveriesIndexRoute
+  '/sales/orders/': typeof AuthedSalesOrdersIndexRoute
   '/stock/adjustments/': typeof AuthedStockAdjustmentsIndexRoute
   '/stock/opnames/': typeof AuthedStockOpnamesIndexRoute
   '/stock/transfers/': typeof AuthedStockTransfersIndexRoute
@@ -354,6 +375,8 @@ export interface FileRoutesByTo {
   '/purchases/receipts/new': typeof AuthedPurchasesReceiptsNewRoute
   '/sales/deliveries/$id': typeof AuthedSalesDeliveriesIdRoute
   '/sales/deliveries/new': typeof AuthedSalesDeliveriesNewRoute
+  '/sales/orders/$id': typeof AuthedSalesOrdersIdRoute
+  '/sales/orders/new': typeof AuthedSalesOrdersNewRoute
   '/stock/adjustments/$id': typeof AuthedStockAdjustmentsIdRoute
   '/stock/adjustments/new': typeof AuthedStockAdjustmentsNewRoute
   '/stock/opnames/$id': typeof AuthedStockOpnamesIdRoute
@@ -363,6 +386,7 @@ export interface FileRoutesByTo {
   '/purchases/orders': typeof AuthedPurchasesOrdersIndexRoute
   '/purchases/receipts': typeof AuthedPurchasesReceiptsIndexRoute
   '/sales/deliveries': typeof AuthedSalesDeliveriesIndexRoute
+  '/sales/orders': typeof AuthedSalesOrdersIndexRoute
   '/stock/adjustments': typeof AuthedStockAdjustmentsIndexRoute
   '/stock/opnames': typeof AuthedStockOpnamesIndexRoute
   '/stock/transfers': typeof AuthedStockTransfersIndexRoute
@@ -400,6 +424,8 @@ export interface FileRoutesById {
   '/_authed/purchases/receipts/new': typeof AuthedPurchasesReceiptsNewRoute
   '/_authed/sales/deliveries/$id': typeof AuthedSalesDeliveriesIdRoute
   '/_authed/sales/deliveries/new': typeof AuthedSalesDeliveriesNewRoute
+  '/_authed/sales/orders/$id': typeof AuthedSalesOrdersIdRoute
+  '/_authed/sales/orders/new': typeof AuthedSalesOrdersNewRoute
   '/_authed/stock/adjustments/$id': typeof AuthedStockAdjustmentsIdRoute
   '/_authed/stock/adjustments/new': typeof AuthedStockAdjustmentsNewRoute
   '/_authed/stock/opnames/$id': typeof AuthedStockOpnamesIdRoute
@@ -409,6 +435,7 @@ export interface FileRoutesById {
   '/_authed/purchases/orders/': typeof AuthedPurchasesOrdersIndexRoute
   '/_authed/purchases/receipts/': typeof AuthedPurchasesReceiptsIndexRoute
   '/_authed/sales/deliveries/': typeof AuthedSalesDeliveriesIndexRoute
+  '/_authed/sales/orders/': typeof AuthedSalesOrdersIndexRoute
   '/_authed/stock/adjustments/': typeof AuthedStockAdjustmentsIndexRoute
   '/_authed/stock/opnames/': typeof AuthedStockOpnamesIndexRoute
   '/_authed/stock/transfers/': typeof AuthedStockTransfersIndexRoute
@@ -446,6 +473,8 @@ export interface FileRouteTypes {
     | '/purchases/receipts/new'
     | '/sales/deliveries/$id'
     | '/sales/deliveries/new'
+    | '/sales/orders/$id'
+    | '/sales/orders/new'
     | '/stock/adjustments/$id'
     | '/stock/adjustments/new'
     | '/stock/opnames/$id'
@@ -455,6 +484,7 @@ export interface FileRouteTypes {
     | '/purchases/orders/'
     | '/purchases/receipts/'
     | '/sales/deliveries/'
+    | '/sales/orders/'
     | '/stock/adjustments/'
     | '/stock/opnames/'
     | '/stock/transfers/'
@@ -488,6 +518,8 @@ export interface FileRouteTypes {
     | '/purchases/receipts/new'
     | '/sales/deliveries/$id'
     | '/sales/deliveries/new'
+    | '/sales/orders/$id'
+    | '/sales/orders/new'
     | '/stock/adjustments/$id'
     | '/stock/adjustments/new'
     | '/stock/opnames/$id'
@@ -497,6 +529,7 @@ export interface FileRouteTypes {
     | '/purchases/orders'
     | '/purchases/receipts'
     | '/sales/deliveries'
+    | '/sales/orders'
     | '/stock/adjustments'
     | '/stock/opnames'
     | '/stock/transfers'
@@ -533,6 +566,8 @@ export interface FileRouteTypes {
     | '/_authed/purchases/receipts/new'
     | '/_authed/sales/deliveries/$id'
     | '/_authed/sales/deliveries/new'
+    | '/_authed/sales/orders/$id'
+    | '/_authed/sales/orders/new'
     | '/_authed/stock/adjustments/$id'
     | '/_authed/stock/adjustments/new'
     | '/_authed/stock/opnames/$id'
@@ -542,6 +577,7 @@ export interface FileRouteTypes {
     | '/_authed/purchases/orders/'
     | '/_authed/purchases/receipts/'
     | '/_authed/sales/deliveries/'
+    | '/_authed/sales/orders/'
     | '/_authed/stock/adjustments/'
     | '/_authed/stock/opnames/'
     | '/_authed/stock/transfers/'
@@ -794,6 +830,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSalesDeliveriesNewRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
+    '/_authed/sales/orders/': {
+      id: '/_authed/sales/orders/'
+      path: '/sales/orders'
+      fullPath: '/sales/orders/'
+      preLoaderRoute: typeof AuthedSalesOrdersIndexRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/sales/orders/$id': {
+      id: '/_authed/sales/orders/$id'
+      path: '/sales/orders/$id'
+      fullPath: '/sales/orders/$id'
+      preLoaderRoute: typeof AuthedSalesOrdersIdRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/sales/orders/new': {
+      id: '/_authed/sales/orders/new'
+      path: '/sales/orders/new'
+      fullPath: '/sales/orders/new'
+      preLoaderRoute: typeof AuthedSalesOrdersNewRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
     '/_authed/stock/adjustments/': {
       id: '/_authed/stock/adjustments/'
       path: '/stock/adjustments'
@@ -951,6 +1008,8 @@ interface AuthedRouteRouteChildren {
   AuthedPurchasesReceiptsNewRoute: typeof AuthedPurchasesReceiptsNewRoute
   AuthedSalesDeliveriesIdRoute: typeof AuthedSalesDeliveriesIdRoute
   AuthedSalesDeliveriesNewRoute: typeof AuthedSalesDeliveriesNewRoute
+  AuthedSalesOrdersIdRoute: typeof AuthedSalesOrdersIdRoute
+  AuthedSalesOrdersNewRoute: typeof AuthedSalesOrdersNewRoute
   AuthedStockAdjustmentsIdRoute: typeof AuthedStockAdjustmentsIdRoute
   AuthedStockAdjustmentsNewRoute: typeof AuthedStockAdjustmentsNewRoute
   AuthedStockOpnamesIdRoute: typeof AuthedStockOpnamesIdRoute
@@ -960,6 +1019,7 @@ interface AuthedRouteRouteChildren {
   AuthedPurchasesOrdersIndexRoute: typeof AuthedPurchasesOrdersIndexRoute
   AuthedPurchasesReceiptsIndexRoute: typeof AuthedPurchasesReceiptsIndexRoute
   AuthedSalesDeliveriesIndexRoute: typeof AuthedSalesDeliveriesIndexRoute
+  AuthedSalesOrdersIndexRoute: typeof AuthedSalesOrdersIndexRoute
   AuthedStockAdjustmentsIndexRoute: typeof AuthedStockAdjustmentsIndexRoute
   AuthedStockOpnamesIndexRoute: typeof AuthedStockOpnamesIndexRoute
   AuthedStockTransfersIndexRoute: typeof AuthedStockTransfersIndexRoute
@@ -982,6 +1042,8 @@ const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedPurchasesReceiptsNewRoute: AuthedPurchasesReceiptsNewRoute,
   AuthedSalesDeliveriesIdRoute: AuthedSalesDeliveriesIdRoute,
   AuthedSalesDeliveriesNewRoute: AuthedSalesDeliveriesNewRoute,
+  AuthedSalesOrdersIdRoute: AuthedSalesOrdersIdRoute,
+  AuthedSalesOrdersNewRoute: AuthedSalesOrdersNewRoute,
   AuthedStockAdjustmentsIdRoute: AuthedStockAdjustmentsIdRoute,
   AuthedStockAdjustmentsNewRoute: AuthedStockAdjustmentsNewRoute,
   AuthedStockOpnamesIdRoute: AuthedStockOpnamesIdRoute,
@@ -991,6 +1053,7 @@ const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedPurchasesOrdersIndexRoute: AuthedPurchasesOrdersIndexRoute,
   AuthedPurchasesReceiptsIndexRoute: AuthedPurchasesReceiptsIndexRoute,
   AuthedSalesDeliveriesIndexRoute: AuthedSalesDeliveriesIndexRoute,
+  AuthedSalesOrdersIndexRoute: AuthedSalesOrdersIndexRoute,
   AuthedStockAdjustmentsIndexRoute: AuthedStockAdjustmentsIndexRoute,
   AuthedStockOpnamesIndexRoute: AuthedStockOpnamesIndexRoute,
   AuthedStockTransfersIndexRoute: AuthedStockTransfersIndexRoute,
