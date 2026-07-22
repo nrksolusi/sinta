@@ -1,5 +1,8 @@
 # Fix 2 - UX redesign: information architecture and page prototypes
 
+> **Status: Done - shipped to `main`.** All phases F2.1-F2.6 complete. Deferred
+> scope is tracked in `../discovery/fix-2-deferred-scope.md`.
+
 Rewrite of the first version of this plan, which restyled the existing
 screens without questioning their shape. This version starts from the
 information architecture: documents as first-class records, workflows that

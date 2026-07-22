@@ -1,5 +1,7 @@
 # Line-heavy documents use a header -> lines -> summary wizard
 
+**Status:** Proposed - not yet implemented (see fix-3/fix-4).
+
 Creating and editing a line-heavy document - orders, receipts, deliveries,
 transfers, opname - is structured as a three-step flow: header (the document),
 then lines (the detail), then a summary/confirm, rather than one long screen.

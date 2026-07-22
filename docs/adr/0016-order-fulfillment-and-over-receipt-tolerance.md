@@ -1,5 +1,7 @@
 # Order fulfillment is server-computed, with tolerance-bounded over-receipt
 
+**Status:** Proposed - not yet implemented (see fix-3/fix-4).
+
 Received and delivered quantities are rolled up server-side per order line and
 exposed as a fulfillment state (`open` / `partial` / `closed`); receiving or
 delivering against an order line is guarded so cumulative fulfilled quantity

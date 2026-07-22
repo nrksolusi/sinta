@@ -1,5 +1,7 @@
 # In-house email/password auth with server-side sessions
 
+**Status:** Accepted - implemented.
+
 Authentication is built into the Go server - argon2id password hashing,
 server-side sessions, email verification and reset - instead of a managed
 provider (Clerk/Auth0) or a self-hosted IdP (Keycloak/Zitadel). Per-MAU vendor

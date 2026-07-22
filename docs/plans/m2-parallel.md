@@ -1,6 +1,10 @@
 # M2 - Parallel development plan
 
-Decomposition of Milestone 2 (see `../PLAN.md` §5) into isolated tracks that a
+> **Status: Superseded.** Predates fix-3/fix-4 and ADR-0013..0020. Folded into
+> the unified roadmap - see `m2-m3-roadmap.md`. Kept for its track-decomposition
+> detail (FIFO, reconciliation).
+
+Decomposition of Milestone 2 (see `../reference/PLAN.md` §5) into isolated tracks that a
 solo developer can build concurrently using parallel agents in separate git
 worktrees. The goal is true concurrency: tracks must have near-zero file
 overlap and frozen contracts before they fork, because worktree agents cannot
@@ -93,7 +97,7 @@ ADR-0010).
 ## Integration strategy
 
 - Each track is a short-lived branch off `main`, rebased before merge, squash
-  merged (per `../CONVENTIONS.md`, trunk-based).
+  merged (per `../reference/CONVENTIONS.md`, trunk-based).
 - `main` stays deployable throughout:
   - FIFO merges dark - it is opt-in per tenant via `costing_method`, so no
     tenant sees it until they select it.

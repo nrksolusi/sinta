@@ -1,5 +1,7 @@
 # Read-query contract: server-side filtering, cursor pagination, and typeahead search
 
+**Status:** Proposed - not yet implemented (see fix-3/fix-4).
+
 List endpoints gain a uniform query contract - `status`, `warehouseId`,
 `dateFrom`/`dateTo`, `q`, plus `cursor` + `limit` - and entity pickers are backed
 by server-side typeahead search (`q` over name/code/SKU/barcode/id with fuzzy

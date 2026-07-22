@@ -1,5 +1,7 @@
 # Money stays as document totals - no accounting ledger
 
+**Status:** Accepted - implemented.
+
 Purchase and sales documents carry monetary totals, but Sinta has no general
 ledger, no AR/AP, no payment tracking, and no tax handling (PPN, e-Faktur). The
 boundary was drawn deliberately: order flows are required for distributors to

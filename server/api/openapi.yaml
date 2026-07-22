@@ -6,7 +6,7 @@ info:
     Contract-first: this file is the single source of truth for both the Go
     server (oapi-codegen) and the TypeScript client (openapi-typescript).
     Conventions: camelCase fields, kebab-case plural paths, /v1 prefix
-    (docs/CONVENTIONS.md).
+    (docs/reference/CONVENTIONS.md).
   version: 0.1.0
 
 servers:

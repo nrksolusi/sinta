@@ -1,5 +1,7 @@
 # Order cancellation is a terminal status with short-close, distinct from reversal
 
+**Status:** Proposed - not yet implemented (see fix-3/fix-4).
+
 Purchase and sales orders gain a `cancelled` status reachable from `draft` or
 `posted`; cancelling a partially-fulfilled order short-closes it - the remaining
 un-received or un-delivered quantity is closed, while the fulfilled quantity and

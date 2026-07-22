@@ -1,5 +1,7 @@
 # Document numbers: gapless at posting, tenant templates locked per year
 
+**Status:** Accepted - implemented.
+
 Document numbers are assigned only when a document is posted - drafts are
 unnumbered - so the posted sequence is gapless per tenant, document type, and
 year, which Indonesian audit practice expects. The rendered format is a

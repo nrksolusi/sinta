@@ -1,5 +1,7 @@
 # Draft documents are deletable - the sole exception to document immutability
 
+**Status:** Proposed - not yet implemented (see fix-3/fix-4).
+
 An unposted draft document can be hard-deleted via `DELETE /v1/{document}/{id}`,
 guarded to `status = draft`. This is deliberately the one place a document row is
 removed rather than reversed. It does not conflict with the append-only journal

@@ -1,5 +1,7 @@
 # Dual costing engines, tenant-selectable, switchable at fiscal-year boundary
 
+**Status:** Accepted - weighted-average implemented (M1); FIFO pending (M2).
+
 Each tenant chooses weighted average or FIFO at onboarding, and may switch once
 per fiscal year at the boundary via a revaluation run. We ship both engines in
 v1 despite having no customers yet, because the founder judges tenant-selectable

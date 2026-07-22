@@ -1,5 +1,7 @@
 # Soft cap on self-served tenant activation
 
+**Status:** Accepted - implemented.
+
 Amends D14. Any user may create tenants through the onboarding wizard without
 operator involvement, but only their first 3 created tenants start `active`.
 From the 4th onward the tenant is created with `active = false` and every

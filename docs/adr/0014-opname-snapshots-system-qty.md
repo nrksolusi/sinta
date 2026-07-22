@@ -1,5 +1,7 @@
 # Opname lines snapshot systemQty at posting
 
+**Status:** Proposed - not yet implemented (see fix-3/fix-4).
+
 When a stock opname posts, each line stores the system on-hand quantity it was
 counted against (`system_qty`) alongside `counted_qty`, so the posted berita
 acara renders System / Counted / Selisih exactly as it was adjusted. We snapshot

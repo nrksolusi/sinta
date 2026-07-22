@@ -1,5 +1,7 @@
 # Document approval gate: opt-in per tenant per document type, fixed-role authority
 
+**Status:** Proposed - not yet implemented (see fix-3/fix-4).
+
 Tenants may require an approval step before a document can be posted, enabled per
 tenant and per document type. When enabled for a type, a document of that type
 moves `draft -> pending_approval (Menunggu Persetujuan) -> approved (Disetujui)

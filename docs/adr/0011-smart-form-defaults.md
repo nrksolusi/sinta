@@ -1,5 +1,7 @@
 # Smart default values on form inputs, except in auth flows
 
+**Status:** Accepted - implemented.
+
 Every form input outside the authentication modules should carry a smart default
 whenever one can be reasonably inferred and pre-filling it is safe. A default is
 inferred from context the system already holds - the current tenant and

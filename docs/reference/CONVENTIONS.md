@@ -1,7 +1,7 @@
 # Conventions
 
 Git and naming rules for Sinta. Decided 2026-07-21. Hard-to-reverse choices
-have ADRs (see `adr/`); everything here is binding either way.
+have ADRs (see `../adr/`); everything here is binding either way.
 
 ## Git
 

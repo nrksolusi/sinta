@@ -1,6 +1,9 @@
 # M1 - Parallel development plan
 
-Decomposition of Milestone 1 (see `../PLAN.md` §5) into tracks a solo developer
+> **Status: Done - shipped to `main`.** M1 is complete; this is the historical
+> build plan, kept for reference.
+
+Decomposition of Milestone 1 (see `../reference/PLAN.md` §5) into tracks a solo developer
 can build concurrently using parallel agents in separate git worktrees.
 
 Unlike M2, M1 is a foundation, not a set of independent features. Everything
@@ -13,7 +16,7 @@ embarrassingly-parallel features.
 Executor model: solo developer, parallel agents, one worktree per track.
 
 Prerequisite: M0 must be complete (auth, tenant switching, codegen in CI,
-`../PLAN.md` M0 exit criteria met).
+`../reference/PLAN.md` M0 exit criteria met).
 
 ## Track 0 - Contracts, schema, and interfaces (spine PR, merges before the fork)
 
@@ -162,7 +165,7 @@ front-loaded: freezing its interfaces in Track 0 is what unblocks C and D.
 ## Integration strategy
 
 - Each track is a short-lived branch off `main`, rebased before merge, squash
-  merged (`../CONVENTIONS.md`, trunk-based).
+  merged (`../reference/CONVENTIONS.md`, trunk-based).
 - `main` stays building at every merge; M1 is pre-pilot so feature-gating is not
   required, but no track merges with red CI.
 - Merge order: Track 0 first. A and F any time. B before C integrates. D after
@@ -179,5 +182,5 @@ front-loaded: freezing its interfaces in Track 0 is what unblocks C and D.
    stops and Track 0 is reopened as a small additive migration PR (using the
    track's reserved range) before work resumes. Tracks never edit another
    track's OpenAPI slice or migration range.
-3. This milestone gates the pilot. Per `../PLAN.md` M1 exit: if no distributor
+3. This milestone gates the pilot. Per `../reference/PLAN.md` M1 exit: if no distributor
    will pilot, stop building and start selling (D1 risk).

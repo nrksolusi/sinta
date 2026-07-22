@@ -1,5 +1,8 @@
 # Fix 2 - UI revamp: work allocation, complexity, and dependencies
 
+> **Status: Done.** Process artifact; the fix-2 worktrees are merged and cleaned
+> up.
+
 Companion to `fix-2-ui-redesign.md`. That plan defines *what* each screen is;
 this file defines *who builds what, in what order, and what blocks what* so
 the team can work in parallel worktrees without colliding.
@@ -24,7 +27,7 @@ pickers/LineGrid.
 
 | # | Task | Cx | Branch | Depends on |
 |---|---|---|---|---|
-| 0.0 | UI/UX design brief (`fix-2-ui-design-principles.md`) | M | (doc, no code) | — |
+| 0.0 | UI/UX design brief (`../design/ui-design-principles.md`) | M | (doc, no code) | — |
 | 0.1 | Tokens + typography (index.css, Geist fonts, StatusBadge palette) | M | `feat/ui-revamp-foundations` | 0.0 |
 | 0.2 | App shell (UX-D9 sidebar nav, topbar, tenant-switcher combobox, mobile Sheet) | L | `feat/ui-revamp-shell` | 0.1 |
 | 0.3 | Shared components: RecordShell, StatusBadge, EmptyState, ConfirmDialog, DocList | L | `feat/ui-revamp-shared-components` | 0.1 |

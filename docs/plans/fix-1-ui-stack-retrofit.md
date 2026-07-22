@@ -1,6 +1,9 @@
 # Fix 1 - UI stack retrofit (shadcn, TanStack Form, TanStack Table)
 
-The stack decision (`../PLAN.md` "Stack stands as-is: TanStack
+> **Status: Done - shipped to `main`** (its steps were absorbed into the fix-2
+> implementation phases).
+
+The stack decision (`../reference/PLAN.md` "Stack stands as-is: TanStack
 Router/Query/Table/Form, Tailwind 4 + shadcn") was set up in M0 but never
 enforced: all three are installed in `client/package.json` and shadcn is
 configured (`components.json`), yet only `Button` and `Sonner` were ever
@@ -45,7 +48,7 @@ copied the pattern.
 ### Step 1 - shadcn primitives sweep (`fix/ui-shadcn-primitives`)
 
 Generate the missing primitives into `src/components/ui` (excluded from
-Biome per `../CONVENTIONS.md`): `input`, `label`, `select`, `checkbox`,
+Biome per `../reference/CONVENTIONS.md`): `input`, `label`, `select`, `checkbox`,
 `card`, `table`, `badge`, `dialog`. Then sweep every raw styled element to
 the generated component:
 

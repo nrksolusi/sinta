@@ -1,5 +1,7 @@
 # Shared-schema multi-tenancy with tenant_id and Postgres RLS
 
+**Status:** Accepted - implemented.
+
 All tenants share one Postgres schema; every tenant-owned row carries
 `tenant_id`, application middleware scopes every query, and row-level security
 policies (keyed on `current_setting('app.tenant_id')`) act as a backstop. We

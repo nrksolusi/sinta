@@ -1,5 +1,7 @@
 # Flat tenants, global user accounts, membership-based access
 
+**Status:** Accepted - implemented.
+
 A tenant is exactly one legal company (PT/CV); users are global accounts (one
 login per email); a membership row links a user to a tenant with a role and
 optional warehouse scoping. People who work across companies - shared staff, an

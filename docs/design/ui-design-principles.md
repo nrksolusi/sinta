@@ -1,7 +1,10 @@
-# Fix 2 - UI design principles (build north-star)
+# UI design principles (build north-star)
+
+> **Status: Living contract.** Originated in the fix-2 redesign; now the standing
+> UI design system - build all new UI to the component prop contracts here.
 
 The design contract every page in the fix-2 redesign is built against. Derived
-from `fix-2-ui-redesign.md` (UX-D1..D11) - that plan is authoritative; this doc
+from `../plans/fix-2-ui-redesign.md` (UX-D1..D11) - that plan is authoritative; this doc
 turns its decisions into concrete tokens, flows, and component prop contracts so
 three engineers building in parallel produce compatible APIs.
 

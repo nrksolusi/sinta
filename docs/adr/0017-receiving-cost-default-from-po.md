@@ -1,5 +1,7 @@
 # Receiving cost defaults from the purchase order, overridable only with permission
 
+**Status:** Proposed - not yet implemented (see fix-3/fix-4).
+
 A goods receipt line's unit cost defaults from the linked purchase order line's
 agreed price; changing it at receipt is restricted to owner/admin and the
 override is recorded. Today the receipt line carries an independent `unit_cost`

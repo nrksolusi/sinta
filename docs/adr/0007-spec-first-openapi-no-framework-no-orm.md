@@ -1,5 +1,7 @@
 # Spec-first OpenAPI contract; stdlib HTTP and sqlc instead of framework/ORM
 
+**Status:** Accepted - implemented.
+
 `server/api/openapi.yaml` is the single API contract: Go server interfaces are
 generated with oapi-codegen and the React client generates types from the same
 file (already wired via `generate-api` in client/package.json). The server uses

@@ -1,5 +1,7 @@
 # Negative stock allowed, valued at last known cost with correction entries
 
+**Status:** Accepted - implemented.
+
 Stock may go below zero. In the field, goods leave the dock before paperwork is
 entered and waste factors are a fact of life, so blocking the transaction is a
 churn risk. An issue that drives stock negative books at the last known cost and

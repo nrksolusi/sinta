@@ -1,5 +1,7 @@
 # UUIDv7 primary keys everywhere
 
+**Status:** Accepted - implemented.
+
 Every table uses UUIDv7 primary keys - no bigint identities, no exceptions.
 In a shared-schema multi-tenant database (ADR-0004), sequential IDs advertise
 volume and turn any missed tenant check into an enumeration vulnerability;

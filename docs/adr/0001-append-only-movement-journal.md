@@ -1,5 +1,7 @@
 # Append-only stock movement journal as the sole source of truth
 
+**Status:** Accepted - implemented.
+
 Stock on hand, stock cards, and all valuation are computed from an append-only
 `stock_movements` journal; there is no authoritative "quantity" column. We chose
 this over a mutable stock-balance table because the product must support two

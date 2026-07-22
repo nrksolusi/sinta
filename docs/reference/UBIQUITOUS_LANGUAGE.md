@@ -2,7 +2,7 @@
 
 Canonical vocabulary for Sinta - multi-tenant inventory management for
 Indonesian SME distributors. Companion to `CONTEXT.md` (quick glossary) and
-`adr/` (why the model is shaped this way).
+`../adr/` (why the model is shaped this way).
 
 ## Tenancy and people
 
