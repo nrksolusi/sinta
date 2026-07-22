@@ -34,6 +34,9 @@ import { Route as AuthedSettingsProfileRouteImport } from './routes/_authed/sett
 import { Route as AuthedCatalogPartnersIdRouteImport } from './routes/_authed/catalog/partners.$id'
 import { Route as AuthedCatalogProductsIdRouteImport } from './routes/_authed/catalog/products.$id'
 import { Route as AuthedCatalogWarehousesIdRouteImport } from './routes/_authed/catalog/warehouses.$id'
+import { Route as AuthedStockAdjustmentsIndexRouteImport } from './routes/_authed/stock/adjustments/index'
+import { Route as AuthedStockAdjustmentsIdRouteImport } from './routes/_authed/stock/adjustments/$id'
+import { Route as AuthedStockAdjustmentsNewRouteImport } from './routes/_authed/stock/adjustments/new'
 
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
@@ -161,6 +164,24 @@ const AuthedCatalogWarehousesIdRoute =
     path: '/$id',
     getParentRoute: () => AuthedCatalogWarehousesRoute,
   } as any)
+const AuthedStockAdjustmentsIndexRoute =
+  AuthedStockAdjustmentsIndexRouteImport.update({
+    id: '/stock/adjustments/',
+    path: '/stock/adjustments/',
+    getParentRoute: () => AuthedRouteRoute,
+  } as any)
+const AuthedStockAdjustmentsIdRoute =
+  AuthedStockAdjustmentsIdRouteImport.update({
+    id: '/stock/adjustments/$id',
+    path: '/stock/adjustments/$id',
+    getParentRoute: () => AuthedRouteRoute,
+  } as any)
+const AuthedStockAdjustmentsNewRoute =
+  AuthedStockAdjustmentsNewRouteImport.update({
+    id: '/stock/adjustments/new',
+    path: '/stock/adjustments/new',
+    getParentRoute: () => AuthedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -187,6 +208,9 @@ export interface FileRoutesByFullPath {
   '/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/stock/adjustments/$id': typeof AuthedStockAdjustmentsIdRoute
+  '/stock/adjustments/new': typeof AuthedStockAdjustmentsNewRoute
+  '/stock/adjustments/': typeof AuthedStockAdjustmentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -211,6 +235,9 @@ export interface FileRoutesByTo {
   '/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/stock/adjustments/$id': typeof AuthedStockAdjustmentsIdRoute
+  '/stock/adjustments/new': typeof AuthedStockAdjustmentsNewRoute
+  '/stock/adjustments': typeof AuthedStockAdjustmentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -239,6 +266,9 @@ export interface FileRoutesById {
   '/_authed/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/_authed/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/_authed/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/_authed/stock/adjustments/$id': typeof AuthedStockAdjustmentsIdRoute
+  '/_authed/stock/adjustments/new': typeof AuthedStockAdjustmentsNewRoute
+  '/_authed/stock/adjustments/': typeof AuthedStockAdjustmentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -267,6 +297,9 @@ export interface FileRouteTypes {
     | '/catalog/partners/$id'
     | '/catalog/products/$id'
     | '/catalog/warehouses/$id'
+    | '/stock/adjustments/$id'
+    | '/stock/adjustments/new'
+    | '/stock/adjustments/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -291,6 +324,9 @@ export interface FileRouteTypes {
     | '/catalog/partners/$id'
     | '/catalog/products/$id'
     | '/catalog/warehouses/$id'
+    | '/stock/adjustments/$id'
+    | '/stock/adjustments/new'
+    | '/stock/adjustments'
   id:
     | '__root__'
     | '/_authed'
@@ -318,6 +354,9 @@ export interface FileRouteTypes {
     | '/_authed/catalog/partners/$id'
     | '/_authed/catalog/products/$id'
     | '/_authed/catalog/warehouses/$id'
+    | '/_authed/stock/adjustments/$id'
+    | '/_authed/stock/adjustments/new'
+    | '/_authed/stock/adjustments/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -504,6 +543,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCatalogWarehousesIdRouteImport
       parentRoute: typeof AuthedCatalogWarehousesRoute
     }
+    '/_authed/stock/adjustments/': {
+      id: '/_authed/stock/adjustments/'
+      path: '/stock/adjustments'
+      fullPath: '/stock/adjustments/'
+      preLoaderRoute: typeof AuthedStockAdjustmentsIndexRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/stock/adjustments/$id': {
+      id: '/_authed/stock/adjustments/$id'
+      path: '/stock/adjustments/$id'
+      fullPath: '/stock/adjustments/$id'
+      preLoaderRoute: typeof AuthedStockAdjustmentsIdRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/stock/adjustments/new': {
+      id: '/_authed/stock/adjustments/new'
+      path: '/stock/adjustments/new'
+      fullPath: '/stock/adjustments/new'
+      preLoaderRoute: typeof AuthedStockAdjustmentsNewRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
   }
 }
 
@@ -592,6 +652,9 @@ interface AuthedRouteRouteChildren {
   AuthedReportsStockCardRoute: typeof AuthedReportsStockCardRoute
   AuthedReportsStockOnHandRoute: typeof AuthedReportsStockOnHandRoute
   AuthedReportsValuationRoute: typeof AuthedReportsValuationRoute
+  AuthedStockAdjustmentsIdRoute: typeof AuthedStockAdjustmentsIdRoute
+  AuthedStockAdjustmentsNewRoute: typeof AuthedStockAdjustmentsNewRoute
+  AuthedStockAdjustmentsIndexRoute: typeof AuthedStockAdjustmentsIndexRoute
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
@@ -605,6 +668,9 @@ const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedReportsStockCardRoute: AuthedReportsStockCardRoute,
   AuthedReportsStockOnHandRoute: AuthedReportsStockOnHandRoute,
   AuthedReportsValuationRoute: AuthedReportsValuationRoute,
+  AuthedStockAdjustmentsIdRoute: AuthedStockAdjustmentsIdRoute,
+  AuthedStockAdjustmentsNewRoute: AuthedStockAdjustmentsNewRoute,
+  AuthedStockAdjustmentsIndexRoute: AuthedStockAdjustmentsIndexRoute,
 }
 
 const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
