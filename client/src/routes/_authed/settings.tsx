@@ -45,11 +45,13 @@ function TenantProfileSection({ editable }: { editable: boolean }) {
     const { data } = await api.PATCH("/tenant", {
       body: { name, legalName },
     });
-    if (data) {
-      queryClient.setQueryData(["tenant"], data);
-      await queryClient.invalidateQueries({ queryKey: ["session"] });
-      toast.success(m.settings_saved());
+    if (!data) {
+      toast.error(m.error_generic());
+      return;
     }
+    queryClient.setQueryData(["tenant"], data);
+    await queryClient.invalidateQueries({ queryKey: ["session"] });
+    toast.success(m.settings_saved());
   };
 
   return (
@@ -110,6 +112,10 @@ function MembersSection({
       toast.error(m.settings_last_owner_error());
       return;
     }
+    if (!response.ok) {
+      toast.error(m.error_generic());
+      return;
+    }
     await refetch();
     await router.invalidate();
   };
@@ -120,6 +126,10 @@ function MembersSection({
     });
     if (response.status === 409) {
       toast.error(m.settings_last_owner_error());
+      return;
+    }
+    if (!response.ok) {
+      toast.error(m.error_generic());
       return;
     }
     await refetch();
@@ -180,7 +190,11 @@ function InvitesSection() {
   const [role, setRole] = useState<Role>("warehouse");
 
   const create = async () => {
-    await api.POST("/tenant/invites", { body: { role } });
+    const { data } = await api.POST("/tenant/invites", { body: { role } });
+    if (!data) {
+      toast.error(m.error_generic());
+      return;
+    }
     await refetch();
   };
 
@@ -192,9 +206,13 @@ function InvitesSection() {
   };
 
   const revoke = async (inviteId: string) => {
-    await api.DELETE("/tenant/invites/{inviteId}", {
+    const { response } = await api.DELETE("/tenant/invites/{inviteId}", {
       params: { path: { inviteId } },
     });
+    if (!response.ok) {
+      toast.error(m.error_generic());
+      return;
+    }
     await refetch();
   };
 

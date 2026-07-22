@@ -5,6 +5,7 @@ import {
   redirect,
   useRouter,
 } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query";
@@ -38,10 +39,12 @@ function AuthedLayout() {
     const { data } = await api.POST("/auth/switch-tenant", {
       body: { tenantId },
     });
-    if (data) {
-      queryClient.setQueryData(["session"], data);
-      await router.invalidate();
+    if (!data) {
+      toast.error(m.error_generic());
+      return;
     }
+    queryClient.setQueryData(["session"], data);
+    await router.invalidate();
   };
 
   const logout = async () => {

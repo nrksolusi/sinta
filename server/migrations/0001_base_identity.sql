@@ -73,11 +73,13 @@ CREATE POLICY memberships_tenant_isolation ON memberships
 
 -- The application connects as a dedicated non-superuser role so RLS applies
 -- (superusers and table owners with BYPASSRLS would silently skip policies).
+-- The role is created without a password; each environment sets its own via
+-- ALTER ROLE out-of-band (never hardcoded in migrations).
 -- +goose StatementBegin
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'sinta_app') THEN
-        CREATE ROLE sinta_app LOGIN PASSWORD 'sinta_app_dev';
+        CREATE ROLE sinta_app LOGIN;
     END IF;
 END
 $$;

@@ -14,8 +14,15 @@ import (
 type tenantCtx struct {
 	session  store.Session
 	user     store.User
+	tenant   store.Tenant
 	tenantID uuid.UUID
 	role     string
+}
+
+func (tc tenantCtx) isOwner() bool { return tc.role == "owner" }
+
+func (tc tenantCtx) canManageInvites() bool {
+	return tc.role == "owner" || tc.role == "admin"
 }
 
 // requireTenant authenticates the request and resolves the active tenant
@@ -41,7 +48,18 @@ func (s *Server) requireTenant(w http.ResponseWriter, r *http.Request) (tenantCt
 		return tenantCtx{}, false
 	}
 
-	return tenantCtx{session: session, user: user, tenantID: tenantID, role: membership.Role}, true
+	tenant, err := s.queries.GetTenant(r.Context(), tenantID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal", "could not load tenant")
+		return tenantCtx{}, false
+	}
+	// D14: the activation flag is the manual billing kill-switch.
+	if !tenant.Active {
+		writeError(w, http.StatusForbidden, "tenant_inactive", "this tenant is deactivated")
+		return tenantCtx{}, false
+	}
+
+	return tenantCtx{session: session, user: user, tenant: tenant, tenantID: tenantID, role: membership.Role}, true
 }
 
 // tenantTx runs fn inside a transaction with app.tenant_id set, so the RLS

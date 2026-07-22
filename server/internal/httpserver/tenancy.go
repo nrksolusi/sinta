@@ -8,7 +8,10 @@ import (
 	"net/http"
 	"time"
 
+	"errors"
+
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
@@ -59,6 +62,12 @@ func (s *Server) CreateTenant(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnprocessableEntity, "invalid_costing_method", "costingMethod must be weightedAverage or fifo")
 		return
 	}
+	// Temporary until the FIFO engine ships in M2 (PLAN.md D15): refuse to
+	// commit a tenant to a valuation engine that cannot run yet.
+	if req.CostingMethod == api.Fifo {
+		writeError(w, http.StatusUnprocessableEntity, "fifo_not_yet_available", "FIFO costing will be available soon; choose weightedAverage for now")
+		return
+	}
 	fiscalStart := int32(1)
 	if req.FiscalYearStartMonth != nil {
 		fiscalStart = int32(*req.FiscalYearStartMonth)
@@ -70,43 +79,51 @@ func (s *Server) CreateTenant(w http.ResponseWriter, r *http.Request) {
 
 	// Tenant, owner membership, first warehouse, and session activation are one
 	// atomic onboarding step - a tenant must never exist half-set-up.
-	tx, err := s.pool.Begin(r.Context())
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not onboard tenant")
-		return
-	}
-	defer tx.Rollback(r.Context())
-	q := s.queries.WithTx(tx)
+	var tenant store.Tenant
+	err = func() error {
+		tx, err := s.pool.Begin(r.Context())
+		if err != nil {
+			return err
+		}
+		defer tx.Rollback(r.Context())
+		q := s.queries.WithTx(tx)
 
-	tenant, err := q.CreateTenant(r.Context(), store.CreateTenantParams{
-		Name:                 req.Name,
-		LegalName:            legalName,
-		CostingMethod:        costing,
-		FiscalYearStartMonth: fiscalStart,
-	})
-	if err == nil {
-		_, err = q.CreateMembership(r.Context(), store.CreateMembershipParams{
+		tenant, err = q.CreateTenant(r.Context(), store.CreateTenantParams{
+			Name:                 req.Name,
+			LegalName:            legalName,
+			CostingMethod:        costing,
+			FiscalYearStartMonth: fiscalStart,
+		})
+		if err != nil {
+			return err
+		}
+		// The warehouses policy is fail-closed: tenant context must be set
+		// before the first warehouse insert (ADR-0004).
+		if _, err := tx.Exec(r.Context(), "SELECT set_config('app.tenant_id', $1, true)", tenant.ID.String()); err != nil {
+			return err
+		}
+		if _, err := q.CreateMembership(r.Context(), store.CreateMembershipParams{
 			UserID:   user.ID,
 			TenantID: tenant.ID,
 			Role:     "owner",
-		})
-	}
-	if err == nil {
-		_, err = q.CreateWarehouse(r.Context(), store.CreateWarehouseParams{
+		}); err != nil {
+			return err
+		}
+		if _, err := q.CreateWarehouse(r.Context(), store.CreateWarehouseParams{
 			TenantID: tenant.ID,
 			Code:     req.Warehouse.Code,
 			Name:     req.Warehouse.Name,
-		})
-	}
-	if err == nil {
-		err = q.SetSessionActiveTenant(r.Context(), store.SetSessionActiveTenantParams{
+		}); err != nil {
+			return err
+		}
+		if err := q.SetSessionActiveTenant(r.Context(), store.SetSessionActiveTenantParams{
 			ID:             session.ID,
 			ActiveTenantID: pgUUID(tenant.ID),
-		})
-	}
-	if err == nil {
-		err = tx.Commit(r.Context())
-	}
+		}); err != nil {
+			return err
+		}
+		return tx.Commit(r.Context())
+	}()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "could not onboard tenant")
 		return
@@ -120,18 +137,8 @@ func (s *Server) GetTenant(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-
-	var tenant store.Tenant
-	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
-		var err error
-		tenant, err = q.GetTenant(r.Context(), tc.tenantID)
-		return err
-	})
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not load tenant")
-		return
-	}
-	writeJSON(w, http.StatusOK, tenantProfile(tenant, tc.role))
+	// requireTenant already loaded the tenant row.
+	writeJSON(w, http.StatusOK, tenantProfile(tc.tenant, tc.role))
 }
 
 func (s *Server) UpdateTenant(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +146,7 @@ func (s *Server) UpdateTenant(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if tc.role != "owner" {
+	if !tc.isOwner() {
 		writeError(w, http.StatusForbidden, "owner_only", "only the owner can update the tenant profile")
 		return
 	}
@@ -241,7 +248,7 @@ func (s *Server) UpdateMember(w http.ResponseWriter, r *http.Request, userId ope
 	if !ok {
 		return
 	}
-	if tc.role != "owner" {
+	if !tc.isOwner() {
 		writeError(w, http.StatusForbidden, "owner_only", "only the owner can change member roles")
 		return
 	}
@@ -249,6 +256,10 @@ func (s *Server) UpdateMember(w http.ResponseWriter, r *http.Request, userId ope
 	var req api.UpdateMemberRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusUnprocessableEntity, "invalid_body", "request body is not valid JSON")
+		return
+	}
+	if !validRole(req.Role) {
+		writeError(w, http.StatusUnprocessableEntity, "invalid_role", "role must be one of owner, admin, warehouse, sales, viewer")
 		return
 	}
 
@@ -281,6 +292,10 @@ func (s *Server) UpdateMember(w http.ResponseWriter, r *http.Request, userId ope
 		return nil
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "member_not_found", "no such member in this tenant")
+			return
+		}
 		writeError(w, http.StatusInternalServerError, "internal", "could not update member")
 		return
 	}
@@ -296,7 +311,7 @@ func (s *Server) RemoveMember(w http.ResponseWriter, r *http.Request, userId ope
 	if !ok {
 		return
 	}
-	if tc.role != "owner" {
+	if !tc.isOwner() {
 		writeError(w, http.StatusForbidden, "owner_only", "only the owner can remove members")
 		return
 	}
@@ -316,6 +331,10 @@ func (s *Server) RemoveMember(w http.ResponseWriter, r *http.Request, userId ope
 		return err
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "member_not_found", "no such member in this tenant")
+			return
+		}
 		writeError(w, http.StatusInternalServerError, "internal", "could not remove member")
 		return
 	}
@@ -336,8 +355,12 @@ func newInviteToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(raw), nil
 }
 
-func canManageInvites(role string) bool {
-	return role == "owner" || role == "admin"
+func validRole(role api.Role) bool {
+	switch role {
+	case api.Owner, api.Admin, api.Warehouse, api.Sales, api.Viewer:
+		return true
+	}
+	return false
 }
 
 func inviteToAPI(inv store.Invitation) api.Invite {
@@ -354,7 +377,7 @@ func (s *Server) ListInvites(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !canManageInvites(tc.role) {
+	if !tc.canManageInvites() {
 		writeError(w, http.StatusForbidden, "owner_or_admin_only", "only owners and admins manage invites")
 		return
 	}
@@ -382,7 +405,7 @@ func (s *Server) CreateInvite(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !canManageInvites(tc.role) {
+	if !tc.canManageInvites() {
 		writeError(w, http.StatusForbidden, "owner_or_admin_only", "only owners and admins manage invites")
 		return
 	}
@@ -390,6 +413,10 @@ func (s *Server) CreateInvite(w http.ResponseWriter, r *http.Request) {
 	var req api.CreateInviteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusUnprocessableEntity, "invalid_body", "request body is not valid JSON")
+		return
+	}
+	if !validRole(req.Role) {
+		writeError(w, http.StatusUnprocessableEntity, "invalid_role", "role must be one of owner, admin, warehouse, sales, viewer")
 		return
 	}
 
@@ -423,7 +450,7 @@ func (s *Server) RevokeInvite(w http.ResponseWriter, r *http.Request, inviteId o
 	if !ok {
 		return
 	}
-	if !canManageInvites(tc.role) {
+	if !tc.canManageInvites() {
 		writeError(w, http.StatusForbidden, "owner_or_admin_only", "only owners and admins manage invites")
 		return
 	}
@@ -480,27 +507,38 @@ func (s *Server) AcceptInvite(w http.ResponseWriter, r *http.Request, token stri
 		return
 	}
 
-	// Idempotent: an existing membership keeps its current role.
-	_, err = s.queries.GetMembership(r.Context(), store.GetMembershipParams{
-		UserID:   user.ID,
-		TenantID: invite.TenantID,
-	})
-	if err != nil {
-		if _, err := s.queries.CreateMembership(r.Context(), store.CreateMembershipParams{
+	// Joining and activating are one atomic step, mirroring onboarding.
+	err = func() error {
+		tx, err := s.pool.Begin(r.Context())
+		if err != nil {
+			return err
+		}
+		defer tx.Rollback(r.Context())
+		q := s.queries.WithTx(tx)
+
+		// Idempotent: an existing membership keeps its current role.
+		if _, err := q.GetMembership(r.Context(), store.GetMembershipParams{
 			UserID:   user.ID,
 			TenantID: invite.TenantID,
-			Role:     invite.Role,
 		}); err != nil {
-			writeError(w, http.StatusInternalServerError, "internal", "could not join tenant")
-			return
+			if _, err := q.CreateMembership(r.Context(), store.CreateMembershipParams{
+				UserID:   user.ID,
+				TenantID: invite.TenantID,
+				Role:     invite.Role,
+			}); err != nil {
+				return err
+			}
 		}
-	}
-
-	if err := s.queries.SetSessionActiveTenant(r.Context(), store.SetSessionActiveTenantParams{
-		ID:             session.ID,
-		ActiveTenantID: pgUUID(invite.TenantID),
-	}); err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not activate tenant")
+		if err := q.SetSessionActiveTenant(r.Context(), store.SetSessionActiveTenantParams{
+			ID:             session.ID,
+			ActiveTenantID: pgUUID(invite.TenantID),
+		}); err != nil {
+			return err
+		}
+		return tx.Commit(r.Context())
+	}()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal", "could not join tenant")
 		return
 	}
 

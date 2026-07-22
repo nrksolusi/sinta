@@ -61,5 +61,7 @@
   "invite_register_first": "Buat akun untuk menerima",
   "invite_invalid": "Tautan undangan tidak valid atau sudah kedaluwarsa.",
   "nav_dashboard": "Dasbor",
-  "nav_settings": "Pengaturan"
+  "nav_settings": "Pengaturan",
+  "error_generic": "Terjadi kesalahan. Silakan coba lagi.",
+  "onboarding_costing_fifo_soon": "Segera hadir - pilot berjalan dengan rata-rata tertimbang dulu"
 }

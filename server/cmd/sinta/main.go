@@ -1,6 +1,10 @@
 // Command sinta serves the Sinta API.
 //
 //	DATABASE_URL=postgres://... PORT=8080 go run ./cmd/sinta
+//
+// In production DATABASE_URL must connect as the sinta_app role (not the
+// database owner) so the RLS policies actually apply (ADR-0004). Migrations
+// run as the owner via cmd/migrate.
 package main
 
 import (

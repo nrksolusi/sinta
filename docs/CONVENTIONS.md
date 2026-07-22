@@ -19,6 +19,8 @@ have ADRs (see `adr/`); everything here is binding either way.
 
 - JSON fields: camelCase (`warehouseId`, `effectiveDate`).
 - URLs: kebab-case, plural resources, `/v1` prefix (`GET /v1/goods-receipts`).
+  Exception: singleton resources scoped to the session use singular
+  (`/v1/tenant` is the session's active tenant; `/v1/tenants` creates one).
 - Casing and paths are locked once a pilot tenant exists; changing them is a
   breaking change requiring `/v2`.
 

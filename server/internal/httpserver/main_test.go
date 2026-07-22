@@ -17,7 +17,10 @@ import (
 	"github.com/nrksolusi/sinta/migrations"
 )
 
-var testPool *pgxpool.Pool
+var (
+	testPool *pgxpool.Pool // owner connection: test seeding and assertions
+	appPool  *pgxpool.Pool // sinta_app connection: what the server under test uses
+)
 
 // TestMain creates a fresh sinta_test database, migrates it with goose, and
 // shares one pool across the package's tests. Requires the docker compose
@@ -59,14 +62,28 @@ func TestMain(m *testing.M) {
 	if err := goose.Up(migrateDB, "."); err != nil {
 		log.Fatalf("migrate test db: %v", err)
 	}
+	// Migrations create sinta_app without a password; the test environment
+	// sets one so the server under test can log in as it.
+	if _, err := migrateDB.ExecContext(ctx, "ALTER ROLE sinta_app PASSWORD 'sinta_app_test'"); err != nil {
+		log.Fatalf("set app role password: %v", err)
+	}
 	migrateDB.Close()
 
+	// testPool (owner) is for test arrange/assert only. The server under test
+	// gets its own pool as the RLS-constrained sinta_app role, so every
+	// integration test exercises the policies for real (ADR-0004).
 	testPool, err = pgxpool.New(ctx, testURL)
 	if err != nil {
 		log.Fatalf("pool: %v", err)
 	}
+	appPool, err = pgxpool.New(ctx,
+		"postgres://sinta_app:sinta_app_test@localhost:5432/sinta_test?sslmode=disable")
+	if err != nil {
+		log.Fatalf("app pool: %v", err)
+	}
 
 	code := m.Run()
+	appPool.Close()
 	testPool.Close()
 	os.Exit(code)
 }
@@ -78,7 +95,7 @@ func newTestServer(t *testing.T) *httptest.Server {
 		"TRUNCATE users, tenants, memberships, sessions CASCADE"); err != nil {
 		t.Fatalf("truncate: %v", err)
 	}
-	ts := httptest.NewServer(httpserver.New(testPool).Handler())
+	ts := httptest.NewServer(httpserver.New(appPool).Handler())
 	t.Cleanup(ts.Close)
 	return ts
 }

@@ -7,6 +7,7 @@ import type { components } from "@/lib/api-types";
 import { queryClient } from "@/lib/query";
 import { sessionQueryOptions } from "@/lib/session";
 import { m } from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 
 export const Route = createFileRoute("/_authed/onboarding")({
   component: OnboardingWizard,
@@ -129,7 +130,7 @@ function OnboardingWizard() {
                   >
                     {Array.from({ length: 12 }, (_, i) => {
                       const monthName = new Date(2000, i, 1).toLocaleString(
-                        "id-ID",
+                        getLocale(),
                         { month: "long" },
                       );
                       return (
@@ -168,19 +169,15 @@ function OnboardingWizard() {
                     </span>
                   </span>
                 </label>
-                <label className="flex items-start gap-2 rounded-md border p-3">
-                  <input
-                    type="radio"
-                    name="costing"
-                    checked={field.state.value === "fifo"}
-                    onChange={() => field.handleChange("fifo")}
-                  />
+                {/* FIFO ships in M2 (PLAN.md D15); the server rejects it until then. */}
+                <label className="flex items-start gap-2 rounded-md border p-3 opacity-60">
+                  <input type="radio" name="costing" disabled />
                   <span>
                     <span className="block font-medium">
                       {m.onboarding_costing_fifo()}
                     </span>
                     <span className="text-sm text-muted-foreground">
-                      {m.onboarding_costing_fifo_hint()}
+                      {m.onboarding_costing_fifo_soon()}
                     </span>
                   </span>
                 </label>

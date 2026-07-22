@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query";
@@ -28,10 +29,12 @@ function InvitePage() {
     const { data } = await api.POST("/invites/{token}/accept", {
       params: { path: { token } },
     });
-    if (data) {
-      queryClient.setQueryData(["session"], data);
-      await navigate({ to: "/" });
+    if (!data) {
+      toast.error(m.error_generic());
+      return;
     }
+    queryClient.setQueryData(["session"], data);
+    await navigate({ to: "/" });
   };
 
   if (isLoading) return null;

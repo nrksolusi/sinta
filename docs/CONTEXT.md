@@ -6,6 +6,11 @@ totals; accounting is outside this context (ADR-0008).
 
 ## Language
 
+The canonical terms and avoid-lists bind identifiers: code, schema, API, and
+documentation. User-facing display copy may use the natural-language
+equivalent instead (a Tenant appears as "perusahaan"/"company" in the UI) -
+what matters is that the underlying identifier is the canonical term.
+
 ### Tenancy and identity
 
 **Tenant**:

@@ -61,5 +61,7 @@
   "invite_register_first": "Create an account to accept",
   "invite_invalid": "This invite link is invalid or has expired.",
   "nav_dashboard": "Dashboard",
-  "nav_settings": "Settings"
+  "nav_settings": "Settings",
+  "error_generic": "Something went wrong. Please try again.",
+  "onboarding_costing_fifo_soon": "Available soon - the pilot runs on weighted average first"
 }
