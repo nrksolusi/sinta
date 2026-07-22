@@ -1,0 +1,31 @@
+{
+  "rows": [
+    {
+      "productId": "<prodA>",
+      "productName": "Produk A",
+      "qtyOnHand": "15",
+      "sku": "AAA",
+      "warehouseCode": "GD-01",
+      "warehouseId": "<whMain>",
+      "warehouseName": "Gudang Utama"
+    },
+    {
+      "productId": "<prodA>",
+      "productName": "Produk A",
+      "qtyOnHand": "4",
+      "sku": "AAA",
+      "warehouseCode": "GD-02",
+      "warehouseId": "<whSpare>",
+      "warehouseName": "Gudang Cadangan"
+    },
+    {
+      "productId": "<prodB>",
+      "productName": "Produk B",
+      "qtyOnHand": "8",
+      "sku": "BBB",
+      "warehouseCode": "GD-01",
+      "warehouseId": "<whMain>",
+      "warehouseName": "Gudang Utama"
+    }
+  ]
+}

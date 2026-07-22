@@ -1,0 +1,38 @@
+{
+  "rows": [
+    {
+      "avgCost": "150",
+      "productId": "<prodA>",
+      "productName": "Produk A",
+      "qtyOnHand": "15",
+      "sku": "AAA",
+      "value": "2250",
+      "warehouseCode": "GD-01",
+      "warehouseId": "<whMain>",
+      "warehouseName": "Gudang Utama"
+    },
+    {
+      "avgCost": "250",
+      "productId": "<prodA>",
+      "productName": "Produk A",
+      "qtyOnHand": "4",
+      "sku": "AAA",
+      "value": "1000",
+      "warehouseCode": "GD-02",
+      "warehouseId": "<whSpare>",
+      "warehouseName": "Gudang Cadangan"
+    },
+    {
+      "avgCost": "50",
+      "productId": "<prodB>",
+      "productName": "Produk B",
+      "qtyOnHand": "8",
+      "sku": "BBB",
+      "value": "400",
+      "warehouseCode": "GD-01",
+      "warehouseId": "<whMain>",
+      "warehouseName": "Gudang Utama"
+    }
+  ],
+  "totalValue": "3650"
+}

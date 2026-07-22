@@ -3,4 +3,245 @@
 # hand, stock card, stock valuation) and their schemas; may reference shared
 # root components (they resolve after the merge). Track D authors the contents;
 # keep all report endpoints under this file.
-paths: {}
+#
+# All three reports are read-only and tenant-scoped (via tenantTx + RLS). Stock
+# on hand and stock valuation read the derived stock_levels cache; the stock
+# card folds the append-only journal through the tenant's costing engine to
+# derive a per-movement running balance (the audit trail). Quantities and money
+# are decimal strings on the wire, never JSON numbers (CLAUDE.md: never float).
+paths:
+  /reports/stock-on-hand:
+    get:
+      operationId: reportStockOnHand
+      summary: Current on-hand quantity per product, warehouse, and batch
+      description: >
+        The derived stock level for every (product, warehouse, batch) key with a
+        non-zero position, read from the stock_levels cache. Filterable by
+        warehouse and/or product.
+      parameters:
+        - $ref: "#/components/parameters/WarehouseFilter"
+        - $ref: "#/components/parameters/ProductFilter"
+      responses:
+        "200":
+          description: On-hand rows for the active tenant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockOnHandReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /reports/stock-card:
+    get:
+      operationId: reportStockCard
+      summary: Per-product movement history with a running balance
+      description: >
+        The ordered journal for one product (optionally one warehouse), each
+        movement carrying the running on-hand quantity, booked unit cost, and
+        running value the tenant's costing engine derives at that point. This is
+        the stock audit trail; it is never rewritten (ADR-0001).
+      parameters:
+        - name: productId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/WarehouseFilter"
+      responses:
+        "200":
+          description: Movement history for the product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockCardReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /reports/stock-valuation:
+    get:
+      operationId: reportStockValuation
+      summary: Monetary value of stock per product and warehouse
+      description: >
+        The value of stock on hand per (product, warehouse, batch) key, computed
+        as qty_on_hand * avg_cost from the stock_levels cache under the tenant's
+        costing method (weighted average in M1). The cache is a faithful
+        reduction of the journal maintained transactionally at posting, so this
+        equals folding the journal through the costing engine.
+      parameters:
+        - $ref: "#/components/parameters/WarehouseFilter"
+        - $ref: "#/components/parameters/ProductFilter"
+      responses:
+        "200":
+          description: Valuation rows for the active tenant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockValuationReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  parameters:
+    WarehouseFilter:
+      name: warehouseId
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+    ProductFilter:
+      name: productId
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    StockOnHandReport:
+      type: object
+      required: [rows]
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockOnHandRow"
+
+    StockOnHandRow:
+      type: object
+      required: [productId, sku, productName, warehouseId, warehouseCode, warehouseName, qtyOnHand]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        productName:
+          type: string
+        warehouseId:
+          type: string
+          format: uuid
+        warehouseCode:
+          type: string
+        warehouseName:
+          type: string
+        batchId:
+          type: string
+          format: uuid
+          description: Absent for stock that is not batch-tracked
+        batchNo:
+          type: string
+        qtyOnHand:
+          type: string
+          description: On-hand quantity in base units, as a decimal string
+
+    StockValuationReport:
+      type: object
+      required: [rows, totalValue]
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockValuationRow"
+        totalValue:
+          type: string
+          description: Sum of value across all rows, as a decimal string
+
+    StockValuationRow:
+      type: object
+      required: [productId, sku, productName, warehouseId, warehouseCode, warehouseName, qtyOnHand, avgCost, value]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        productName:
+          type: string
+        warehouseId:
+          type: string
+          format: uuid
+        warehouseCode:
+          type: string
+        warehouseName:
+          type: string
+        batchId:
+          type: string
+          format: uuid
+          description: Absent for stock that is not batch-tracked
+        batchNo:
+          type: string
+        qtyOnHand:
+          type: string
+          description: On-hand quantity in base units, as a decimal string
+        avgCost:
+          type: string
+          description: Weighted-average unit cost, as a decimal string
+        value:
+          type: string
+          description: qtyOnHand * avgCost, as a decimal string
+
+    StockCardReport:
+      type: object
+      required: [productId, entries]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockCardEntry"
+
+    StockCardEntry:
+      type: object
+      required: [movementId, warehouseId, movementType, qty, unitCost, effectiveAt, seq, runningQty, runningValue, provisional]
+      properties:
+        movementId:
+          type: string
+          format: uuid
+        warehouseId:
+          type: string
+          format: uuid
+        batchId:
+          type: string
+          format: uuid
+          description: Absent for stock that is not batch-tracked
+        movementType:
+          type: string
+          enum: [receipt, issue, transfer_in, transfer_out, adjustment, opname, cost_correction, revaluation]
+        qty:
+          type: string
+          description: Signed movement quantity in base units, as a decimal string
+        unitCost:
+          type: string
+          description: Cost booked for this movement by the costing engine, as a decimal string
+        effectiveAt:
+          type: string
+          format: date-time
+        seq:
+          type: integer
+          format: int64
+        runningQty:
+          type: string
+          description: On-hand quantity after this movement, as a decimal string
+        runningValue:
+          type: string
+          description: Total stock value after this movement, as a decimal string
+        provisional:
+          type: boolean
+          description: True when the movement was valued below zero stock (D6)
+        docType:
+          type: string
+        docId:
+          type: string
+          format: uuid

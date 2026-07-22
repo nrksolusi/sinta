@@ -3,6 +3,21 @@
 # Edit those, then run `go generate ./...` from server/.
 
 components:
+    parameters:
+        ProductFilter:
+            in: query
+            name: productId
+            required: false
+            schema:
+                format: uuid
+                type: string
+        WarehouseFilter:
+            in: query
+            name: warehouseId
+            required: false
+            schema:
+                format: uuid
+                type: string
     responses:
         Conflict:
             content:
@@ -195,6 +210,178 @@ components:
             required:
                 - user
                 - memberships
+            type: object
+        StockCardEntry:
+            properties:
+                batchId:
+                    description: Absent for stock that is not batch-tracked
+                    format: uuid
+                    type: string
+                docId:
+                    format: uuid
+                    type: string
+                docType:
+                    type: string
+                effectiveAt:
+                    format: date-time
+                    type: string
+                movementId:
+                    format: uuid
+                    type: string
+                movementType:
+                    enum:
+                        - receipt
+                        - issue
+                        - transfer_in
+                        - transfer_out
+                        - adjustment
+                        - opname
+                        - cost_correction
+                        - revaluation
+                    type: string
+                provisional:
+                    description: True when the movement was valued below zero stock (D6)
+                    type: boolean
+                qty:
+                    description: Signed movement quantity in base units, as a decimal string
+                    type: string
+                runningQty:
+                    description: On-hand quantity after this movement, as a decimal string
+                    type: string
+                runningValue:
+                    description: Total stock value after this movement, as a decimal string
+                    type: string
+                seq:
+                    format: int64
+                    type: integer
+                unitCost:
+                    description: Cost booked for this movement by the costing engine, as a decimal string
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - movementId
+                - warehouseId
+                - movementType
+                - qty
+                - unitCost
+                - effectiveAt
+                - seq
+                - runningQty
+                - runningValue
+                - provisional
+            type: object
+        StockCardReport:
+            properties:
+                entries:
+                    items:
+                        $ref: '#/components/schemas/StockCardEntry'
+                    type: array
+                productId:
+                    format: uuid
+                    type: string
+            required:
+                - productId
+                - entries
+            type: object
+        StockOnHandReport:
+            properties:
+                rows:
+                    items:
+                        $ref: '#/components/schemas/StockOnHandRow'
+                    type: array
+            required:
+                - rows
+            type: object
+        StockOnHandRow:
+            properties:
+                batchId:
+                    description: Absent for stock that is not batch-tracked
+                    format: uuid
+                    type: string
+                batchNo:
+                    type: string
+                productId:
+                    format: uuid
+                    type: string
+                productName:
+                    type: string
+                qtyOnHand:
+                    description: On-hand quantity in base units, as a decimal string
+                    type: string
+                sku:
+                    type: string
+                warehouseCode:
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+                warehouseName:
+                    type: string
+            required:
+                - productId
+                - sku
+                - productName
+                - warehouseId
+                - warehouseCode
+                - warehouseName
+                - qtyOnHand
+            type: object
+        StockValuationReport:
+            properties:
+                rows:
+                    items:
+                        $ref: '#/components/schemas/StockValuationRow'
+                    type: array
+                totalValue:
+                    description: Sum of value across all rows, as a decimal string
+                    type: string
+            required:
+                - rows
+                - totalValue
+            type: object
+        StockValuationRow:
+            properties:
+                avgCost:
+                    description: Weighted-average unit cost, as a decimal string
+                    type: string
+                batchId:
+                    description: Absent for stock that is not batch-tracked
+                    format: uuid
+                    type: string
+                batchNo:
+                    type: string
+                productId:
+                    format: uuid
+                    type: string
+                productName:
+                    type: string
+                qtyOnHand:
+                    description: On-hand quantity in base units, as a decimal string
+                    type: string
+                sku:
+                    type: string
+                value:
+                    description: qtyOnHand * avgCost, as a decimal string
+                    type: string
+                warehouseCode:
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+                warehouseName:
+                    type: string
+            required:
+                - productId
+                - sku
+                - productName
+                - warehouseId
+                - warehouseCode
+                - warehouseName
+                - qtyOnHand
+                - avgCost
+                - value
             type: object
         SwitchTenantRequest:
             properties:
@@ -454,6 +641,73 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Invite expired
             summary: Join the inviting tenant with the invite's role
+    /reports/stock-card:
+        get:
+            description: |
+                The ordered journal for one product (optionally one warehouse), each movement carrying the running on-hand quantity, booked unit cost, and running value the tenant's costing engine derives at that point. This is the stock audit trail; it is never rewritten (ADR-0001).
+            operationId: reportStockCard
+            parameters:
+                - in: query
+                  name: productId
+                  required: true
+                  schema:
+                    format: uuid
+                    type: string
+                - $ref: '#/components/parameters/WarehouseFilter'
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockCardReport'
+                    description: Movement history for the product
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Per-product movement history with a running balance
+    /reports/stock-on-hand:
+        get:
+            description: |
+                The derived stock level for every (product, warehouse, batch) key with a non-zero position, read from the stock_levels cache. Filterable by warehouse and/or product.
+            operationId: reportStockOnHand
+            parameters:
+                - $ref: '#/components/parameters/WarehouseFilter'
+                - $ref: '#/components/parameters/ProductFilter'
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockOnHandReport'
+                    description: On-hand rows for the active tenant
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: Current on-hand quantity per product, warehouse, and batch
+    /reports/stock-valuation:
+        get:
+            description: |
+                The value of stock on hand per (product, warehouse, batch) key, computed as qty_on_hand * avg_cost from the stock_levels cache under the tenant's costing method (weighted average in M1). The cache is a faithful reduction of the journal maintained transactionally at posting, so this equals folding the journal through the costing engine.
+            operationId: reportStockValuation
+            parameters:
+                - $ref: '#/components/parameters/WarehouseFilter'
+                - $ref: '#/components/parameters/ProductFilter'
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockValuationReport'
+                    description: Valuation rows for the active tenant
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: Monetary value of stock per product and warehouse
     /tenant:
         get:
             operationId: getTenant

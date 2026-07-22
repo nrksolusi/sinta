@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"compress/flate"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -75,6 +76,42 @@ func (e Role) Valid() bool {
 	case Viewer:
 		return true
 	case Warehouse:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StockCardEntryMovementType.
+const (
+	Adjustment     StockCardEntryMovementType = "adjustment"
+	CostCorrection StockCardEntryMovementType = "cost_correction"
+	Issue          StockCardEntryMovementType = "issue"
+	Opname         StockCardEntryMovementType = "opname"
+	Receipt        StockCardEntryMovementType = "receipt"
+	Revaluation    StockCardEntryMovementType = "revaluation"
+	TransferIn     StockCardEntryMovementType = "transfer_in"
+	TransferOut    StockCardEntryMovementType = "transfer_out"
+)
+
+// Valid indicates whether the value is a known member of the StockCardEntryMovementType enum.
+func (e StockCardEntryMovementType) Valid() bool {
+	switch e {
+	case Adjustment:
+		return true
+	case CostCorrection:
+		return true
+	case Issue:
+		return true
+	case Opname:
+		return true
+	case Receipt:
+		return true
+	case Revaluation:
+		return true
+	case TransferIn:
+		return true
+	case TransferOut:
 		return true
 	default:
 		return false
@@ -168,6 +205,94 @@ type SessionInfo struct {
 	User           User                `json:"user"`
 }
 
+// StockCardEntry defines model for StockCardEntry.
+type StockCardEntry struct {
+	// BatchId Absent for stock that is not batch-tracked
+	BatchId      *openapi_types.UUID        `json:"batchId,omitempty"`
+	DocId        *openapi_types.UUID        `json:"docId,omitempty"`
+	DocType      *string                    `json:"docType,omitempty"`
+	EffectiveAt  time.Time                  `json:"effectiveAt"`
+	MovementId   openapi_types.UUID         `json:"movementId"`
+	MovementType StockCardEntryMovementType `json:"movementType"`
+
+	// Provisional True when the movement was valued below zero stock (D6)
+	Provisional bool `json:"provisional"`
+
+	// Qty Signed movement quantity in base units, as a decimal string
+	Qty string `json:"qty"`
+
+	// RunningQty On-hand quantity after this movement, as a decimal string
+	RunningQty string `json:"runningQty"`
+
+	// RunningValue Total stock value after this movement, as a decimal string
+	RunningValue string `json:"runningValue"`
+	Seq          int64  `json:"seq"`
+
+	// UnitCost Cost booked for this movement by the costing engine, as a decimal string
+	UnitCost    string             `json:"unitCost"`
+	WarehouseId openapi_types.UUID `json:"warehouseId"`
+}
+
+// StockCardEntryMovementType defines model for StockCardEntry.MovementType.
+type StockCardEntryMovementType string
+
+// StockCardReport defines model for StockCardReport.
+type StockCardReport struct {
+	Entries   []StockCardEntry   `json:"entries"`
+	ProductId openapi_types.UUID `json:"productId"`
+}
+
+// StockOnHandReport defines model for StockOnHandReport.
+type StockOnHandReport struct {
+	Rows []StockOnHandRow `json:"rows"`
+}
+
+// StockOnHandRow defines model for StockOnHandRow.
+type StockOnHandRow struct {
+	// BatchId Absent for stock that is not batch-tracked
+	BatchId     *openapi_types.UUID `json:"batchId,omitempty"`
+	BatchNo     *string             `json:"batchNo,omitempty"`
+	ProductId   openapi_types.UUID  `json:"productId"`
+	ProductName string              `json:"productName"`
+
+	// QtyOnHand On-hand quantity in base units, as a decimal string
+	QtyOnHand     string             `json:"qtyOnHand"`
+	Sku           string             `json:"sku"`
+	WarehouseCode string             `json:"warehouseCode"`
+	WarehouseId   openapi_types.UUID `json:"warehouseId"`
+	WarehouseName string             `json:"warehouseName"`
+}
+
+// StockValuationReport defines model for StockValuationReport.
+type StockValuationReport struct {
+	Rows []StockValuationRow `json:"rows"`
+
+	// TotalValue Sum of value across all rows, as a decimal string
+	TotalValue string `json:"totalValue"`
+}
+
+// StockValuationRow defines model for StockValuationRow.
+type StockValuationRow struct {
+	// AvgCost Weighted-average unit cost, as a decimal string
+	AvgCost string `json:"avgCost"`
+
+	// BatchId Absent for stock that is not batch-tracked
+	BatchId     *openapi_types.UUID `json:"batchId,omitempty"`
+	BatchNo     *string             `json:"batchNo,omitempty"`
+	ProductId   openapi_types.UUID  `json:"productId"`
+	ProductName string              `json:"productName"`
+
+	// QtyOnHand On-hand quantity in base units, as a decimal string
+	QtyOnHand string `json:"qtyOnHand"`
+	Sku       string `json:"sku"`
+
+	// Value qtyOnHand * avgCost, as a decimal string
+	Value         string             `json:"value"`
+	WarehouseCode string             `json:"warehouseCode"`
+	WarehouseId   openapi_types.UUID `json:"warehouseId"`
+	WarehouseName string             `json:"warehouseName"`
+}
+
 // SwitchTenantRequest defines model for SwitchTenantRequest.
 type SwitchTenantRequest struct {
 	TenantId openapi_types.UUID `json:"tenantId"`
@@ -215,6 +340,12 @@ type WarehouseInput struct {
 	Name string `json:"name"`
 }
 
+// ProductFilter defines model for ProductFilter.
+type ProductFilter = openapi_types.UUID
+
+// WarehouseFilter defines model for WarehouseFilter.
+type WarehouseFilter = openapi_types.UUID
+
 // Conflict defines model for Conflict.
 type Conflict = Error
 
@@ -226,6 +357,24 @@ type Unauthorized = Error
 
 // ValidationError defines model for ValidationError.
 type ValidationError = Error
+
+// ReportStockCardParams defines parameters for ReportStockCard.
+type ReportStockCardParams struct {
+	ProductId   openapi_types.UUID `form:"productId" json:"productId"`
+	WarehouseId *WarehouseFilter   `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
+}
+
+// ReportStockOnHandParams defines parameters for ReportStockOnHand.
+type ReportStockOnHandParams struct {
+	WarehouseId *WarehouseFilter `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
+	ProductId   *ProductFilter   `form:"productId,omitempty" json:"productId,omitempty"`
+}
+
+// ReportStockValuationParams defines parameters for ReportStockValuation.
+type ReportStockValuationParams struct {
+	WarehouseId *WarehouseFilter `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
+	ProductId   *ProductFilter   `form:"productId,omitempty" json:"productId,omitempty"`
+}
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
@@ -274,6 +423,15 @@ type ServerInterface interface {
 	// AcceptInvite Join the inviting tenant with the invite's role
 	// (POST /invites/{token}/accept)
 	AcceptInvite(w http.ResponseWriter, r *http.Request, token string)
+	// ReportStockCard Per-product movement history with a running balance
+	// (GET /reports/stock-card)
+	ReportStockCard(w http.ResponseWriter, r *http.Request, params ReportStockCardParams)
+	// ReportStockOnHand Current on-hand quantity per product, warehouse, and batch
+	// (GET /reports/stock-on-hand)
+	ReportStockOnHand(w http.ResponseWriter, r *http.Request, params ReportStockOnHandParams)
+	// ReportStockValuation Monetary value of stock per product and warehouse
+	// (GET /reports/stock-valuation)
+	ReportStockValuation(w http.ResponseWriter, r *http.Request, params ReportStockValuationParams)
 	// GetTenant Profile of the session's active tenant
 	// (GET /tenant)
 	GetTenant(w http.ResponseWriter, r *http.Request)
@@ -439,6 +597,144 @@ func (siw *ServerInterfaceWrapper) AcceptInvite(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AcceptInvite(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReportStockCard operation middleware
+func (siw *ServerInterfaceWrapper) ReportStockCard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReportStockCardParams
+
+	// ------------- Required query parameter "productId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "productId", r.URL.Query(), &params.ProductId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "productId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "warehouseId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "warehouseId", r.URL.Query(), &params.WarehouseId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "warehouseId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "warehouseId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReportStockCard(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReportStockOnHand operation middleware
+func (siw *ServerInterfaceWrapper) ReportStockOnHand(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReportStockOnHandParams
+
+	// ------------- Optional query parameter "warehouseId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "warehouseId", r.URL.Query(), &params.WarehouseId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "warehouseId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "warehouseId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "productId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "productId", r.URL.Query(), &params.ProductId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "productId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReportStockOnHand(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReportStockValuation operation middleware
+func (siw *ServerInterfaceWrapper) ReportStockValuation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReportStockValuationParams
+
+	// ------------- Optional query parameter "warehouseId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "warehouseId", r.URL.Query(), &params.WarehouseId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "warehouseId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "warehouseId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "productId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "productId", r.URL.Query(), &params.ProductId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "productId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "productId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReportStockValuation(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -738,6 +1034,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/health", wrapper.GetHealth)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/invites/{token}", wrapper.GetInvite)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/invites/{token}/accept", wrapper.AcceptInvite)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports/stock-card", wrapper.ReportStockCard)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports/stock-on-hand", wrapper.ReportStockOnHand)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports/stock-valuation", wrapper.ReportStockValuation)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant", wrapper.GetTenant)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/tenant", wrapper.UpdateTenant)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant/invites", wrapper.ListInvites)
@@ -756,43 +1055,62 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

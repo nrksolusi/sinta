@@ -1,0 +1,61 @@
+{
+  "entries": [
+    {
+      "docId": "<id1>",
+      "docType": "goods_receipt",
+      "effectiveAt": "<ts>",
+      "movementId": "<id2>",
+      "movementType": "receipt",
+      "provisional": false,
+      "qty": "10",
+      "runningQty": "10",
+      "runningValue": "1000",
+      "seq": 1,
+      "unitCost": "100",
+      "warehouseId": "<whMain>"
+    },
+    {
+      "docId": "<id3>",
+      "docType": "goods_receipt",
+      "effectiveAt": "<ts>",
+      "movementId": "<id4>",
+      "movementType": "receipt",
+      "provisional": false,
+      "qty": "10",
+      "runningQty": "20",
+      "runningValue": "3000",
+      "seq": 2,
+      "unitCost": "200",
+      "warehouseId": "<whMain>"
+    },
+    {
+      "docId": "<id5>",
+      "docType": "delivery",
+      "effectiveAt": "<ts>",
+      "movementId": "<id6>",
+      "movementType": "issue",
+      "provisional": false,
+      "qty": "-5",
+      "runningQty": "15",
+      "runningValue": "2250",
+      "seq": 3,
+      "unitCost": "150",
+      "warehouseId": "<whMain>"
+    },
+    {
+      "docId": "<id7>",
+      "docType": "goods_receipt",
+      "effectiveAt": "<ts>",
+      "movementId": "<id8>",
+      "movementType": "receipt",
+      "provisional": false,
+      "qty": "4",
+      "runningQty": "4",
+      "runningValue": "1000",
+      "seq": 1,
+      "unitCost": "250",
+      "warehouseId": "<whSpare>"
+    }
+  ],
+  "productId": "<prodA>"
+}
