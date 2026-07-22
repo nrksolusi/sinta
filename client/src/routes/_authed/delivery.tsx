@@ -88,6 +88,7 @@ function DeliveryPage() {
           options={customers.map((c) => ({ value: c.id, label: c.name }))}
           value={customerId || undefined}
           onValueChange={(value) => value && setCustomerId(value)}
+          autoSelectSingle
           placeholder={m.field_select()}
           aria-labelledby="delivery-customer-label"
           className="w-full"
@@ -103,6 +104,7 @@ function DeliveryPage() {
           }))}
           value={warehouseId || undefined}
           onValueChange={(value) => value && setWarehouseId(value)}
+          autoSelectSingle
           placeholder={m.field_select()}
           aria-labelledby="delivery-warehouse-label"
           className="w-full"

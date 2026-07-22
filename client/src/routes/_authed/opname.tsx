@@ -86,6 +86,7 @@ function OpnamePage() {
           }))}
           value={warehouseId || undefined}
           onValueChange={(value) => value && setWarehouseId(value)}
+          autoSelectSingle
           placeholder={m.field_select()}
           aria-labelledby="opname-warehouse-label"
           className="w-full"

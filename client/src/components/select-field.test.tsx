@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { SelectField } from "./select-field";
 
 const options = [
   { value: "1", label: "January" },
   { value: "2", label: "February" },
 ];
+
+const single = [{ value: "only", label: "Only Warehouse" }];
 
 // The rendered trigger, whose text is the label Base UI resolves from `items`.
 function triggerText(): string {
@@ -49,4 +51,63 @@ test("updates the displayed label when the value changes", () => {
     />,
   );
   expect(triggerText()).toContain("February");
+});
+
+test("autoSelectSingle preselects the sole option when nothing is chosen", () => {
+  const onValueChange = vi.fn();
+  render(
+    <SelectField
+      options={single}
+      value={undefined}
+      onValueChange={onValueChange}
+      autoSelectSingle
+      aria-labelledby="wh"
+    />,
+  );
+
+  expect(onValueChange).toHaveBeenCalledWith("only");
+});
+
+test("autoSelectSingle does not preselect when there are multiple options", () => {
+  const onValueChange = vi.fn();
+  render(
+    <SelectField
+      options={options}
+      value={undefined}
+      onValueChange={onValueChange}
+      autoSelectSingle
+      aria-labelledby="month"
+    />,
+  );
+
+  expect(onValueChange).not.toHaveBeenCalled();
+});
+
+test("autoSelectSingle does not override an existing selection", () => {
+  const onValueChange = vi.fn();
+  render(
+    <SelectField
+      options={single}
+      value="only"
+      onValueChange={onValueChange}
+      autoSelectSingle
+      aria-labelledby="wh"
+    />,
+  );
+
+  expect(onValueChange).not.toHaveBeenCalled();
+});
+
+test("does not preselect the sole option without autoSelectSingle", () => {
+  const onValueChange = vi.fn();
+  render(
+    <SelectField
+      options={single}
+      value={undefined}
+      onValueChange={onValueChange}
+      aria-labelledby="wh"
+    />,
+  );
+
+  expect(onValueChange).not.toHaveBeenCalled();
 });

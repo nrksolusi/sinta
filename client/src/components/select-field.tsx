@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ export function SelectField({
   id,
   size,
   className,
+  autoSelectSingle,
   "aria-labelledby": ariaLabelledby,
 }: {
   options: SelectFieldOption[];
@@ -33,8 +35,19 @@ export function SelectField({
   id?: string;
   size?: "sm" | "default";
   className?: string;
+  // Preselect the only option when nothing is chosen yet - saves a tap on the
+  // document pickers for tenants with a single warehouse/partner.
+  autoSelectSingle?: boolean;
   "aria-labelledby"?: string;
 }) {
+  const soleValue =
+    autoSelectSingle && options.length === 1 ? options[0].value : undefined;
+  useEffect(() => {
+    if (soleValue != null && (value == null || value === "")) {
+      onValueChange(soleValue);
+    }
+  }, [soleValue, value, onValueChange]);
+
   return (
     <Select items={options} value={value} onValueChange={onValueChange}>
       <SelectTrigger

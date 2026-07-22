@@ -89,6 +89,7 @@ function ReceivePage() {
           options={suppliers.map((s) => ({ value: s.id, label: s.name }))}
           value={supplierId || undefined}
           onValueChange={(value) => value && setSupplierId(value)}
+          autoSelectSingle
           placeholder={m.field_select()}
           aria-labelledby="receive-supplier-label"
           className="w-full"
@@ -104,6 +105,7 @@ function ReceivePage() {
           }))}
           value={warehouseId || undefined}
           onValueChange={(value) => value && setWarehouseId(value)}
+          autoSelectSingle
           placeholder={m.field_select()}
           aria-labelledby="receive-warehouse-label"
           className="w-full"
