@@ -90,7 +90,10 @@ pilot polish) | `M2` (deferred by plan) | `scale` (only matters as data grows).
 - **Workaround (M1):** client-side filtering; URL params already model the
   eventual server contract.
 - **Proposed:** add query params (`status`, `warehouseId`, `dateFrom`/`dateTo`,
-  `q`, `limit`/`cursor`) to the list endpoints.
+  `q`, `limit`/`cursor`) to the list endpoints. Concrete near-term instance
+  surfaced by 2.5 PO: a `purchaseOrderId` filter on `GET /goods-receipts` (and
+  `salesOrderId` on `GET /deliveries`) would remove the full-list fetch the
+  PO/SO chain does on every list and detail render for its fulfillment join.
 - **Severity:** scale.
 
 ## INC-6 - No product search endpoint for the combobox

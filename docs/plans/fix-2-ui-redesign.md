@@ -483,12 +483,12 @@ rule.
 
 ## Status
 
-- [ ] F2.1 Foundations + shell
-- [ ] F2.2 Pickers + line grid
-- [ ] F2.3 Document lifecycle
-- [ ] F2.4 Purchase/sales chains
-- [ ] F2.5 Opname flow
-- [ ] F2.6 Reports, entity details, dashboard
+- [x] F2.1 Foundations + shell
+- [x] F2.2 Pickers + line grid
+- [x] F2.3 Document lifecycle
+- [x] F2.4 Purchase/sales chains
+- [x] F2.5 Opname flow
+- [x] F2.6 Reports, entity details, dashboard
 
 ## Sources
 
