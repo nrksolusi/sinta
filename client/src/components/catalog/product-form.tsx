@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { Product } from "@/lib/catalog";
 import { m } from "@/paraglide/messages";
 
@@ -48,50 +51,56 @@ export function ProductForm({
         }
       }}
     >
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_sku()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2 disabled:opacity-60"
+      <div className="space-y-1">
+        <Label htmlFor="product-sku">{m.field_sku()}</Label>
+        <Input
+          id="product-sku"
           required
           disabled={!!product}
           value={sku}
           onChange={(e) => setSku(e.target.value)}
         />
-      </label>
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_product_name()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2"
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="product-name">{m.field_product_name()}</Label>
+        <Input
+          id="product-name"
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-      </label>
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_base_uom()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2"
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="product-base-uom">{m.field_base_uom()}</Label>
+        <Input
+          id="product-base-uom"
           required
           value={baseUom}
           onChange={(e) => setBaseUom(e.target.value)}
         />
-      </label>
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_barcode()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2"
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="product-barcode">{m.field_barcode()}</Label>
+        <Input
+          id="product-barcode"
           value={barcode}
           onChange={(e) => setBarcode(e.target.value)}
         />
-      </label>
-      <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
+      </div>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="product-batch-tracked"
+          aria-labelledby="product-batch-tracked-label"
           checked={isBatchTracked}
-          onChange={(e) => setIsBatchTracked(e.target.checked)}
+          onCheckedChange={(checked) => setIsBatchTracked(checked === true)}
         />
-        <span className="text-sm font-medium">{m.field_batch_tracked()}</span>
-      </label>
+        <span
+          id="product-batch-tracked-label"
+          className="text-sm font-medium select-none"
+        >
+          {m.field_batch_tracked()}
+        </span>
+      </div>
       <div className="flex gap-2">
         <Button type="submit">{m.action_save()}</Button>
         {onCancel && (

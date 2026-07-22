@@ -2,6 +2,15 @@ import { useForm } from "@tanstack/react-form";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 import { monthName } from "@/lib/format";
@@ -117,54 +126,63 @@ function OnboardingWizard() {
           <>
             <form.Field name="name">
               {(field) => (
-                <label className="block space-y-1">
-                  <span className="text-sm font-medium">
+                <div className="space-y-1">
+                  <Label htmlFor="onboarding-name">
                     {m.onboarding_company_name()}
-                  </span>
-                  <input
-                    className="w-full rounded-md border px-3 py-2"
+                  </Label>
+                  <Input
+                    id="onboarding-name"
                     required
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                   />
-                </label>
+                </div>
               )}
             </form.Field>
             <form.Field name="legalName">
               {(field) => (
-                <label className="block space-y-1">
-                  <span className="text-sm font-medium">
+                <div className="space-y-1">
+                  <Label htmlFor="onboarding-legal-name">
                     {m.onboarding_legal_name()}
-                  </span>
-                  <input
-                    className="w-full rounded-md border px-3 py-2"
+                  </Label>
+                  <Input
+                    id="onboarding-legal-name"
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                   />
-                </label>
+                </div>
               )}
             </form.Field>
             <form.Field name="fiscalYearStartMonth">
               {(field) => (
-                <label className="block space-y-1">
-                  <span className="text-sm font-medium">
+                <div className="space-y-1">
+                  <Label id="onboarding-fiscal-month-label">
                     {m.onboarding_fiscal_month()}
-                  </span>
-                  <select
-                    className="w-full rounded-md border px-3 py-2"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(Number(e.target.value))}
+                  </Label>
+                  <Select
+                    value={String(field.state.value)}
+                    onValueChange={(value) =>
+                      value && field.handleChange(Number(value))
+                    }
                   >
-                    {Array.from({ length: 12 }, (_, i) => {
-                      const name = monthName(i + 1);
-                      return (
-                        <option key={name} value={i + 1}>
-                          {name}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </label>
+                    <SelectTrigger
+                      aria-labelledby="onboarding-fiscal-month-label"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const name = monthName(i + 1);
+                        return (
+                          <SelectItem key={name} value={String(i + 1)}>
+                            {name}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </form.Field>
           </>
@@ -217,32 +235,32 @@ function OnboardingWizard() {
             </p>
             <form.Field name="warehouseCode">
               {(field) => (
-                <label className="block space-y-1">
-                  <span className="text-sm font-medium">
+                <div className="space-y-1">
+                  <Label htmlFor="onboarding-warehouse-code">
                     {m.onboarding_warehouse_code()}
-                  </span>
-                  <input
-                    className="w-full rounded-md border px-3 py-2"
+                  </Label>
+                  <Input
+                    id="onboarding-warehouse-code"
                     required
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                   />
-                </label>
+                </div>
               )}
             </form.Field>
             <form.Field name="warehouseName">
               {(field) => (
-                <label className="block space-y-1">
-                  <span className="text-sm font-medium">
+                <div className="space-y-1">
+                  <Label htmlFor="onboarding-warehouse-name">
                     {m.onboarding_warehouse_name()}
-                  </span>
-                  <input
-                    className="w-full rounded-md border px-3 py-2"
+                  </Label>
+                  <Input
+                    id="onboarding-warehouse-name"
                     required
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                   />
-                </label>
+                </div>
               )}
             </form.Field>
           </>

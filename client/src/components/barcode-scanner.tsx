@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { type BarcodeReader, createBarcodeReader } from "@/lib/barcode";
 import { m } from "@/paraglide/messages";
 
@@ -115,10 +117,10 @@ export function BarcodeScanner({
       )}
 
       <div className="space-y-1">
-        <label className="block space-y-1">
-          <span className="text-sm font-medium">{m.scan_manual_label()}</span>
-          <input
-            className="w-full rounded-md border px-3 py-2"
+        <div className="space-y-1">
+          <Label htmlFor="scan-manual">{m.scan_manual_label()}</Label>
+          <Input
+            id="scan-manual"
             inputMode="numeric"
             autoComplete="off"
             value={manual}
@@ -130,7 +132,7 @@ export function BarcodeScanner({
               }
             }}
           />
-        </label>
+        </div>
         <div className="flex gap-2">
           <Button
             type="button"

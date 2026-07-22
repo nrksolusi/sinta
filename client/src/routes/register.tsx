@@ -2,6 +2,8 @@ import { useForm } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query";
 import { m } from "@/paraglide/messages";
@@ -54,41 +56,41 @@ function RegisterPage() {
 
         <form.Field name="name">
           {(field) => (
-            <label className="block space-y-1">
-              <span className="text-sm font-medium">{m.register_name()}</span>
-              <input
-                className="w-full rounded-md border px-3 py-2"
+            <div className="space-y-1">
+              <Label htmlFor="register-name">{m.register_name()}</Label>
+              <Input
+                id="register-name"
                 autoComplete="name"
                 required
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
-            </label>
+            </div>
           )}
         </form.Field>
 
         <form.Field name="email">
           {(field) => (
-            <label className="block space-y-1">
-              <span className="text-sm font-medium">{m.login_email()}</span>
-              <input
-                className="w-full rounded-md border px-3 py-2"
+            <div className="space-y-1">
+              <Label htmlFor="register-email">{m.login_email()}</Label>
+              <Input
+                id="register-email"
                 type="email"
                 autoComplete="email"
                 required
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
-            </label>
+            </div>
           )}
         </form.Field>
 
         <form.Field name="password">
           {(field) => (
-            <label className="block space-y-1">
-              <span className="text-sm font-medium">{m.login_password()}</span>
-              <input
-                className="w-full rounded-md border px-3 py-2"
+            <div className="space-y-1">
+              <Label htmlFor="register-password">{m.login_password()}</Label>
+              <Input
+                id="register-password"
                 type="password"
                 autoComplete="new-password"
                 required
@@ -96,7 +98,7 @@ function RegisterPage() {
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.target.value)}
               />
-            </label>
+            </div>
           )}
         </form.Field>
 

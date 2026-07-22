@@ -6,7 +6,11 @@ import {
   ProductForm,
   type ProductPayload,
 } from "@/components/catalog/product-form";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import type { Product } from "@/lib/catalog";
 import { queryClient } from "@/lib/query";
@@ -84,14 +88,17 @@ function ProductsPage() {
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-medium">{m.catalog_products()}</h2>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2 text-sm">
+            <Checkbox
+              id="products-show-archived"
+              aria-labelledby="products-show-archived-label"
               checked={showArchived}
-              onChange={(e) => setShowArchived(e.target.checked)}
+              onCheckedChange={(checked) => setShowArchived(checked === true)}
             />
-            {m.catalog_show_archived()}
-          </label>
+            <span id="products-show-archived-label" className="select-none">
+              {m.catalog_show_archived()}
+            </span>
+          </div>
           <Button size="sm" onClick={() => setEditing("new")}>
             {m.catalog_add_product()}
           </Button>
@@ -116,9 +123,9 @@ function ProductsPage() {
                 <p className="truncate font-medium">
                   {product.name}
                   {product.status === "archived" && (
-                    <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                    <Badge variant="secondary" className="ml-2 font-normal">
                       {m.catalog_status_archived()}
-                    </span>
+                    </Badge>
                   )}
                 </p>
                 <p className="truncate text-sm text-muted-foreground">
@@ -231,25 +238,23 @@ function UomSection({ product }: { product: Product }) {
         ))}
       </ul>
       <div className="flex items-end gap-2">
-        <label className="block flex-1 space-y-1">
-          <span className="text-sm font-medium">{m.field_uom()}</span>
-          <input
-            className="w-full rounded-md border px-3 py-2"
+        <div className="flex-1 space-y-1">
+          <Label htmlFor="uom-code">{m.field_uom()}</Label>
+          <Input
+            id="uom-code"
             value={uom}
             onChange={(e) => setUom(e.target.value)}
           />
-        </label>
-        <label className="block flex-1 space-y-1">
-          <span className="text-sm font-medium">
-            {m.field_factor_to_base()}
-          </span>
-          <input
-            className="w-full rounded-md border px-3 py-2"
+        </div>
+        <div className="flex-1 space-y-1">
+          <Label htmlFor="uom-factor">{m.field_factor_to_base()}</Label>
+          <Input
+            id="uom-factor"
             inputMode="decimal"
             value={factor}
             onChange={(e) => setFactor(e.target.value)}
           />
-        </label>
+        </div>
         <Button size="sm" disabled={!uom || !factor} onClick={add}>
           {m.uom_add()}
         </Button>

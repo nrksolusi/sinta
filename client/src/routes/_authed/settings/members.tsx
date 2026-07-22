@@ -2,6 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { ROLES, type Role, roleLabel } from "@/lib/roles";
 import { activeRole } from "@/lib/session";
@@ -83,19 +90,23 @@ function MembersSection({
             </div>
             {canManage ? (
               <>
-                <select
-                  className="rounded-md border px-2 py-1 text-sm"
+                <Select
                   value={member.role}
-                  onChange={(e) =>
-                    changeRole(member.userId, e.target.value as Role)
+                  onValueChange={(value) =>
+                    value && changeRole(member.userId, value as Role)
                   }
                 >
-                  {ROLES.map((role) => (
-                    <option key={role} value={role}>
-                      {roleLabel(role)}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger size="sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLES.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {roleLabel(role)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {member.userId !== myUserId && (
                   <Button
                     variant="outline"

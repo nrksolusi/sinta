@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query";
 import { activeRole } from "@/lib/session";
@@ -54,24 +56,24 @@ function TenantProfileSection({
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-medium">{m.settings_profile()}</h2>
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.settings_company_name()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2 disabled:opacity-60"
+      <div className="space-y-1">
+        <Label htmlFor="tenant-name">{m.settings_company_name()}</Label>
+        <Input
+          id="tenant-name"
           disabled={!editable}
           value={name ?? tenant.name}
           onChange={(e) => setName(e.target.value)}
         />
-      </label>
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.settings_legal_name()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2 disabled:opacity-60"
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="tenant-legal-name">{m.settings_legal_name()}</Label>
+        <Input
+          id="tenant-legal-name"
           disabled={!editable}
           value={legalName ?? tenant.legalName}
           onChange={(e) => setLegalName(e.target.value)}
         />
-      </label>
+      </div>
       <p className="text-sm text-muted-foreground">
         {m.settings_costing_label()}{" "}
         <strong>

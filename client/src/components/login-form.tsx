@@ -1,6 +1,8 @@
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import type { SessionInfo } from "@/lib/session";
 import { m } from "@/paraglide/messages";
@@ -37,33 +39,33 @@ export function LoginForm({
 
       <form.Field name="email">
         {(field) => (
-          <label className="block space-y-1">
-            <span className="text-sm font-medium">{m.login_email()}</span>
-            <input
-              className="w-full rounded-md border px-3 py-2"
+          <div className="space-y-1">
+            <Label htmlFor="login-email">{m.login_email()}</Label>
+            <Input
+              id="login-email"
               type="email"
               autoComplete="email"
               required
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
             />
-          </label>
+          </div>
         )}
       </form.Field>
 
       <form.Field name="password">
         {(field) => (
-          <label className="block space-y-1">
-            <span className="text-sm font-medium">{m.login_password()}</span>
-            <input
-              className="w-full rounded-md border px-3 py-2"
+          <div className="space-y-1">
+            <Label htmlFor="login-password">{m.login_password()}</Label>
+            <Input
+              id="login-password"
               type="password"
               autoComplete="current-password"
               required
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
             />
-          </label>
+          </div>
         )}
       </form.Field>
 

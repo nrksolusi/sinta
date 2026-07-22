@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { resolveProductByBarcode } from "@/lib/barcode";
 import type { Product } from "@/lib/catalog";
 import { m } from "@/paraglide/messages";
@@ -141,10 +143,10 @@ export function LineEditor({
                 </Button>
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <label className="space-y-1">
-                  <span className="text-sm font-medium">{qtyLabel}</span>
-                  <input
-                    className="w-full rounded-md border px-3 py-2"
+                <div className="space-y-1">
+                  <Label htmlFor={`qty-${line.key}`}>{qtyLabel}</Label>
+                  <Input
+                    id={`qty-${line.key}`}
                     type="number"
                     inputMode="decimal"
                     min="0"
@@ -154,14 +156,14 @@ export function LineEditor({
                       updateLine(line.key, { qty: e.target.value })
                     }
                   />
-                </label>
+                </div>
                 {withCost && (
-                  <label className="space-y-1">
-                    <span className="text-sm font-medium">
+                  <div className="space-y-1">
+                    <Label htmlFor={`cost-${line.key}`}>
                       {m.line_unit_cost()}
-                    </span>
-                    <input
-                      className="w-full rounded-md border px-3 py-2"
+                    </Label>
+                    <Input
+                      id={`cost-${line.key}`}
                       type="number"
                       inputMode="decimal"
                       min="0"
@@ -171,7 +173,7 @@ export function LineEditor({
                         updateLine(line.key, { cost: e.target.value })
                       }
                     />
-                  </label>
+                  </div>
                 )}
               </div>
             </li>

@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import type { Warehouse } from "@/lib/catalog";
 import { queryClient } from "@/lib/query";
@@ -127,24 +129,24 @@ function WarehouseForm({
         onSubmit({ code, name });
       }}
     >
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_warehouse_code()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2"
+      <div className="space-y-1">
+        <Label htmlFor="warehouse-code">{m.field_warehouse_code()}</Label>
+        <Input
+          id="warehouse-code"
           required
           value={code}
           onChange={(e) => setCode(e.target.value)}
         />
-      </label>
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_warehouse_name()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2"
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="warehouse-name">{m.field_warehouse_name()}</Label>
+        <Input
+          id="warehouse-name"
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-      </label>
+      </div>
       <div className="flex gap-2">
         <Button type="submit">{m.action_save()}</Button>
         <Button type="button" variant="outline" onClick={onCancel}>

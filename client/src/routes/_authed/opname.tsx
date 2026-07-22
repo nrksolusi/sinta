@@ -3,6 +3,16 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { type DocLine, LineEditor } from "@/components/warehouse/line-editor";
 import { api } from "@/lib/api";
 import { productsQueryOptions, warehousesQueryOptions } from "@/lib/catalog";
@@ -73,33 +83,37 @@ function OpnamePage() {
     <main className="mx-auto w-full max-w-lg space-y-5 p-4">
       <h1 className="text-2xl font-semibold">{m.opname_title()}</h1>
 
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_warehouse()}</span>
-        <select
-          className="w-full rounded-md border px-3 py-2"
-          value={warehouseId}
-          onChange={(e) => setWarehouseId(e.target.value)}
+      <div className="space-y-1">
+        <Label id="opname-warehouse-label">{m.field_warehouse()}</Label>
+        <Select
+          value={warehouseId || undefined}
+          onValueChange={(value) => value && setWarehouseId(value)}
         >
-          <option value="" disabled>
-            {m.field_select()}
-          </option>
-          {warehouses.map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.code} - {w.name}
-            </option>
-          ))}
-        </select>
-      </label>
+          <SelectTrigger
+            aria-labelledby="opname-warehouse-label"
+            className="w-full"
+          >
+            <SelectValue placeholder={m.field_select()} />
+          </SelectTrigger>
+          <SelectContent>
+            {warehouses.map((w) => (
+              <SelectItem key={w.id} value={w.id}>
+                {w.code} - {w.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_doc_date()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2"
+      <div className="space-y-1">
+        <Label htmlFor="opname-doc-date">{m.field_doc_date()}</Label>
+        <Input
+          id="opname-doc-date"
           type="date"
           value={docDate}
           onChange={(e) => setDocDate(e.target.value)}
         />
-      </label>
+      </div>
 
       <section className="space-y-2">
         <h2 className="text-lg font-medium">{m.opname_sheet()}</h2>
@@ -111,15 +125,15 @@ function OpnamePage() {
         />
       </section>
 
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_notes()}</span>
-        <textarea
-          className="w-full rounded-md border px-3 py-2"
+      <div className="space-y-1">
+        <Label htmlFor="opname-notes">{m.field_notes()}</Label>
+        <Textarea
+          id="opname-notes"
           rows={2}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
-      </label>
+      </div>
 
       <Button
         className="w-full"

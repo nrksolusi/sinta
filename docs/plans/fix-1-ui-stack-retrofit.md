@@ -59,6 +59,21 @@ Mechanical, no behavior change; existing component tests must pass
 unmodified (they assert on roles/labels, not markup). Biggest
 visual-consistency win, unblocks nothing but de-risks the later steps.
 
+Done notes:
+
+- Also generated `textarea` (document-note fields) - same primitive family,
+  not in the original list. Swept the barcode-scanner manual-entry input too
+  (postdates the 552067a snapshot).
+- Left intentionally native/unswept: the `line-editor.tsx` product picker
+  `<select>` (its test drives a native `combobox` via `selectOptions`; it is a
+  Step 3 target) and the onboarding costing radios (no `radio-group` primitive
+  in scope). Panels stay as bordered `<div>`s - `Card`/layout is fix-2's remit.
+- Base UI (not Radix) quirks: `Checkbox` renders an interactive control plus a
+  hidden input, so a `<label htmlFor>` double-matches in tests. Pattern used:
+  caption in a `<span id="x-label">` with `aria-labelledby="x-label"` on the
+  `Checkbox`. `Select.onValueChange` yields `string | null`, so handlers guard
+  the value; numeric selects (onboarding fiscal month) round-trip via `String`.
+
 ### Step 2 - TanStack Table for list screens (`fix/ui-tanstack-table`)
 
 Introduce one shared thin wrapper (e.g. `src/components/data-table.tsx`
@@ -99,6 +114,6 @@ screens grow line-item editing, where hand-rolled field arrays get painful.
 
 ## Status
 
-- [ ] Step 1 - shadcn primitives sweep
+- [x] Step 1 - shadcn primitives sweep
 - [ ] Step 2 - TanStack Table list screens
 - [ ] Step 3 - TanStack Form migration

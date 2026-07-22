@@ -7,6 +7,13 @@ import {
 } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query";
 import { sessionQueryOptions } from "@/lib/session";
@@ -88,23 +95,24 @@ function AuthedLayout() {
         )}
 
         {session.memberships.length > 0 ? (
-          <label className="ml-auto flex items-center gap-2 text-sm">
-            {m.tenant_select_label()}
-            <select
-              className="rounded-md border px-2 py-1"
-              value={session.activeTenantId ?? ""}
-              onChange={(e) => switchTenant(e.target.value)}
+          <div className="ml-auto flex items-center gap-2 text-sm">
+            <span id="tenant-select-label">{m.tenant_select_label()}</span>
+            <Select
+              value={session.activeTenantId ?? undefined}
+              onValueChange={(value) => value && switchTenant(value)}
             >
-              <option value="" disabled>
-                -
-              </option>
-              {session.memberships.map(({ tenant }) => (
-                <option key={tenant.id} value={tenant.id}>
-                  {tenant.name}
-                </option>
-              ))}
-            </select>
-          </label>
+              <SelectTrigger aria-labelledby="tenant-select-label" size="sm">
+                <SelectValue placeholder="-" />
+              </SelectTrigger>
+              <SelectContent>
+                {session.memberships.map(({ tenant }) => (
+                  <SelectItem key={tenant.id} value={tenant.id}>
+                    {tenant.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         ) : (
           <span className="ml-auto text-sm text-muted-foreground">
             {m.tenant_none()}

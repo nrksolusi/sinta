@@ -3,6 +3,13 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { ROLES, type Role, roleLabel } from "@/lib/roles";
@@ -64,17 +71,21 @@ function InvitesSection({ tenantId }: { tenantId: string }) {
     <section className="space-y-3">
       <h2 className="text-lg font-medium">{m.settings_invites()}</h2>
       <div className="flex items-center gap-2">
-        <select
-          className="rounded-md border px-2 py-1 text-sm"
+        <Select
           value={role}
-          onChange={(e) => setRole(e.target.value as Role)}
+          onValueChange={(value) => value && setRole(value as Role)}
         >
-          {ROLES.filter((r) => r !== "owner").map((r) => (
-            <option key={r} value={r}>
-              {roleLabel(r)}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger size="sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ROLES.filter((r) => r !== "owner").map((r) => (
+              <SelectItem key={r} value={r}>
+                {roleLabel(r)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button size="sm" onClick={create}>
           {m.settings_invite_create()}
         </Button>

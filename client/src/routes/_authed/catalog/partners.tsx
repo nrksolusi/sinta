@@ -2,7 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import type { Partner } from "@/lib/catalog";
 import { queryClient } from "@/lib/query";
@@ -76,14 +80,17 @@ function PartnersPage() {
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-medium">{m.catalog_partners()}</h2>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2 text-sm">
+            <Checkbox
+              id="partners-show-archived"
+              aria-labelledby="partners-show-archived-label"
               checked={showArchived}
-              onChange={(e) => setShowArchived(e.target.checked)}
+              onCheckedChange={(checked) => setShowArchived(checked === true)}
             />
-            {m.catalog_show_archived()}
-          </label>
+            <span id="partners-show-archived-label" className="select-none">
+              {m.catalog_show_archived()}
+            </span>
+          </div>
           <Button size="sm" onClick={() => setEditing("new")}>
             {m.catalog_add_partner()}
           </Button>
@@ -108,9 +115,9 @@ function PartnersPage() {
                 <p className="truncate font-medium">
                   {partner.name}
                   {partner.status === "archived" && (
-                    <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                    <Badge variant="secondary" className="ml-2 font-normal">
                       {m.catalog_status_archived()}
-                    </span>
+                    </Badge>
                   )}
                 </p>
                 <p className="truncate text-sm text-muted-foreground">
@@ -202,40 +209,46 @@ function PartnerForm({
         });
       }}
     >
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_partner_name()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2"
+      <div className="space-y-1">
+        <Label htmlFor="partner-name">{m.field_partner_name()}</Label>
+        <Input
+          id="partner-name"
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-      </label>
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.field_partner_code()}</span>
-        <input
-          className="w-full rounded-md border px-3 py-2"
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="partner-code">{m.field_partner_code()}</Label>
+        <Input
+          id="partner-code"
           value={code}
           onChange={(e) => setCode(e.target.value)}
         />
-      </label>
+      </div>
       <div className="flex gap-4">
-        <label className="flex items-center gap-2 text-sm font-medium">
-          <input
-            type="checkbox"
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Checkbox
+            id="partner-is-supplier"
+            aria-labelledby="partner-is-supplier-label"
             checked={isSupplier}
-            onChange={(e) => setIsSupplier(e.target.checked)}
+            onCheckedChange={(checked) => setIsSupplier(checked === true)}
           />
-          {m.field_supplier()}
-        </label>
-        <label className="flex items-center gap-2 text-sm font-medium">
-          <input
-            type="checkbox"
+          <span id="partner-is-supplier-label" className="select-none">
+            {m.field_supplier()}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Checkbox
+            id="partner-is-customer"
+            aria-labelledby="partner-is-customer-label"
             checked={isCustomer}
-            onChange={(e) => setIsCustomer(e.target.checked)}
+            onCheckedChange={(checked) => setIsCustomer(checked === true)}
           />
-          {m.field_customer()}
-        </label>
+          <span id="partner-is-customer-label" className="select-none">
+            {m.field_customer()}
+          </span>
+        </div>
       </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={!isSupplier && !isCustomer}>
