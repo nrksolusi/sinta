@@ -3,6 +3,14 @@
 # Edit those, then run `go generate ./...` from server/.
 
 components:
+    parameters:
+        DocumentId:
+            in: path
+            name: id
+            required: true
+            schema:
+                format: uuid
+                type: string
     responses:
         Conflict:
             content:
@@ -16,6 +24,12 @@ components:
                     schema:
                         $ref: '#/components/schemas/Error'
             description: Authenticated but not permitted
+        NotFound:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+            description: Resource not found
         Unauthorized:
             content:
                 application/json:
@@ -63,6 +77,143 @@ components:
                 - costingMethod
                 - warehouse
             type: object
+        DecimalString:
+            description: A decimal quantity or money value, string-encoded to avoid float loss
+            example: "12.500"
+            type: string
+        Delivery:
+            properties:
+                customerId:
+                    format: uuid
+                    type: string
+                docDate:
+                    format: date
+                    type: string
+                docNumber:
+                    nullable: true
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/DeliveryLine'
+                    type: array
+                notes:
+                    type: string
+                reversedById:
+                    format: uuid
+                    nullable: true
+                    type: string
+                reversesId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                salesOrderId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                status:
+                    $ref: '#/components/schemas/DocumentStatus'
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - id
+                - status
+                - customerId
+                - warehouseId
+                - docDate
+                - notes
+                - lines
+            type: object
+        DeliveryInput:
+            properties:
+                customerId:
+                    format: uuid
+                    type: string
+                docDate:
+                    format: date
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/DeliveryLineInput'
+                    minItems: 1
+                    type: array
+                notes:
+                    type: string
+                salesOrderId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - customerId
+                - warehouseId
+                - docDate
+                - lines
+            type: object
+        DeliveryLine:
+            properties:
+                batchId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lineNo:
+                    type: integer
+                productId:
+                    format: uuid
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                salesOrderLineId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                uom:
+                    type: string
+            required:
+                - id
+                - lineNo
+                - productId
+                - uom
+                - qty
+            type: object
+        DeliveryLineInput:
+            properties:
+                batchId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                productId:
+                    format: uuid
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                salesOrderLineId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                uom:
+                    minLength: 1
+                    type: string
+            required:
+                - productId
+                - uom
+                - qty
+            type: object
+        DocumentStatus:
+            description: draft is editable; posted is immutable; reversed was cancelled by a reversal
+            enum:
+                - draft
+                - posted
+                - reversed
+            type: string
         Error:
             properties:
                 code:
@@ -77,6 +228,137 @@ components:
             required:
                 - code
                 - message
+            type: object
+        GoodsReceipt:
+            properties:
+                docDate:
+                    format: date
+                    type: string
+                docNumber:
+                    nullable: true
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/GoodsReceiptLine'
+                    type: array
+                notes:
+                    type: string
+                purchaseOrderId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                reversedById:
+                    format: uuid
+                    nullable: true
+                    type: string
+                reversesId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                status:
+                    $ref: '#/components/schemas/DocumentStatus'
+                supplierId:
+                    format: uuid
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - id
+                - status
+                - supplierId
+                - warehouseId
+                - docDate
+                - notes
+                - lines
+            type: object
+        GoodsReceiptInput:
+            properties:
+                docDate:
+                    format: date
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/GoodsReceiptLineInput'
+                    minItems: 1
+                    type: array
+                notes:
+                    type: string
+                purchaseOrderId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                supplierId:
+                    format: uuid
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - supplierId
+                - warehouseId
+                - docDate
+                - lines
+            type: object
+        GoodsReceiptLine:
+            properties:
+                batchId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lineNo:
+                    type: integer
+                productId:
+                    format: uuid
+                    type: string
+                purchaseOrderLineId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                unitCost:
+                    $ref: '#/components/schemas/DecimalString'
+                uom:
+                    type: string
+            required:
+                - id
+                - lineNo
+                - productId
+                - uom
+                - qty
+                - unitCost
+            type: object
+        GoodsReceiptLineInput:
+            properties:
+                batchId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                productId:
+                    format: uuid
+                    type: string
+                purchaseOrderLineId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                unitCost:
+                    $ref: '#/components/schemas/DecimalString'
+                uom:
+                    minLength: 1
+                    type: string
+            required:
+                - productId
+                - uom
+                - qty
             type: object
         Health:
             properties:
@@ -155,6 +437,113 @@ components:
                 - tenant
                 - role
             type: object
+        PurchaseOrder:
+            properties:
+                docDate:
+                    format: date
+                    type: string
+                docNumber:
+                    nullable: true
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/PurchaseOrderLine'
+                    type: array
+                notes:
+                    type: string
+                reversedById:
+                    format: uuid
+                    nullable: true
+                    type: string
+                reversesId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                status:
+                    $ref: '#/components/schemas/DocumentStatus'
+                supplierId:
+                    format: uuid
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - id
+                - status
+                - supplierId
+                - warehouseId
+                - docDate
+                - notes
+                - lines
+            type: object
+        PurchaseOrderInput:
+            properties:
+                docDate:
+                    format: date
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/PurchaseOrderLineInput'
+                    minItems: 1
+                    type: array
+                notes:
+                    type: string
+                supplierId:
+                    format: uuid
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - supplierId
+                - warehouseId
+                - docDate
+                - lines
+            type: object
+        PurchaseOrderLine:
+            properties:
+                id:
+                    format: uuid
+                    type: string
+                lineNo:
+                    type: integer
+                productId:
+                    format: uuid
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                unitCost:
+                    $ref: '#/components/schemas/DecimalString'
+                uom:
+                    type: string
+            required:
+                - id
+                - lineNo
+                - productId
+                - uom
+                - qty
+                - unitCost
+            type: object
+        PurchaseOrderLineInput:
+            properties:
+                productId:
+                    format: uuid
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                unitCost:
+                    $ref: '#/components/schemas/DecimalString'
+                uom:
+                    minLength: 1
+                    type: string
+            required:
+                - productId
+                - uom
+                - qty
+            type: object
         RegisterRequest:
             properties:
                 email:
@@ -180,6 +569,113 @@ components:
                 - sales
                 - viewer
             type: string
+        SalesOrder:
+            properties:
+                customerId:
+                    format: uuid
+                    type: string
+                docDate:
+                    format: date
+                    type: string
+                docNumber:
+                    nullable: true
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/SalesOrderLine'
+                    type: array
+                notes:
+                    type: string
+                reversedById:
+                    format: uuid
+                    nullable: true
+                    type: string
+                reversesId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                status:
+                    $ref: '#/components/schemas/DocumentStatus'
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - id
+                - status
+                - customerId
+                - warehouseId
+                - docDate
+                - notes
+                - lines
+            type: object
+        SalesOrderInput:
+            properties:
+                customerId:
+                    format: uuid
+                    type: string
+                docDate:
+                    format: date
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/SalesOrderLineInput'
+                    minItems: 1
+                    type: array
+                notes:
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - customerId
+                - warehouseId
+                - docDate
+                - lines
+            type: object
+        SalesOrderLine:
+            properties:
+                id:
+                    format: uuid
+                    type: string
+                lineNo:
+                    type: integer
+                productId:
+                    format: uuid
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                unitPrice:
+                    $ref: '#/components/schemas/DecimalString'
+                uom:
+                    type: string
+            required:
+                - id
+                - lineNo
+                - productId
+                - uom
+                - qty
+                - unitPrice
+            type: object
+        SalesOrderLineInput:
+            properties:
+                productId:
+                    format: uuid
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                unitPrice:
+                    $ref: '#/components/schemas/DecimalString'
+                uom:
+                    minLength: 1
+                    type: string
+            required:
+                - productId
+                - uom
+                - qty
+            type: object
         SessionInfo:
             properties:
                 activeTenantId:
@@ -195,6 +691,332 @@ components:
             required:
                 - user
                 - memberships
+            type: object
+        StockAdjustment:
+            properties:
+                docDate:
+                    format: date
+                    type: string
+                docNumber:
+                    nullable: true
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/StockAdjustmentLine'
+                    type: array
+                notes:
+                    type: string
+                reason:
+                    type: string
+                reversedById:
+                    format: uuid
+                    nullable: true
+                    type: string
+                reversesId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                status:
+                    $ref: '#/components/schemas/DocumentStatus'
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - id
+                - status
+                - warehouseId
+                - reason
+                - docDate
+                - notes
+                - lines
+            type: object
+        StockAdjustmentInput:
+            properties:
+                docDate:
+                    format: date
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/StockAdjustmentLineInput'
+                    minItems: 1
+                    type: array
+                notes:
+                    type: string
+                reason:
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - warehouseId
+                - docDate
+                - lines
+            type: object
+        StockAdjustmentLine:
+            properties:
+                batchId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lineNo:
+                    type: integer
+                productId:
+                    format: uuid
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                unitCost:
+                    $ref: '#/components/schemas/DecimalString'
+                uom:
+                    type: string
+            required:
+                - id
+                - lineNo
+                - productId
+                - uom
+                - qty
+                - unitCost
+            type: object
+        StockAdjustmentLineInput:
+            properties:
+                batchId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                productId:
+                    format: uuid
+                    type: string
+                qty:
+                    allOf:
+                        - $ref: '#/components/schemas/DecimalString'
+                    description: Signed - positive is found stock, negative is waste/damage; nonzero
+                unitCost:
+                    $ref: '#/components/schemas/DecimalString'
+                uom:
+                    minLength: 1
+                    type: string
+            required:
+                - productId
+                - uom
+                - qty
+            type: object
+        StockOpname:
+            properties:
+                docDate:
+                    format: date
+                    type: string
+                docNumber:
+                    nullable: true
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/StockOpnameLine'
+                    type: array
+                notes:
+                    type: string
+                reversedById:
+                    format: uuid
+                    nullable: true
+                    type: string
+                reversesId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                status:
+                    $ref: '#/components/schemas/DocumentStatus'
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - id
+                - status
+                - warehouseId
+                - docDate
+                - notes
+                - lines
+            type: object
+        StockOpnameInput:
+            properties:
+                docDate:
+                    format: date
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/StockOpnameLineInput'
+                    minItems: 1
+                    type: array
+                notes:
+                    type: string
+                warehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - warehouseId
+                - docDate
+                - lines
+            type: object
+        StockOpnameLine:
+            properties:
+                batchId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                countedQty:
+                    $ref: '#/components/schemas/DecimalString'
+                id:
+                    format: uuid
+                    type: string
+                lineNo:
+                    type: integer
+                productId:
+                    format: uuid
+                    type: string
+                uom:
+                    type: string
+            required:
+                - id
+                - lineNo
+                - productId
+                - uom
+                - countedQty
+            type: object
+        StockOpnameLineInput:
+            properties:
+                batchId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                countedQty:
+                    $ref: '#/components/schemas/DecimalString'
+                productId:
+                    format: uuid
+                    type: string
+                uom:
+                    minLength: 1
+                    type: string
+            required:
+                - productId
+                - uom
+                - countedQty
+            type: object
+        StockTransfer:
+            properties:
+                docDate:
+                    format: date
+                    type: string
+                docNumber:
+                    nullable: true
+                    type: string
+                fromWarehouseId:
+                    format: uuid
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/StockTransferLine'
+                    type: array
+                notes:
+                    type: string
+                reversedById:
+                    format: uuid
+                    nullable: true
+                    type: string
+                reversesId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                status:
+                    $ref: '#/components/schemas/DocumentStatus'
+                toWarehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - id
+                - status
+                - fromWarehouseId
+                - toWarehouseId
+                - docDate
+                - notes
+                - lines
+            type: object
+        StockTransferInput:
+            properties:
+                docDate:
+                    format: date
+                    type: string
+                fromWarehouseId:
+                    format: uuid
+                    type: string
+                lines:
+                    items:
+                        $ref: '#/components/schemas/StockTransferLineInput'
+                    minItems: 1
+                    type: array
+                notes:
+                    type: string
+                toWarehouseId:
+                    format: uuid
+                    type: string
+            required:
+                - fromWarehouseId
+                - toWarehouseId
+                - docDate
+                - lines
+            type: object
+        StockTransferLine:
+            properties:
+                batchId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                lineNo:
+                    type: integer
+                productId:
+                    format: uuid
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                uom:
+                    type: string
+            required:
+                - id
+                - lineNo
+                - productId
+                - uom
+                - qty
+            type: object
+        StockTransferLineInput:
+            properties:
+                batchId:
+                    format: uuid
+                    nullable: true
+                    type: string
+                productId:
+                    format: uuid
+                    type: string
+                qty:
+                    $ref: '#/components/schemas/DecimalString'
+                uom:
+                    minLength: 1
+                    type: string
+            required:
+                - productId
+                - uom
+                - qty
             type: object
         SwitchTenantRequest:
             properties:
@@ -381,6 +1203,282 @@ paths:
                 "403":
                     $ref: '#/components/responses/Forbidden'
             summary: Change the session's active tenant
+    /deliveries:
+        get:
+            operationId: listDeliveries
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/Delivery'
+                                type: array
+                    description: Deliveries
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: List deliveries
+            tags:
+                - documents
+        post:
+            operationId: createDelivery
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DeliveryInput'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Delivery'
+                    description: Draft created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a draft delivery
+            tags:
+                - documents
+    /deliveries/{id}:
+        get:
+            operationId: getDelivery
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Delivery'
+                    description: Delivery
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: Get a delivery
+            tags:
+                - documents
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        put:
+            operationId: updateDelivery
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/DeliveryInput'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Delivery'
+                    description: Draft updated
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Replace a draft delivery (rejected once posted)
+            tags:
+                - documents
+    /deliveries/{id}/post:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: postDelivery
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Delivery'
+                    description: Posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Post a draft delivery (issues stock out)
+            tags:
+                - documents
+    /deliveries/{id}/reverse:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: reverseDelivery
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Delivery'
+                    description: Reversal document posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Reverse a posted delivery (posts receipt movements back in)
+            tags:
+                - documents
+    /goods-receipts:
+        get:
+            operationId: listGoodsReceipts
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/GoodsReceipt'
+                                type: array
+                    description: Goods receipts
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: List goods receipts
+            tags:
+                - documents
+        post:
+            operationId: createGoodsReceipt
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GoodsReceiptInput'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GoodsReceipt'
+                    description: Draft created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a draft goods receipt
+            tags:
+                - documents
+    /goods-receipts/{id}:
+        get:
+            operationId: getGoodsReceipt
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GoodsReceipt'
+                    description: Goods receipt
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: Get a goods receipt
+            tags:
+                - documents
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        put:
+            operationId: updateGoodsReceipt
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GoodsReceiptInput'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GoodsReceipt'
+                    description: Draft updated
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Replace a draft goods receipt (rejected once posted)
+            tags:
+                - documents
+    /goods-receipts/{id}/post:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: postGoodsReceipt
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GoodsReceipt'
+                    description: Posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Post a draft goods receipt (receives stock, cost enters the journal)
+            tags:
+                - documents
+    /goods-receipts/{id}/reverse:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: reverseGoodsReceipt
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GoodsReceipt'
+                    description: Reversal document posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Reverse a posted goods receipt (posts issue movements back out)
+            tags:
+                - documents
     /health:
         get:
             operationId: getHealth
@@ -454,6 +1552,696 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Invite expired
             summary: Join the inviting tenant with the invite's role
+    /purchase-orders:
+        get:
+            operationId: listPurchaseOrders
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/PurchaseOrder'
+                                type: array
+                    description: Purchase orders
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: List purchase orders
+            tags:
+                - documents
+        post:
+            operationId: createPurchaseOrder
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PurchaseOrderInput'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PurchaseOrder'
+                    description: Draft created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a draft purchase order
+            tags:
+                - documents
+    /purchase-orders/{id}:
+        get:
+            operationId: getPurchaseOrder
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PurchaseOrder'
+                    description: Purchase order
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: Get a purchase order
+            tags:
+                - documents
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        put:
+            operationId: updatePurchaseOrder
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PurchaseOrderInput'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PurchaseOrder'
+                    description: Draft updated
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Replace a draft purchase order (rejected once posted)
+            tags:
+                - documents
+    /purchase-orders/{id}/post:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: postPurchaseOrder
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PurchaseOrder'
+                    description: Posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Post a draft purchase order (assigns the gapless number)
+            tags:
+                - documents
+    /purchase-orders/{id}/reverse:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: reversePurchaseOrder
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PurchaseOrder'
+                    description: Reversal document posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Reverse a posted purchase order (posts a cancelling document)
+            tags:
+                - documents
+    /sales-orders:
+        get:
+            operationId: listSalesOrders
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/SalesOrder'
+                                type: array
+                    description: Sales orders
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: List sales orders
+            tags:
+                - documents
+        post:
+            operationId: createSalesOrder
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SalesOrderInput'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SalesOrder'
+                    description: Draft created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a draft sales order
+            tags:
+                - documents
+    /sales-orders/{id}:
+        get:
+            operationId: getSalesOrder
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SalesOrder'
+                    description: Sales order
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: Get a sales order
+            tags:
+                - documents
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        put:
+            operationId: updateSalesOrder
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SalesOrderInput'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SalesOrder'
+                    description: Draft updated
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Replace a draft sales order (rejected once posted)
+            tags:
+                - documents
+    /sales-orders/{id}/post:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: postSalesOrder
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SalesOrder'
+                    description: Posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Post a draft sales order (assigns the gapless number)
+            tags:
+                - documents
+    /sales-orders/{id}/reverse:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: reverseSalesOrder
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SalesOrder'
+                    description: Reversal document posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Reverse a posted sales order (posts a cancelling document)
+            tags:
+                - documents
+    /stock-adjustments:
+        get:
+            operationId: listStockAdjustments
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/StockAdjustment'
+                                type: array
+                    description: Stock adjustments
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: List stock adjustments
+            tags:
+                - documents
+        post:
+            operationId: createStockAdjustment
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/StockAdjustmentInput'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockAdjustment'
+                    description: Draft created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a draft stock adjustment
+            tags:
+                - documents
+    /stock-adjustments/{id}:
+        get:
+            operationId: getStockAdjustment
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockAdjustment'
+                    description: Stock adjustment
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: Get a stock adjustment
+            tags:
+                - documents
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        put:
+            operationId: updateStockAdjustment
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/StockAdjustmentInput'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockAdjustment'
+                    description: Draft updated
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Replace a draft stock adjustment (rejected once posted)
+            tags:
+                - documents
+    /stock-adjustments/{id}/post:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: postStockAdjustment
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockAdjustment'
+                    description: Posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Post a draft stock adjustment (signed adjustment movements)
+            tags:
+                - documents
+    /stock-adjustments/{id}/reverse:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: reverseStockAdjustment
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockAdjustment'
+                    description: Reversal document posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Reverse a posted stock adjustment (posts the negated movements)
+            tags:
+                - documents
+    /stock-opnames:
+        get:
+            operationId: listStockOpnames
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/StockOpname'
+                                type: array
+                    description: Stock opnames
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: List stock opnames
+            tags:
+                - documents
+        post:
+            operationId: createStockOpname
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/StockOpnameInput'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockOpname'
+                    description: Draft created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a draft stock opname
+            tags:
+                - documents
+    /stock-opnames/{id}:
+        get:
+            operationId: getStockOpname
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockOpname'
+                    description: Stock opname
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: Get a stock opname
+            tags:
+                - documents
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        put:
+            operationId: updateStockOpname
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/StockOpnameInput'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockOpname'
+                    description: Draft updated
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Replace a draft stock opname (rejected once posted)
+            tags:
+                - documents
+    /stock-opnames/{id}/post:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: postStockOpname
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockOpname'
+                    description: Posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Post a draft stock opname (variance vs current stock -> adjustments)
+            tags:
+                - documents
+    /stock-opnames/{id}/reverse:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: reverseStockOpname
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockOpname'
+                    description: Reversal document posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Reverse a posted stock opname (posts the negated variance)
+            tags:
+                - documents
+    /stock-transfers:
+        get:
+            operationId: listStockTransfers
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/StockTransfer'
+                                type: array
+                    description: Stock transfers
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: List stock transfers
+            tags:
+                - documents
+        post:
+            operationId: createStockTransfer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/StockTransferInput'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockTransfer'
+                    description: Draft created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a draft stock transfer
+            tags:
+                - documents
+    /stock-transfers/{id}:
+        get:
+            operationId: getStockTransfer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockTransfer'
+                    description: Stock transfer
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: Get a stock transfer
+            tags:
+                - documents
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        put:
+            operationId: updateStockTransfer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/StockTransferInput'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockTransfer'
+                    description: Draft updated
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Replace a draft stock transfer (rejected once posted)
+            tags:
+                - documents
+    /stock-transfers/{id}/post:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: postStockTransfer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockTransfer'
+                    description: Posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Post a draft stock transfer (transfer_out + transfer_in pair)
+            tags:
+                - documents
+    /stock-transfers/{id}/reverse:
+        parameters:
+            - $ref: '#/components/parameters/DocumentId'
+        post:
+            operationId: reverseStockTransfer
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/StockTransfer'
+                    description: Reversal document posted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Reverse a posted stock transfer (swaps the movement pair)
+            tags:
+                - documents
     /tenant:
         get:
             operationId: getTenant

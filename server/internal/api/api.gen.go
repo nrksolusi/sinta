@@ -39,6 +39,27 @@ func (e CostingMethod) Valid() bool {
 	}
 }
 
+// Defines values for DocumentStatus.
+const (
+	Draft    DocumentStatus = "draft"
+	Posted   DocumentStatus = "posted"
+	Reversed DocumentStatus = "reversed"
+)
+
+// Valid indicates whether the value is a known member of the DocumentStatus enum.
+func (e DocumentStatus) Valid() bool {
+	switch e {
+	case Draft:
+		return true
+	case Posted:
+		return true
+	case Reversed:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for HealthStatus.
 const (
 	Ok HealthStatus = "ok"
@@ -99,6 +120,69 @@ type CreateTenantRequest struct {
 	Warehouse            WarehouseInput `json:"warehouse"`
 }
 
+// DecimalString A decimal quantity or money value, string-encoded to avoid float loss
+//
+// Example: 12.500
+type DecimalString = string
+
+// Delivery defines model for Delivery.
+type Delivery struct {
+	CustomerId   openapi_types.UUID  `json:"customerId"`
+	DocDate      openapi_types.Date  `json:"docDate"`
+	DocNumber    *string             `json:"docNumber,omitempty"`
+	Id           openapi_types.UUID  `json:"id"`
+	Lines        []DeliveryLine      `json:"lines"`
+	Notes        string              `json:"notes"`
+	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
+	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
+	SalesOrderId *openapi_types.UUID `json:"salesOrderId,omitempty"`
+
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	Status      DocumentStatus     `json:"status"`
+	WarehouseId openapi_types.UUID `json:"warehouseId"`
+}
+
+// DeliveryInput defines model for DeliveryInput.
+type DeliveryInput struct {
+	CustomerId   openapi_types.UUID  `json:"customerId"`
+	DocDate      openapi_types.Date  `json:"docDate"`
+	Lines        []DeliveryLineInput `json:"lines"`
+	Notes        *string             `json:"notes,omitempty"`
+	SalesOrderId *openapi_types.UUID `json:"salesOrderId,omitempty"`
+	WarehouseId  openapi_types.UUID  `json:"warehouseId"`
+}
+
+// DeliveryLine defines model for DeliveryLine.
+type DeliveryLine struct {
+	BatchId   *openapi_types.UUID `json:"batchId,omitempty"`
+	Id        openapi_types.UUID  `json:"id"`
+	LineNo    int                 `json:"lineNo"`
+	ProductId openapi_types.UUID  `json:"productId"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty              DecimalString       `json:"qty"`
+	SalesOrderLineId *openapi_types.UUID `json:"salesOrderLineId,omitempty"`
+	Uom              string              `json:"uom"`
+}
+
+// DeliveryLineInput defines model for DeliveryLineInput.
+type DeliveryLineInput struct {
+	BatchId   *openapi_types.UUID `json:"batchId,omitempty"`
+	ProductId openapi_types.UUID  `json:"productId"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty              DecimalString       `json:"qty"`
+	SalesOrderLineId *openapi_types.UUID `json:"salesOrderLineId,omitempty"`
+	Uom              string              `json:"uom"`
+}
+
+// DocumentStatus draft is editable; posted is immutable; reversed was cancelled by a reversal
+type DocumentStatus string
+
 // Error defines model for Error.
 type Error struct {
 	Code string `json:"code"`
@@ -106,6 +190,71 @@ type Error struct {
 	// Fields Per-field validation messages, when applicable
 	Fields  *map[string]string `json:"fields,omitempty"`
 	Message string             `json:"message"`
+}
+
+// GoodsReceipt defines model for GoodsReceipt.
+type GoodsReceipt struct {
+	DocDate         openapi_types.Date  `json:"docDate"`
+	DocNumber       *string             `json:"docNumber,omitempty"`
+	Id              openapi_types.UUID  `json:"id"`
+	Lines           []GoodsReceiptLine  `json:"lines"`
+	Notes           string              `json:"notes"`
+	PurchaseOrderId *openapi_types.UUID `json:"purchaseOrderId,omitempty"`
+	ReversedById    *openapi_types.UUID `json:"reversedById,omitempty"`
+	ReversesId      *openapi_types.UUID `json:"reversesId,omitempty"`
+
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	Status      DocumentStatus     `json:"status"`
+	SupplierId  openapi_types.UUID `json:"supplierId"`
+	WarehouseId openapi_types.UUID `json:"warehouseId"`
+}
+
+// GoodsReceiptInput defines model for GoodsReceiptInput.
+type GoodsReceiptInput struct {
+	DocDate         openapi_types.Date      `json:"docDate"`
+	Lines           []GoodsReceiptLineInput `json:"lines"`
+	Notes           *string                 `json:"notes,omitempty"`
+	PurchaseOrderId *openapi_types.UUID     `json:"purchaseOrderId,omitempty"`
+	SupplierId      openapi_types.UUID      `json:"supplierId"`
+	WarehouseId     openapi_types.UUID      `json:"warehouseId"`
+}
+
+// GoodsReceiptLine defines model for GoodsReceiptLine.
+type GoodsReceiptLine struct {
+	BatchId             *openapi_types.UUID `json:"batchId,omitempty"`
+	Id                  openapi_types.UUID  `json:"id"`
+	LineNo              int                 `json:"lineNo"`
+	ProductId           openapi_types.UUID  `json:"productId"`
+	PurchaseOrderLineId *openapi_types.UUID `json:"purchaseOrderLineId,omitempty"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty DecimalString `json:"qty"`
+
+	// UnitCost A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	UnitCost DecimalString `json:"unitCost"`
+	Uom      string        `json:"uom"`
+}
+
+// GoodsReceiptLineInput defines model for GoodsReceiptLineInput.
+type GoodsReceiptLineInput struct {
+	BatchId             *openapi_types.UUID `json:"batchId,omitempty"`
+	ProductId           openapi_types.UUID  `json:"productId"`
+	PurchaseOrderLineId *openapi_types.UUID `json:"purchaseOrderLineId,omitempty"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty DecimalString `json:"qty"`
+
+	// UnitCost A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	UnitCost *DecimalString `json:"unitCost,omitempty"`
+	Uom      string         `json:"uom"`
 }
 
 // Health defines model for Health.
@@ -150,6 +299,65 @@ type Membership struct {
 	Tenant Tenant `json:"tenant"`
 }
 
+// PurchaseOrder defines model for PurchaseOrder.
+type PurchaseOrder struct {
+	DocDate      openapi_types.Date  `json:"docDate"`
+	DocNumber    *string             `json:"docNumber,omitempty"`
+	Id           openapi_types.UUID  `json:"id"`
+	Lines        []PurchaseOrderLine `json:"lines"`
+	Notes        string              `json:"notes"`
+	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
+	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
+
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	Status      DocumentStatus     `json:"status"`
+	SupplierId  openapi_types.UUID `json:"supplierId"`
+	WarehouseId openapi_types.UUID `json:"warehouseId"`
+}
+
+// PurchaseOrderInput defines model for PurchaseOrderInput.
+type PurchaseOrderInput struct {
+	DocDate     openapi_types.Date       `json:"docDate"`
+	Lines       []PurchaseOrderLineInput `json:"lines"`
+	Notes       *string                  `json:"notes,omitempty"`
+	SupplierId  openapi_types.UUID       `json:"supplierId"`
+	WarehouseId openapi_types.UUID       `json:"warehouseId"`
+}
+
+// PurchaseOrderLine defines model for PurchaseOrderLine.
+type PurchaseOrderLine struct {
+	Id        openapi_types.UUID `json:"id"`
+	LineNo    int                `json:"lineNo"`
+	ProductId openapi_types.UUID `json:"productId"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty DecimalString `json:"qty"`
+
+	// UnitCost A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	UnitCost DecimalString `json:"unitCost"`
+	Uom      string        `json:"uom"`
+}
+
+// PurchaseOrderLineInput defines model for PurchaseOrderLineInput.
+type PurchaseOrderLineInput struct {
+	ProductId openapi_types.UUID `json:"productId"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty DecimalString `json:"qty"`
+
+	// UnitCost A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	UnitCost *DecimalString `json:"unitCost,omitempty"`
+	Uom      string         `json:"uom"`
+}
+
 // RegisterRequest defines model for RegisterRequest.
 type RegisterRequest struct {
 	Email    openapi_types.Email `json:"email"`
@@ -160,12 +368,230 @@ type RegisterRequest struct {
 // Role defines model for Role.
 type Role string
 
+// SalesOrder defines model for SalesOrder.
+type SalesOrder struct {
+	CustomerId   openapi_types.UUID  `json:"customerId"`
+	DocDate      openapi_types.Date  `json:"docDate"`
+	DocNumber    *string             `json:"docNumber,omitempty"`
+	Id           openapi_types.UUID  `json:"id"`
+	Lines        []SalesOrderLine    `json:"lines"`
+	Notes        string              `json:"notes"`
+	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
+	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
+
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	Status      DocumentStatus     `json:"status"`
+	WarehouseId openapi_types.UUID `json:"warehouseId"`
+}
+
+// SalesOrderInput defines model for SalesOrderInput.
+type SalesOrderInput struct {
+	CustomerId  openapi_types.UUID    `json:"customerId"`
+	DocDate     openapi_types.Date    `json:"docDate"`
+	Lines       []SalesOrderLineInput `json:"lines"`
+	Notes       *string               `json:"notes,omitempty"`
+	WarehouseId openapi_types.UUID    `json:"warehouseId"`
+}
+
+// SalesOrderLine defines model for SalesOrderLine.
+type SalesOrderLine struct {
+	Id        openapi_types.UUID `json:"id"`
+	LineNo    int                `json:"lineNo"`
+	ProductId openapi_types.UUID `json:"productId"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty DecimalString `json:"qty"`
+
+	// UnitPrice A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	UnitPrice DecimalString `json:"unitPrice"`
+	Uom       string        `json:"uom"`
+}
+
+// SalesOrderLineInput defines model for SalesOrderLineInput.
+type SalesOrderLineInput struct {
+	ProductId openapi_types.UUID `json:"productId"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty DecimalString `json:"qty"`
+
+	// UnitPrice A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	UnitPrice *DecimalString `json:"unitPrice,omitempty"`
+	Uom       string         `json:"uom"`
+}
+
 // SessionInfo defines model for SessionInfo.
 type SessionInfo struct {
 	// ActiveTenantId Absent until a tenant is selected
 	ActiveTenantId *openapi_types.UUID `json:"activeTenantId,omitempty"`
 	Memberships    []Membership        `json:"memberships"`
 	User           User                `json:"user"`
+}
+
+// StockAdjustment defines model for StockAdjustment.
+type StockAdjustment struct {
+	DocDate      openapi_types.Date    `json:"docDate"`
+	DocNumber    *string               `json:"docNumber,omitempty"`
+	Id           openapi_types.UUID    `json:"id"`
+	Lines        []StockAdjustmentLine `json:"lines"`
+	Notes        string                `json:"notes"`
+	Reason       string                `json:"reason"`
+	ReversedById *openapi_types.UUID   `json:"reversedById,omitempty"`
+	ReversesId   *openapi_types.UUID   `json:"reversesId,omitempty"`
+
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	Status      DocumentStatus     `json:"status"`
+	WarehouseId openapi_types.UUID `json:"warehouseId"`
+}
+
+// StockAdjustmentInput defines model for StockAdjustmentInput.
+type StockAdjustmentInput struct {
+	DocDate     openapi_types.Date         `json:"docDate"`
+	Lines       []StockAdjustmentLineInput `json:"lines"`
+	Notes       *string                    `json:"notes,omitempty"`
+	Reason      *string                    `json:"reason,omitempty"`
+	WarehouseId openapi_types.UUID         `json:"warehouseId"`
+}
+
+// StockAdjustmentLine defines model for StockAdjustmentLine.
+type StockAdjustmentLine struct {
+	BatchId   *openapi_types.UUID `json:"batchId,omitempty"`
+	Id        openapi_types.UUID  `json:"id"`
+	LineNo    int                 `json:"lineNo"`
+	ProductId openapi_types.UUID  `json:"productId"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty DecimalString `json:"qty"`
+
+	// UnitCost A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	UnitCost DecimalString `json:"unitCost"`
+	Uom      string        `json:"uom"`
+}
+
+// StockAdjustmentLineInput defines model for StockAdjustmentLineInput.
+type StockAdjustmentLineInput struct {
+	BatchId   *openapi_types.UUID `json:"batchId,omitempty"`
+	ProductId openapi_types.UUID  `json:"productId"`
+
+	// Qty Signed - positive is found stock, negative is waste/damage; nonzero
+	Qty DecimalString `json:"qty"`
+
+	// UnitCost A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	UnitCost *DecimalString `json:"unitCost,omitempty"`
+	Uom      string         `json:"uom"`
+}
+
+// StockOpname defines model for StockOpname.
+type StockOpname struct {
+	DocDate      openapi_types.Date  `json:"docDate"`
+	DocNumber    *string             `json:"docNumber,omitempty"`
+	Id           openapi_types.UUID  `json:"id"`
+	Lines        []StockOpnameLine   `json:"lines"`
+	Notes        string              `json:"notes"`
+	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
+	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
+
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	Status      DocumentStatus     `json:"status"`
+	WarehouseId openapi_types.UUID `json:"warehouseId"`
+}
+
+// StockOpnameInput defines model for StockOpnameInput.
+type StockOpnameInput struct {
+	DocDate     openapi_types.Date     `json:"docDate"`
+	Lines       []StockOpnameLineInput `json:"lines"`
+	Notes       *string                `json:"notes,omitempty"`
+	WarehouseId openapi_types.UUID     `json:"warehouseId"`
+}
+
+// StockOpnameLine defines model for StockOpnameLine.
+type StockOpnameLine struct {
+	BatchId *openapi_types.UUID `json:"batchId,omitempty"`
+
+	// CountedQty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	CountedQty DecimalString      `json:"countedQty"`
+	Id         openapi_types.UUID `json:"id"`
+	LineNo     int                `json:"lineNo"`
+	ProductId  openapi_types.UUID `json:"productId"`
+	Uom        string             `json:"uom"`
+}
+
+// StockOpnameLineInput defines model for StockOpnameLineInput.
+type StockOpnameLineInput struct {
+	BatchId *openapi_types.UUID `json:"batchId,omitempty"`
+
+	// CountedQty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	CountedQty DecimalString      `json:"countedQty"`
+	ProductId  openapi_types.UUID `json:"productId"`
+	Uom        string             `json:"uom"`
+}
+
+// StockTransfer defines model for StockTransfer.
+type StockTransfer struct {
+	DocDate         openapi_types.Date  `json:"docDate"`
+	DocNumber       *string             `json:"docNumber,omitempty"`
+	FromWarehouseId openapi_types.UUID  `json:"fromWarehouseId"`
+	Id              openapi_types.UUID  `json:"id"`
+	Lines           []StockTransferLine `json:"lines"`
+	Notes           string              `json:"notes"`
+	ReversedById    *openapi_types.UUID `json:"reversedById,omitempty"`
+	ReversesId      *openapi_types.UUID `json:"reversesId,omitempty"`
+
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	Status        DocumentStatus     `json:"status"`
+	ToWarehouseId openapi_types.UUID `json:"toWarehouseId"`
+}
+
+// StockTransferInput defines model for StockTransferInput.
+type StockTransferInput struct {
+	DocDate         openapi_types.Date       `json:"docDate"`
+	FromWarehouseId openapi_types.UUID       `json:"fromWarehouseId"`
+	Lines           []StockTransferLineInput `json:"lines"`
+	Notes           *string                  `json:"notes,omitempty"`
+	ToWarehouseId   openapi_types.UUID       `json:"toWarehouseId"`
+}
+
+// StockTransferLine defines model for StockTransferLine.
+type StockTransferLine struct {
+	BatchId   *openapi_types.UUID `json:"batchId,omitempty"`
+	Id        openapi_types.UUID  `json:"id"`
+	LineNo    int                 `json:"lineNo"`
+	ProductId openapi_types.UUID  `json:"productId"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty DecimalString `json:"qty"`
+	Uom string        `json:"uom"`
+}
+
+// StockTransferLineInput defines model for StockTransferLineInput.
+type StockTransferLineInput struct {
+	BatchId   *openapi_types.UUID `json:"batchId,omitempty"`
+	ProductId openapi_types.UUID  `json:"productId"`
+
+	// Qty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	Qty DecimalString `json:"qty"`
+	Uom string        `json:"uom"`
 }
 
 // SwitchTenantRequest defines model for SwitchTenantRequest.
@@ -215,11 +641,17 @@ type WarehouseInput struct {
 	Name string `json:"name"`
 }
 
+// DocumentId defines model for DocumentId.
+type DocumentId = openapi_types.UUID
+
 // Conflict defines model for Conflict.
 type Conflict = Error
 
 // Forbidden defines model for Forbidden.
 type Forbidden = Error
+
+// NotFound defines model for NotFound.
+type NotFound = Error
 
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = Error
@@ -235,6 +667,48 @@ type RegisterJSONRequestBody = RegisterRequest
 
 // SwitchTenantJSONRequestBody defines body for SwitchTenant for application/json ContentType.
 type SwitchTenantJSONRequestBody = SwitchTenantRequest
+
+// CreateDeliveryJSONRequestBody defines body for CreateDelivery for application/json ContentType.
+type CreateDeliveryJSONRequestBody = DeliveryInput
+
+// UpdateDeliveryJSONRequestBody defines body for UpdateDelivery for application/json ContentType.
+type UpdateDeliveryJSONRequestBody = DeliveryInput
+
+// CreateGoodsReceiptJSONRequestBody defines body for CreateGoodsReceipt for application/json ContentType.
+type CreateGoodsReceiptJSONRequestBody = GoodsReceiptInput
+
+// UpdateGoodsReceiptJSONRequestBody defines body for UpdateGoodsReceipt for application/json ContentType.
+type UpdateGoodsReceiptJSONRequestBody = GoodsReceiptInput
+
+// CreatePurchaseOrderJSONRequestBody defines body for CreatePurchaseOrder for application/json ContentType.
+type CreatePurchaseOrderJSONRequestBody = PurchaseOrderInput
+
+// UpdatePurchaseOrderJSONRequestBody defines body for UpdatePurchaseOrder for application/json ContentType.
+type UpdatePurchaseOrderJSONRequestBody = PurchaseOrderInput
+
+// CreateSalesOrderJSONRequestBody defines body for CreateSalesOrder for application/json ContentType.
+type CreateSalesOrderJSONRequestBody = SalesOrderInput
+
+// UpdateSalesOrderJSONRequestBody defines body for UpdateSalesOrder for application/json ContentType.
+type UpdateSalesOrderJSONRequestBody = SalesOrderInput
+
+// CreateStockAdjustmentJSONRequestBody defines body for CreateStockAdjustment for application/json ContentType.
+type CreateStockAdjustmentJSONRequestBody = StockAdjustmentInput
+
+// UpdateStockAdjustmentJSONRequestBody defines body for UpdateStockAdjustment for application/json ContentType.
+type UpdateStockAdjustmentJSONRequestBody = StockAdjustmentInput
+
+// CreateStockOpnameJSONRequestBody defines body for CreateStockOpname for application/json ContentType.
+type CreateStockOpnameJSONRequestBody = StockOpnameInput
+
+// UpdateStockOpnameJSONRequestBody defines body for UpdateStockOpname for application/json ContentType.
+type UpdateStockOpnameJSONRequestBody = StockOpnameInput
+
+// CreateStockTransferJSONRequestBody defines body for CreateStockTransfer for application/json ContentType.
+type CreateStockTransferJSONRequestBody = StockTransferInput
+
+// UpdateStockTransferJSONRequestBody defines body for UpdateStockTransfer for application/json ContentType.
+type UpdateStockTransferJSONRequestBody = StockTransferInput
 
 // UpdateTenantJSONRequestBody defines body for UpdateTenant for application/json ContentType.
 type UpdateTenantJSONRequestBody = UpdateTenantRequest
@@ -265,6 +739,42 @@ type ServerInterface interface {
 	// SwitchTenant Change the session's active tenant
 	// (POST /auth/switch-tenant)
 	SwitchTenant(w http.ResponseWriter, r *http.Request)
+	// ListDeliveries List deliveries
+	// (GET /deliveries)
+	ListDeliveries(w http.ResponseWriter, r *http.Request)
+	// CreateDelivery Create a draft delivery
+	// (POST /deliveries)
+	CreateDelivery(w http.ResponseWriter, r *http.Request)
+	// GetDelivery Get a delivery
+	// (GET /deliveries/{id})
+	GetDelivery(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// UpdateDelivery Replace a draft delivery (rejected once posted)
+	// (PUT /deliveries/{id})
+	UpdateDelivery(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// PostDelivery Post a draft delivery (issues stock out)
+	// (POST /deliveries/{id}/post)
+	PostDelivery(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ReverseDelivery Reverse a posted delivery (posts receipt movements back in)
+	// (POST /deliveries/{id}/reverse)
+	ReverseDelivery(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ListGoodsReceipts List goods receipts
+	// (GET /goods-receipts)
+	ListGoodsReceipts(w http.ResponseWriter, r *http.Request)
+	// CreateGoodsReceipt Create a draft goods receipt
+	// (POST /goods-receipts)
+	CreateGoodsReceipt(w http.ResponseWriter, r *http.Request)
+	// GetGoodsReceipt Get a goods receipt
+	// (GET /goods-receipts/{id})
+	GetGoodsReceipt(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// UpdateGoodsReceipt Replace a draft goods receipt (rejected once posted)
+	// (PUT /goods-receipts/{id})
+	UpdateGoodsReceipt(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// PostGoodsReceipt Post a draft goods receipt (receives stock, cost enters the journal)
+	// (POST /goods-receipts/{id}/post)
+	PostGoodsReceipt(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ReverseGoodsReceipt Reverse a posted goods receipt (posts issue movements back out)
+	// (POST /goods-receipts/{id}/reverse)
+	ReverseGoodsReceipt(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// GetHealth Liveness check
 	// (GET /health)
 	GetHealth(w http.ResponseWriter, r *http.Request)
@@ -274,6 +784,96 @@ type ServerInterface interface {
 	// AcceptInvite Join the inviting tenant with the invite's role
 	// (POST /invites/{token}/accept)
 	AcceptInvite(w http.ResponseWriter, r *http.Request, token string)
+	// ListPurchaseOrders List purchase orders
+	// (GET /purchase-orders)
+	ListPurchaseOrders(w http.ResponseWriter, r *http.Request)
+	// CreatePurchaseOrder Create a draft purchase order
+	// (POST /purchase-orders)
+	CreatePurchaseOrder(w http.ResponseWriter, r *http.Request)
+	// GetPurchaseOrder Get a purchase order
+	// (GET /purchase-orders/{id})
+	GetPurchaseOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// UpdatePurchaseOrder Replace a draft purchase order (rejected once posted)
+	// (PUT /purchase-orders/{id})
+	UpdatePurchaseOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// PostPurchaseOrder Post a draft purchase order (assigns the gapless number)
+	// (POST /purchase-orders/{id}/post)
+	PostPurchaseOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ReversePurchaseOrder Reverse a posted purchase order (posts a cancelling document)
+	// (POST /purchase-orders/{id}/reverse)
+	ReversePurchaseOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ListSalesOrders List sales orders
+	// (GET /sales-orders)
+	ListSalesOrders(w http.ResponseWriter, r *http.Request)
+	// CreateSalesOrder Create a draft sales order
+	// (POST /sales-orders)
+	CreateSalesOrder(w http.ResponseWriter, r *http.Request)
+	// GetSalesOrder Get a sales order
+	// (GET /sales-orders/{id})
+	GetSalesOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// UpdateSalesOrder Replace a draft sales order (rejected once posted)
+	// (PUT /sales-orders/{id})
+	UpdateSalesOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// PostSalesOrder Post a draft sales order (assigns the gapless number)
+	// (POST /sales-orders/{id}/post)
+	PostSalesOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ReverseSalesOrder Reverse a posted sales order (posts a cancelling document)
+	// (POST /sales-orders/{id}/reverse)
+	ReverseSalesOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ListStockAdjustments List stock adjustments
+	// (GET /stock-adjustments)
+	ListStockAdjustments(w http.ResponseWriter, r *http.Request)
+	// CreateStockAdjustment Create a draft stock adjustment
+	// (POST /stock-adjustments)
+	CreateStockAdjustment(w http.ResponseWriter, r *http.Request)
+	// GetStockAdjustment Get a stock adjustment
+	// (GET /stock-adjustments/{id})
+	GetStockAdjustment(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// UpdateStockAdjustment Replace a draft stock adjustment (rejected once posted)
+	// (PUT /stock-adjustments/{id})
+	UpdateStockAdjustment(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// PostStockAdjustment Post a draft stock adjustment (signed adjustment movements)
+	// (POST /stock-adjustments/{id}/post)
+	PostStockAdjustment(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ReverseStockAdjustment Reverse a posted stock adjustment (posts the negated movements)
+	// (POST /stock-adjustments/{id}/reverse)
+	ReverseStockAdjustment(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ListStockOpnames List stock opnames
+	// (GET /stock-opnames)
+	ListStockOpnames(w http.ResponseWriter, r *http.Request)
+	// CreateStockOpname Create a draft stock opname
+	// (POST /stock-opnames)
+	CreateStockOpname(w http.ResponseWriter, r *http.Request)
+	// GetStockOpname Get a stock opname
+	// (GET /stock-opnames/{id})
+	GetStockOpname(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// UpdateStockOpname Replace a draft stock opname (rejected once posted)
+	// (PUT /stock-opnames/{id})
+	UpdateStockOpname(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// PostStockOpname Post a draft stock opname (variance vs current stock -> adjustments)
+	// (POST /stock-opnames/{id}/post)
+	PostStockOpname(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ReverseStockOpname Reverse a posted stock opname (posts the negated variance)
+	// (POST /stock-opnames/{id}/reverse)
+	ReverseStockOpname(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ListStockTransfers List stock transfers
+	// (GET /stock-transfers)
+	ListStockTransfers(w http.ResponseWriter, r *http.Request)
+	// CreateStockTransfer Create a draft stock transfer
+	// (POST /stock-transfers)
+	CreateStockTransfer(w http.ResponseWriter, r *http.Request)
+	// GetStockTransfer Get a stock transfer
+	// (GET /stock-transfers/{id})
+	GetStockTransfer(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// UpdateStockTransfer Replace a draft stock transfer (rejected once posted)
+	// (PUT /stock-transfers/{id})
+	UpdateStockTransfer(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// PostStockTransfer Post a draft stock transfer (transfer_out + transfer_in pair)
+	// (POST /stock-transfers/{id}/post)
+	PostStockTransfer(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// ReverseStockTransfer Reverse a posted stock transfer (swaps the movement pair)
+	// (POST /stock-transfers/{id}/reverse)
+	ReverseStockTransfer(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// GetTenant Profile of the session's active tenant
 	// (GET /tenant)
 	GetTenant(w http.ResponseWriter, r *http.Request)
@@ -382,6 +982,270 @@ func (siw *ServerInterfaceWrapper) SwitchTenant(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// ListDeliveries operation middleware
+func (siw *ServerInterfaceWrapper) ListDeliveries(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDeliveries(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateDelivery operation middleware
+func (siw *ServerInterfaceWrapper) CreateDelivery(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateDelivery(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDelivery operation middleware
+func (siw *ServerInterfaceWrapper) GetDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDelivery(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateDelivery operation middleware
+func (siw *ServerInterfaceWrapper) UpdateDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateDelivery(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostDelivery operation middleware
+func (siw *ServerInterfaceWrapper) PostDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostDelivery(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReverseDelivery operation middleware
+func (siw *ServerInterfaceWrapper) ReverseDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReverseDelivery(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGoodsReceipts operation middleware
+func (siw *ServerInterfaceWrapper) ListGoodsReceipts(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGoodsReceipts(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGoodsReceipt operation middleware
+func (siw *ServerInterfaceWrapper) CreateGoodsReceipt(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGoodsReceipt(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGoodsReceipt operation middleware
+func (siw *ServerInterfaceWrapper) GetGoodsReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGoodsReceipt(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateGoodsReceipt operation middleware
+func (siw *ServerInterfaceWrapper) UpdateGoodsReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateGoodsReceipt(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostGoodsReceipt operation middleware
+func (siw *ServerInterfaceWrapper) PostGoodsReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostGoodsReceipt(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReverseGoodsReceipt operation middleware
+func (siw *ServerInterfaceWrapper) ReverseGoodsReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReverseGoodsReceipt(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetHealth operation middleware
 func (siw *ServerInterfaceWrapper) GetHealth(w http.ResponseWriter, r *http.Request) {
 
@@ -439,6 +1303,666 @@ func (siw *ServerInterfaceWrapper) AcceptInvite(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AcceptInvite(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPurchaseOrders operation middleware
+func (siw *ServerInterfaceWrapper) ListPurchaseOrders(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPurchaseOrders(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) CreatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePurchaseOrder(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) GetPurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPurchaseOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdatePurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePurchaseOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostPurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) PostPurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostPurchaseOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReversePurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) ReversePurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReversePurchaseOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSalesOrders operation middleware
+func (siw *ServerInterfaceWrapper) ListSalesOrders(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSalesOrders(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSalesOrder operation middleware
+func (siw *ServerInterfaceWrapper) CreateSalesOrder(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSalesOrder(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSalesOrder operation middleware
+func (siw *ServerInterfaceWrapper) GetSalesOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSalesOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSalesOrder operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSalesOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSalesOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostSalesOrder operation middleware
+func (siw *ServerInterfaceWrapper) PostSalesOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostSalesOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReverseSalesOrder operation middleware
+func (siw *ServerInterfaceWrapper) ReverseSalesOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReverseSalesOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListStockAdjustments operation middleware
+func (siw *ServerInterfaceWrapper) ListStockAdjustments(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListStockAdjustments(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateStockAdjustment operation middleware
+func (siw *ServerInterfaceWrapper) CreateStockAdjustment(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateStockAdjustment(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetStockAdjustment operation middleware
+func (siw *ServerInterfaceWrapper) GetStockAdjustment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetStockAdjustment(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateStockAdjustment operation middleware
+func (siw *ServerInterfaceWrapper) UpdateStockAdjustment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateStockAdjustment(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostStockAdjustment operation middleware
+func (siw *ServerInterfaceWrapper) PostStockAdjustment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostStockAdjustment(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReverseStockAdjustment operation middleware
+func (siw *ServerInterfaceWrapper) ReverseStockAdjustment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReverseStockAdjustment(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListStockOpnames operation middleware
+func (siw *ServerInterfaceWrapper) ListStockOpnames(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListStockOpnames(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateStockOpname operation middleware
+func (siw *ServerInterfaceWrapper) CreateStockOpname(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateStockOpname(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetStockOpname operation middleware
+func (siw *ServerInterfaceWrapper) GetStockOpname(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetStockOpname(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateStockOpname operation middleware
+func (siw *ServerInterfaceWrapper) UpdateStockOpname(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateStockOpname(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostStockOpname operation middleware
+func (siw *ServerInterfaceWrapper) PostStockOpname(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostStockOpname(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReverseStockOpname operation middleware
+func (siw *ServerInterfaceWrapper) ReverseStockOpname(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReverseStockOpname(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListStockTransfers operation middleware
+func (siw *ServerInterfaceWrapper) ListStockTransfers(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListStockTransfers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateStockTransfer operation middleware
+func (siw *ServerInterfaceWrapper) CreateStockTransfer(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateStockTransfer(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetStockTransfer operation middleware
+func (siw *ServerInterfaceWrapper) GetStockTransfer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetStockTransfer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateStockTransfer operation middleware
+func (siw *ServerInterfaceWrapper) UpdateStockTransfer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateStockTransfer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostStockTransfer operation middleware
+func (siw *ServerInterfaceWrapper) PostStockTransfer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostStockTransfer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReverseStockTransfer operation middleware
+func (siw *ServerInterfaceWrapper) ReverseStockTransfer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReverseStockTransfer(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -735,9 +2259,51 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/register", wrapper.Register)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/session", wrapper.GetSession)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/switch-tenant", wrapper.SwitchTenant)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/deliveries", wrapper.ListDeliveries)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deliveries", wrapper.CreateDelivery)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/deliveries/{id}", wrapper.GetDelivery)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/deliveries/{id}", wrapper.UpdateDelivery)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deliveries/{id}/post", wrapper.PostDelivery)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deliveries/{id}/reverse", wrapper.ReverseDelivery)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/goods-receipts", wrapper.ListGoodsReceipts)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/goods-receipts", wrapper.CreateGoodsReceipt)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/goods-receipts/{id}", wrapper.GetGoodsReceipt)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/goods-receipts/{id}", wrapper.UpdateGoodsReceipt)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/goods-receipts/{id}/post", wrapper.PostGoodsReceipt)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/goods-receipts/{id}/reverse", wrapper.ReverseGoodsReceipt)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/health", wrapper.GetHealth)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/invites/{token}", wrapper.GetInvite)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/invites/{token}/accept", wrapper.AcceptInvite)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/purchase-orders", wrapper.ListPurchaseOrders)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/purchase-orders", wrapper.CreatePurchaseOrder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/purchase-orders/{id}", wrapper.GetPurchaseOrder)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/purchase-orders/{id}", wrapper.UpdatePurchaseOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/purchase-orders/{id}/post", wrapper.PostPurchaseOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/purchase-orders/{id}/reverse", wrapper.ReversePurchaseOrder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/sales-orders", wrapper.ListSalesOrders)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/sales-orders", wrapper.CreateSalesOrder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/sales-orders/{id}", wrapper.GetSalesOrder)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/sales-orders/{id}", wrapper.UpdateSalesOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/sales-orders/{id}/post", wrapper.PostSalesOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/sales-orders/{id}/reverse", wrapper.ReverseSalesOrder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-adjustments", wrapper.ListStockAdjustments)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-adjustments", wrapper.CreateStockAdjustment)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-adjustments/{id}", wrapper.GetStockAdjustment)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/stock-adjustments/{id}", wrapper.UpdateStockAdjustment)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-adjustments/{id}/post", wrapper.PostStockAdjustment)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-adjustments/{id}/reverse", wrapper.ReverseStockAdjustment)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-opnames", wrapper.ListStockOpnames)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-opnames", wrapper.CreateStockOpname)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-opnames/{id}", wrapper.GetStockOpname)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/stock-opnames/{id}", wrapper.UpdateStockOpname)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-opnames/{id}/post", wrapper.PostStockOpname)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-opnames/{id}/reverse", wrapper.ReverseStockOpname)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-transfers", wrapper.ListStockTransfers)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-transfers", wrapper.CreateStockTransfer)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-transfers/{id}", wrapper.GetStockTransfer)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/stock-transfers/{id}", wrapper.UpdateStockTransfer)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-transfers/{id}/post", wrapper.PostStockTransfer)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-transfers/{id}/reverse", wrapper.ReverseStockTransfer)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant", wrapper.GetTenant)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/tenant", wrapper.UpdateTenant)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant/invites", wrapper.ListInvites)
@@ -756,43 +2322,79 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
+	"Rs5gfu483z//KwAA//8=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

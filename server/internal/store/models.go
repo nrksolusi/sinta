@@ -31,6 +31,8 @@ type Delivery struct {
 	PostedAt     pgtype.Timestamptz
 	CreatedAt    pgtype.Timestamptz
 	CreatedBy    uuid.UUID
+	ReversesID   pgtype.UUID
+	ReversedByID pgtype.UUID
 }
 
 type DeliveryLine struct {
@@ -65,6 +67,8 @@ type GoodsReceipt struct {
 	PostedAt        pgtype.Timestamptz
 	CreatedAt       pgtype.Timestamptz
 	CreatedBy       uuid.UUID
+	ReversesID      pgtype.UUID
+	ReversedByID    pgtype.UUID
 }
 
 type GoodsReceiptLine struct {
@@ -139,17 +143,19 @@ type ProductUom struct {
 }
 
 type PurchaseOrder struct {
-	ID          uuid.UUID
-	TenantID    uuid.UUID
-	DocNumber   pgtype.Text
-	Status      string
-	SupplierID  uuid.UUID
-	WarehouseID uuid.UUID
-	DocDate     pgtype.Date
-	Notes       string
-	PostedAt    pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	CreatedBy   uuid.UUID
+	ID           uuid.UUID
+	TenantID     uuid.UUID
+	DocNumber    pgtype.Text
+	Status       string
+	SupplierID   uuid.UUID
+	WarehouseID  uuid.UUID
+	DocDate      pgtype.Date
+	Notes        string
+	PostedAt     pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	CreatedBy    uuid.UUID
+	ReversesID   pgtype.UUID
+	ReversedByID pgtype.UUID
 }
 
 type PurchaseOrderLine struct {
@@ -164,17 +170,19 @@ type PurchaseOrderLine struct {
 }
 
 type SalesOrder struct {
-	ID          uuid.UUID
-	TenantID    uuid.UUID
-	DocNumber   pgtype.Text
-	Status      string
-	CustomerID  uuid.UUID
-	WarehouseID uuid.UUID
-	DocDate     pgtype.Date
-	Notes       string
-	PostedAt    pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	CreatedBy   uuid.UUID
+	ID           uuid.UUID
+	TenantID     uuid.UUID
+	DocNumber    pgtype.Text
+	Status       string
+	CustomerID   uuid.UUID
+	WarehouseID  uuid.UUID
+	DocDate      pgtype.Date
+	Notes        string
+	PostedAt     pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	CreatedBy    uuid.UUID
+	ReversesID   pgtype.UUID
+	ReversedByID pgtype.UUID
 }
 
 type SalesOrderLine struct {
@@ -197,17 +205,19 @@ type Session struct {
 }
 
 type StockAdjustment struct {
-	ID          uuid.UUID
-	TenantID    uuid.UUID
-	DocNumber   pgtype.Text
-	Status      string
-	WarehouseID uuid.UUID
-	Reason      string
-	DocDate     pgtype.Date
-	Notes       string
-	PostedAt    pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	CreatedBy   uuid.UUID
+	ID           uuid.UUID
+	TenantID     uuid.UUID
+	DocNumber    pgtype.Text
+	Status       string
+	WarehouseID  uuid.UUID
+	Reason       string
+	DocDate      pgtype.Date
+	Notes        string
+	PostedAt     pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	CreatedBy    uuid.UUID
+	ReversesID   pgtype.UUID
+	ReversedByID pgtype.UUID
 }
 
 type StockAdjustmentLine struct {
@@ -253,16 +263,18 @@ type StockMovement struct {
 }
 
 type StockOpname struct {
-	ID          uuid.UUID
-	TenantID    uuid.UUID
-	DocNumber   pgtype.Text
-	Status      string
-	WarehouseID uuid.UUID
-	DocDate     pgtype.Date
-	Notes       string
-	PostedAt    pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	CreatedBy   uuid.UUID
+	ID           uuid.UUID
+	TenantID     uuid.UUID
+	DocNumber    pgtype.Text
+	Status       string
+	WarehouseID  uuid.UUID
+	DocDate      pgtype.Date
+	Notes        string
+	PostedAt     pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	CreatedBy    uuid.UUID
+	ReversesID   pgtype.UUID
+	ReversedByID pgtype.UUID
 }
 
 type StockOpnameLine struct {
@@ -288,6 +300,8 @@ type StockTransfer struct {
 	PostedAt        pgtype.Timestamptz
 	CreatedAt       pgtype.Timestamptz
 	CreatedBy       uuid.UUID
+	ReversesID      pgtype.UUID
+	ReversedByID    pgtype.UUID
 }
 
 type StockTransferLine struct {

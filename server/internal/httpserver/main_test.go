@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -70,10 +71,21 @@ func TestMain(m *testing.M) {
 	if err := goose.Up(migrateDB, "."); err != nil {
 		log.Fatalf("migrate test db: %v", err)
 	}
-	// Migrations create sinta_app without a password; the test environment
-	// sets one so the server under test can log in as it.
-	if _, err := migrateDB.ExecContext(ctx, "ALTER ROLE sinta_app PASSWORD 'sinta_app_test'"); err != nil {
-		log.Fatalf("set app role password: %v", err)
+	// Migrations create sinta_app without a password; the test environment sets
+	// one so the server under test can log in as it. sinta_app is cluster-global,
+	// so when this suite runs in parallel with the store suite (both derive from
+	// one Postgres) the two identical ALTER ROLEs can collide with "tuple
+	// concurrently updated". The target state is identical, so retry a few times
+	// (mirrors the store suite's TestMain).
+	for attempt := 0; ; attempt++ {
+		_, err := migrateDB.ExecContext(ctx, "ALTER ROLE sinta_app PASSWORD 'sinta_app_test'")
+		if err == nil {
+			break
+		}
+		if attempt >= 10 {
+			log.Fatalf("set app role password: %v", err)
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 	migrateDB.Close()
 
