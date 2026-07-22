@@ -28,6 +28,7 @@ import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settin
 import { Route as AuthedSettingsInvitesRouteImport } from './routes/_authed/settings/invites'
 import { Route as AuthedSettingsMembersRouteImport } from './routes/_authed/settings/members'
 import { Route as AuthedSettingsProfileRouteImport } from './routes/_authed/settings/profile'
+import { Route as AuthedCatalogProductsIdRouteImport } from './routes/_authed/catalog/products.$id'
 
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
@@ -123,6 +124,11 @@ const AuthedSettingsProfileRoute = AuthedSettingsProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthedSettingsRouteRoute,
 } as any)
+const AuthedCatalogProductsIdRoute = AuthedCatalogProductsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthedCatalogProductsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -136,13 +142,14 @@ export interface FileRoutesByFullPath {
   '/receive': typeof AuthedReceiveRoute
   '/invite/$token': typeof InviteTokenRoute
   '/catalog/partners': typeof AuthedCatalogPartnersRoute
-  '/catalog/products': typeof AuthedCatalogProductsRoute
+  '/catalog/products': typeof AuthedCatalogProductsRouteWithChildren
   '/catalog/warehouses': typeof AuthedCatalogWarehousesRoute
   '/settings/invites': typeof AuthedSettingsInvitesRoute
   '/settings/members': typeof AuthedSettingsMembersRoute
   '/settings/profile': typeof AuthedSettingsProfileRoute
   '/catalog/': typeof AuthedCatalogIndexRoute
   '/settings/': typeof AuthedSettingsIndexRoute
+  '/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -154,13 +161,14 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/': typeof AuthedIndexRoute
   '/catalog/partners': typeof AuthedCatalogPartnersRoute
-  '/catalog/products': typeof AuthedCatalogProductsRoute
+  '/catalog/products': typeof AuthedCatalogProductsRouteWithChildren
   '/catalog/warehouses': typeof AuthedCatalogWarehousesRoute
   '/settings/invites': typeof AuthedSettingsInvitesRoute
   '/settings/members': typeof AuthedSettingsMembersRoute
   '/settings/profile': typeof AuthedSettingsProfileRoute
   '/catalog': typeof AuthedCatalogIndexRoute
   '/settings': typeof AuthedSettingsIndexRoute
+  '/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -176,13 +184,14 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/catalog/partners': typeof AuthedCatalogPartnersRoute
-  '/_authed/catalog/products': typeof AuthedCatalogProductsRoute
+  '/_authed/catalog/products': typeof AuthedCatalogProductsRouteWithChildren
   '/_authed/catalog/warehouses': typeof AuthedCatalogWarehousesRoute
   '/_authed/settings/invites': typeof AuthedSettingsInvitesRoute
   '/_authed/settings/members': typeof AuthedSettingsMembersRoute
   '/_authed/settings/profile': typeof AuthedSettingsProfileRoute
   '/_authed/catalog/': typeof AuthedCatalogIndexRoute
   '/_authed/settings/': typeof AuthedSettingsIndexRoute
+  '/_authed/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/settings/profile'
     | '/catalog/'
     | '/settings/'
+    | '/catalog/products/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/settings/profile'
     | '/catalog'
     | '/settings'
+    | '/catalog/products/$id'
   id:
     | '__root__'
     | '/_authed'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/_authed/settings/profile'
     | '/_authed/catalog/'
     | '/_authed/settings/'
+    | '/_authed/catalog/products/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -388,19 +400,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSettingsProfileRouteImport
       parentRoute: typeof AuthedSettingsRouteRoute
     }
+    '/_authed/catalog/products/$id': {
+      id: '/_authed/catalog/products/$id'
+      path: '/$id'
+      fullPath: '/catalog/products/$id'
+      preLoaderRoute: typeof AuthedCatalogProductsIdRouteImport
+      parentRoute: typeof AuthedCatalogProductsRoute
+    }
   }
 }
 
+interface AuthedCatalogProductsRouteChildren {
+  AuthedCatalogProductsIdRoute: typeof AuthedCatalogProductsIdRoute
+}
+
+const AuthedCatalogProductsRouteChildren: AuthedCatalogProductsRouteChildren = {
+  AuthedCatalogProductsIdRoute: AuthedCatalogProductsIdRoute,
+}
+
+const AuthedCatalogProductsRouteWithChildren =
+  AuthedCatalogProductsRoute._addFileChildren(
+    AuthedCatalogProductsRouteChildren,
+  )
+
 interface AuthedCatalogRouteRouteChildren {
   AuthedCatalogPartnersRoute: typeof AuthedCatalogPartnersRoute
-  AuthedCatalogProductsRoute: typeof AuthedCatalogProductsRoute
+  AuthedCatalogProductsRoute: typeof AuthedCatalogProductsRouteWithChildren
   AuthedCatalogWarehousesRoute: typeof AuthedCatalogWarehousesRoute
   AuthedCatalogIndexRoute: typeof AuthedCatalogIndexRoute
 }
 
 const AuthedCatalogRouteRouteChildren: AuthedCatalogRouteRouteChildren = {
   AuthedCatalogPartnersRoute: AuthedCatalogPartnersRoute,
-  AuthedCatalogProductsRoute: AuthedCatalogProductsRoute,
+  AuthedCatalogProductsRoute: AuthedCatalogProductsRouteWithChildren,
   AuthedCatalogWarehousesRoute: AuthedCatalogWarehousesRoute,
   AuthedCatalogIndexRoute: AuthedCatalogIndexRoute,
 }

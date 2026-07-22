@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -97,7 +97,13 @@ function ProductsPage() {
         header: m.field_product_name(),
         cell: ({ row }) => (
           <span className="font-medium">
-            {row.original.name}
+            <Link
+              to="/catalog/products/$id"
+              params={{ id: row.original.id }}
+              className="hover:underline"
+            >
+              {row.original.name}
+            </Link>
             {row.original.status === "archived" && (
               <Badge variant="secondary" className="ml-2 font-normal">
                 {m.catalog_status_archived()}
