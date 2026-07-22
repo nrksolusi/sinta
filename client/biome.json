@@ -5,6 +5,7 @@
       "**",
       "!src/routeTree.gen.ts",
       "!src/paraglide",
+      "!project.inlang/.meta.json",
       "!src/lib/api-types.ts",
       "!src/components/ui",
       "!src/styles.css",

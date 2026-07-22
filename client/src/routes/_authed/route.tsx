@@ -62,6 +62,15 @@ function AuthedLayout() {
             <Link to="/" className="[&.active]:font-semibold">
               {m.nav_dashboard()}
             </Link>
+            <Link to="/receive" className="[&.active]:font-semibold">
+              {m.nav_receive()}
+            </Link>
+            <Link to="/delivery" className="[&.active]:font-semibold">
+              {m.nav_delivery()}
+            </Link>
+            <Link to="/opname" className="[&.active]:font-semibold">
+              {m.nav_opname()}
+            </Link>
             <Link to="/settings" className="[&.active]:font-semibold">
               {m.nav_settings()}
             </Link>

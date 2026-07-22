@@ -17,6 +17,16 @@ declare module "@tanstack/react-router" {
   }
 }
 
+// Register the PWA service worker for installability (D12). Best-effort and
+// production-only: the SW caches static assets, never API responses.
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // Registration failure must never block the app (e.g. insecure origin).
+    });
+  });
+}
+
 // Render the app
 const rootElement = document.getElementById("root")!;
 if (!rootElement.innerHTML) {

@@ -13,7 +13,10 @@ import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedDeliveryRouteImport } from './routes/_authed/delivery'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboarding'
+import { Route as AuthedOpnameRouteImport } from './routes/_authed/opname'
+import { Route as AuthedReceiveRouteImport } from './routes/_authed/receive'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 
@@ -36,9 +39,24 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
+const AuthedDeliveryRoute = AuthedDeliveryRouteImport.update({
+  id: '/delivery',
+  path: '/delivery',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
 const AuthedOnboardingRoute = AuthedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedOpnameRoute = AuthedOpnameRouteImport.update({
+  id: '/opname',
+  path: '/opname',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedReceiveRoute = AuthedReceiveRouteImport.update({
+  id: '/receive',
+  path: '/receive',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
@@ -56,14 +74,20 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/delivery': typeof AuthedDeliveryRoute
   '/onboarding': typeof AuthedOnboardingRoute
+  '/opname': typeof AuthedOpnameRoute
+  '/receive': typeof AuthedReceiveRoute
   '/settings': typeof AuthedSettingsRoute
   '/invite/$token': typeof InviteTokenRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/delivery': typeof AuthedDeliveryRoute
   '/onboarding': typeof AuthedOnboardingRoute
+  '/opname': typeof AuthedOpnameRoute
+  '/receive': typeof AuthedReceiveRoute
   '/settings': typeof AuthedSettingsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/': typeof AuthedIndexRoute
@@ -73,7 +97,10 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/_authed/delivery': typeof AuthedDeliveryRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
+  '/_authed/opname': typeof AuthedOpnameRoute
+  '/_authed/receive': typeof AuthedReceiveRoute
   '/_authed/settings': typeof AuthedSettingsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_authed/': typeof AuthedIndexRoute
@@ -84,14 +111,20 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/delivery'
     | '/onboarding'
+    | '/opname'
+    | '/receive'
     | '/settings'
     | '/invite/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
     | '/register'
+    | '/delivery'
     | '/onboarding'
+    | '/opname'
+    | '/receive'
     | '/settings'
     | '/invite/$token'
     | '/'
@@ -100,7 +133,10 @@ export interface FileRouteTypes {
     | '/_authed'
     | '/login'
     | '/register'
+    | '/_authed/delivery'
     | '/_authed/onboarding'
+    | '/_authed/opname'
+    | '/_authed/receive'
     | '/_authed/settings'
     | '/invite/$token'
     | '/_authed/'
@@ -143,11 +179,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
+    '/_authed/delivery': {
+      id: '/_authed/delivery'
+      path: '/delivery'
+      fullPath: '/delivery'
+      preLoaderRoute: typeof AuthedDeliveryRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
     '/_authed/onboarding': {
       id: '/_authed/onboarding'
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof AuthedOnboardingRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/opname': {
+      id: '/_authed/opname'
+      path: '/opname'
+      fullPath: '/opname'
+      preLoaderRoute: typeof AuthedOpnameRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/receive': {
+      id: '/_authed/receive'
+      path: '/receive'
+      fullPath: '/receive'
+      preLoaderRoute: typeof AuthedReceiveRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
     '/_authed/settings': {
@@ -168,13 +225,19 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteRouteChildren {
+  AuthedDeliveryRoute: typeof AuthedDeliveryRoute
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
+  AuthedOpnameRoute: typeof AuthedOpnameRoute
+  AuthedReceiveRoute: typeof AuthedReceiveRoute
   AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
+  AuthedDeliveryRoute: AuthedDeliveryRoute,
   AuthedOnboardingRoute: AuthedOnboardingRoute,
+  AuthedOpnameRoute: AuthedOpnameRoute,
+  AuthedReceiveRoute: AuthedReceiveRoute,
   AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedIndexRoute: AuthedIndexRoute,
 }

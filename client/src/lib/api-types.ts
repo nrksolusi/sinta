@@ -4,40 +4,6 @@
  */
 
 export interface paths {
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Liveness check */
-        get: operations["getHealth"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/register": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create a user account */
-        post: operations["register"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -66,6 +32,23 @@ export interface paths {
         put?: never;
         /** End the current session */
         post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a user account */
+        post: operations["register"];
         delete?: never;
         options?: never;
         head?: never;
@@ -106,110 +89,170 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tenants": {
+    "/deliveries": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List deliveries */
+        get: operations["listDeliveries"];
         put?: never;
-        /** Onboard a new tenant with its first warehouse; creator becomes owner */
-        post: operations["createTenant"];
+        /** Create a draft delivery */
+        post: operations["createDelivery"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/tenant": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Profile of the session's active tenant */
-        get: operations["getTenant"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update tenant profile (owner only) */
-        patch: operations["updateTenant"];
-        trace?: never;
-    };
-    "/tenant/members": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List tenant members */
-        get: operations["listMembers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tenant/members/{userId}": {
+    "/deliveries/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                userId: string;
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        /** Get a delivery */
+        get: operations["getDelivery"];
+        /** Replace a draft delivery (rejected once posted) */
+        put: operations["updateDelivery"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/deliveries/{id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
             };
             cookie?: never;
         };
         get?: never;
         put?: never;
-        post?: never;
-        /** Remove a member (owner only) */
-        delete: operations["removeMember"];
-        options?: never;
-        head?: never;
-        /** Change a member's role (owner only) */
-        patch: operations["updateMember"];
-        trace?: never;
-    };
-    "/tenant/invites": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List open invites (owner or admin) */
-        get: operations["listInvites"];
-        put?: never;
-        /** Create a shareable invite link (owner or admin) */
-        post: operations["createInvite"];
+        /** Post a draft delivery (issues stock out) */
+        post: operations["postDelivery"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/tenant/invites/{inviteId}": {
+    "/deliveries/{id}/reverse": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                inviteId: string;
+                id: components["parameters"]["DocumentId"];
             };
             cookie?: never;
         };
         get?: never;
         put?: never;
+        /** Reverse a posted delivery (posts receipt movements back in) */
+        post: operations["reverseDelivery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/goods-receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List goods receipts */
+        get: operations["listGoodsReceipts"];
+        put?: never;
+        /** Create a draft goods receipt */
+        post: operations["createGoodsReceipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/goods-receipts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        /** Get a goods receipt */
+        get: operations["getGoodsReceipt"];
+        /** Replace a draft goods receipt (rejected once posted) */
+        put: operations["updateGoodsReceipt"];
         post?: never;
-        /** Revoke an invite (owner or admin) */
-        delete: operations["revokeInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/goods-receipts/{id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post a draft goods receipt (receives stock, cost enters the journal) */
+        post: operations["postGoodsReceipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/goods-receipts/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse a posted goods receipt (posts issue movements back out) */
+        post: operations["reverseGoodsReceipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Liveness check */
+        get: operations["getHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -253,28 +296,933 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List partners in the active tenant */
+        get: operations["listPartners"];
+        put?: never;
+        /** Create a partner */
+        post: operations["createPartner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/partners/{partnerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        /** Get a partner */
+        get: operations["getPartner"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a partner */
+        patch: operations["updatePartner"];
+        trace?: never;
+    };
+    "/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List products in the active tenant */
+        get: operations["listProducts"];
+        put?: never;
+        /** Create a product */
+        post: operations["createProduct"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+            };
+            cookie?: never;
+        };
+        /** Get a product */
+        get: operations["getProduct"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a product */
+        patch: operations["updateProduct"];
+        trace?: never;
+    };
+    "/products/{productId}/batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+            };
+            cookie?: never;
+        };
+        /** List a product's batches */
+        get: operations["listProductBatches"];
+        put?: never;
+        /** Create a batch for a batch-tracked product */
+        post: operations["createBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/uoms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+            };
+            cookie?: never;
+        };
+        /** List a product's unit conversions */
+        get: operations["listProductUoms"];
+        put?: never;
+        /** Add a unit conversion to a product */
+        post: operations["createProductUom"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{productId}/uoms/{uomId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+                uomId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a unit conversion */
+        delete: operations["deleteProductUom"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List purchase orders */
+        get: operations["listPurchaseOrders"];
+        put?: never;
+        /** Create a draft purchase order */
+        post: operations["createPurchaseOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/purchase-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        /** Get a purchase order */
+        get: operations["getPurchaseOrder"];
+        /** Replace a draft purchase order (rejected once posted) */
+        put: operations["updatePurchaseOrder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/purchase-orders/{id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post a draft purchase order (assigns the gapless number) */
+        post: operations["postPurchaseOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/purchase-orders/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse a posted purchase order (posts a cancelling document) */
+        post: operations["reversePurchaseOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/stock-card": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Per-product movement history with a running balance
+         * @description The ordered journal for one product (optionally one warehouse), each movement carrying the running on-hand quantity, booked unit cost, and running value the tenant's costing engine derives at that point. This is the stock audit trail; it is never rewritten (ADR-0001).
+         */
+        get: operations["reportStockCard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/stock-on-hand": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Current on-hand quantity per product, warehouse, and batch
+         * @description The derived stock level for every (product, warehouse, batch) key with a non-zero position, read from the stock_levels cache. Filterable by warehouse and/or product.
+         */
+        get: operations["reportStockOnHand"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/stock-valuation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Monetary value of stock per product and warehouse
+         * @description The value of stock on hand per (product, warehouse, batch) key, computed as qty_on_hand * avg_cost from the stock_levels cache under the tenant's costing method (weighted average in M1). The cache is a faithful reduction of the journal maintained transactionally at posting, so this equals folding the journal through the costing engine.
+         */
+        get: operations["reportStockValuation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sales-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List sales orders */
+        get: operations["listSalesOrders"];
+        put?: never;
+        /** Create a draft sales order */
+        post: operations["createSalesOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sales-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        /** Get a sales order */
+        get: operations["getSalesOrder"];
+        /** Replace a draft sales order (rejected once posted) */
+        put: operations["updateSalesOrder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sales-orders/{id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post a draft sales order (assigns the gapless number) */
+        post: operations["postSalesOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sales-orders/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse a posted sales order (posts a cancelling document) */
+        post: operations["reverseSalesOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List stock adjustments */
+        get: operations["listStockAdjustments"];
+        put?: never;
+        /** Create a draft stock adjustment */
+        post: operations["createStockAdjustment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-adjustments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        /** Get a stock adjustment */
+        get: operations["getStockAdjustment"];
+        /** Replace a draft stock adjustment (rejected once posted) */
+        put: operations["updateStockAdjustment"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-adjustments/{id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post a draft stock adjustment (signed adjustment movements) */
+        post: operations["postStockAdjustment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-adjustments/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse a posted stock adjustment (posts the negated movements) */
+        post: operations["reverseStockAdjustment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-opnames": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List stock opnames */
+        get: operations["listStockOpnames"];
+        put?: never;
+        /** Create a draft stock opname */
+        post: operations["createStockOpname"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-opnames/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        /** Get a stock opname */
+        get: operations["getStockOpname"];
+        /** Replace a draft stock opname (rejected once posted) */
+        put: operations["updateStockOpname"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-opnames/{id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post a draft stock opname (variance vs current stock -> adjustments) */
+        post: operations["postStockOpname"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-opnames/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse a posted stock opname (posts the negated variance) */
+        post: operations["reverseStockOpname"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List stock transfers */
+        get: operations["listStockTransfers"];
+        put?: never;
+        /** Create a draft stock transfer */
+        post: operations["createStockTransfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-transfers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        /** Get a stock transfer */
+        get: operations["getStockTransfer"];
+        /** Replace a draft stock transfer (rejected once posted) */
+        put: operations["updateStockTransfer"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-transfers/{id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post a draft stock transfer (transfer_out + transfer_in pair) */
+        post: operations["postStockTransfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stock-transfers/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverse a posted stock transfer (swaps the movement pair) */
+        post: operations["reverseStockTransfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Profile of the session's active tenant */
+        get: operations["getTenant"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update tenant profile (owner only) */
+        patch: operations["updateTenant"];
+        trace?: never;
+    };
+    "/tenant/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List open invites (owner or admin) */
+        get: operations["listInvites"];
+        put?: never;
+        /** Create a shareable invite link (owner or admin) */
+        post: operations["createInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/invites/{inviteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                inviteId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke an invite (owner or admin) */
+        delete: operations["revokeInvite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tenant members */
+        get: operations["listMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a member (owner only) */
+        delete: operations["removeMember"];
+        options?: never;
+        head?: never;
+        /** Change a member's role (owner only) */
+        patch: operations["updateMember"];
+        trace?: never;
+    };
+    "/tenants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Onboard a new tenant with its first warehouse; creator becomes owner */
+        post: operations["createTenant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/warehouses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List warehouses in the active tenant */
+        get: operations["listWarehouses"];
+        put?: never;
+        /** Create a warehouse */
+        post: operations["createWarehouse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/warehouses/{warehouseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                warehouseId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a warehouse */
+        patch: operations["updateWarehouse"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Health: {
-            /** @enum {string} */
-            status: "ok";
+        Batch: {
+            batchNo: string;
+            /**
+             * Format: date
+             * @description Optional expiry date
+             */
+            expiryDate?: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            productId: string;
         };
+        /** @enum {string} */
+        CatalogStatus: "active" | "archived";
+        /**
+         * @description Locked at onboarding; switchable only at a fiscal year boundary (ADR-0002)
+         * @enum {string}
+         */
+        CostingMethod: "weightedAverage" | "fifo";
+        CreateBatchRequest: {
+            batchNo: string;
+            /** Format: date */
+            expiryDate?: string;
+        };
+        CreateInviteRequest: {
+            role: components["schemas"]["Role"];
+        };
+        CreatePartnerRequest: {
+            code?: string;
+            /** @default false */
+            isCustomer: boolean;
+            /** @default false */
+            isSupplier: boolean;
+            name: string;
+        };
+        CreateProductRequest: {
+            barcode?: string;
+            baseUom: string;
+            /** @default false */
+            isBatchTracked: boolean;
+            name: string;
+            sku: string;
+        };
+        CreateProductUomRequest: {
+            /** @description Positive decimal factor to the base unit */
+            factorToBase: string;
+            uom: string;
+        };
+        CreateTenantRequest: {
+            costingMethod: components["schemas"]["CostingMethod"];
+            /** @default 1 */
+            fiscalYearStartMonth: number;
+            legalName?: string;
+            name: string;
+            warehouse: components["schemas"]["WarehouseInput"];
+        };
+        /**
+         * @description A decimal quantity or money value, string-encoded to avoid float loss
+         * @example 12.500
+         */
+        DecimalString: string;
+        Delivery: {
+            /** Format: uuid */
+            customerId: string;
+            /** Format: date */
+            docDate: string;
+            docNumber?: string | null;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["DeliveryLine"][];
+            notes: string;
+            /** Format: uuid */
+            reversedById?: string | null;
+            /** Format: uuid */
+            reversesId?: string | null;
+            /** Format: uuid */
+            salesOrderId?: string | null;
+            status: components["schemas"]["DocumentStatus"];
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        DeliveryInput: {
+            /** Format: uuid */
+            customerId: string;
+            /** Format: date */
+            docDate: string;
+            lines: components["schemas"]["DeliveryLineInput"][];
+            notes?: string;
+            /** Format: uuid */
+            salesOrderId?: string | null;
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        DeliveryLine: {
+            /** Format: uuid */
+            batchId?: string | null;
+            /** Format: uuid */
+            id: string;
+            lineNo: number;
+            /** Format: uuid */
+            productId: string;
+            qty: components["schemas"]["DecimalString"];
+            /** Format: uuid */
+            salesOrderLineId?: string | null;
+            uom: string;
+        };
+        DeliveryLineInput: {
+            /** Format: uuid */
+            batchId?: string | null;
+            /** Format: uuid */
+            productId: string;
+            qty: components["schemas"]["DecimalString"];
+            /** Format: uuid */
+            salesOrderLineId?: string | null;
+            uom: string;
+        };
+        /**
+         * @description draft is editable; posted is immutable; reversed was cancelled by a reversal
+         * @enum {string}
+         */
+        DocumentStatus: "draft" | "posted" | "reversed";
         Error: {
             code: string;
-            message: string;
             /** @description Per-field validation messages, when applicable */
             fields?: {
                 [key: string]: string;
             };
+            message: string;
         };
-        RegisterRequest: {
-            /** Format: email */
-            email: string;
-            /** Format: password */
-            password: string;
-            name: string;
+        GoodsReceipt: {
+            /** Format: date */
+            docDate: string;
+            docNumber?: string | null;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["GoodsReceiptLine"][];
+            notes: string;
+            /** Format: uuid */
+            purchaseOrderId?: string | null;
+            /** Format: uuid */
+            reversedById?: string | null;
+            /** Format: uuid */
+            reversesId?: string | null;
+            status: components["schemas"]["DocumentStatus"];
+            /** Format: uuid */
+            supplierId: string;
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        GoodsReceiptInput: {
+            /** Format: date */
+            docDate: string;
+            lines: components["schemas"]["GoodsReceiptLineInput"][];
+            notes?: string;
+            /** Format: uuid */
+            purchaseOrderId?: string | null;
+            /** Format: uuid */
+            supplierId: string;
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        GoodsReceiptLine: {
+            /** Format: uuid */
+            batchId?: string | null;
+            /** Format: uuid */
+            id: string;
+            lineNo: number;
+            /** Format: uuid */
+            productId: string;
+            /** Format: uuid */
+            purchaseOrderLineId?: string | null;
+            qty: components["schemas"]["DecimalString"];
+            unitCost: components["schemas"]["DecimalString"];
+            uom: string;
+        };
+        GoodsReceiptLineInput: {
+            /** Format: uuid */
+            batchId?: string | null;
+            /** Format: uuid */
+            productId: string;
+            /** Format: uuid */
+            purchaseOrderLineId?: string | null;
+            qty: components["schemas"]["DecimalString"];
+            unitCost?: components["schemas"]["DecimalString"];
+            uom: string;
+        };
+        Health: {
+            /** @enum {string} */
+            status: "ok";
+        };
+        Invite: {
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            role: components["schemas"]["Role"];
+            token: string;
+        };
+        InvitePublic: {
+            role: components["schemas"]["Role"];
+            tenantName: string;
         };
         LoginRequest: {
             /** Format: email */
@@ -282,98 +1230,448 @@ export interface components {
             /** Format: password */
             password: string;
         };
-        SwitchTenantRequest: {
-            /** Format: uuid */
-            tenantId: string;
-        };
-        User: {
-            /** Format: uuid */
-            id: string;
+        Member: {
             /** Format: email */
             email: string;
             name: string;
+            role: components["schemas"]["Role"];
+            /** Format: uuid */
+            userId: string;
+        };
+        Membership: {
+            role: components["schemas"]["Role"];
+            tenant: components["schemas"]["Tenant"];
+        };
+        Partner: {
+            /** @description Optional; unique within a tenant when present */
+            code?: string;
+            /** Format: uuid */
+            id: string;
+            isCustomer: boolean;
+            isSupplier: boolean;
+            name: string;
+            status: components["schemas"]["CatalogStatus"];
+        };
+        Product: {
+            /** @description Optional; unique within a tenant when present */
+            barcode?: string;
+            /** @description The unit a product's stock is counted in (glossary "Base unit") */
+            baseUom: string;
+            /** Format: uuid */
+            id: string;
+            isBatchTracked: boolean;
+            name: string;
+            sku: string;
+            status: components["schemas"]["CatalogStatus"];
+        };
+        ProductUom: {
+            /** @description Decimal factor to the base unit (carton = "24"); numeric, sent as string to preserve precision */
+            factorToBase: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            productId: string;
+            uom: string;
+        };
+        PurchaseOrder: {
+            /** Format: date */
+            docDate: string;
+            docNumber?: string | null;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["PurchaseOrderLine"][];
+            notes: string;
+            /** Format: uuid */
+            reversedById?: string | null;
+            /** Format: uuid */
+            reversesId?: string | null;
+            status: components["schemas"]["DocumentStatus"];
+            /** Format: uuid */
+            supplierId: string;
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        PurchaseOrderInput: {
+            /** Format: date */
+            docDate: string;
+            lines: components["schemas"]["PurchaseOrderLineInput"][];
+            notes?: string;
+            /** Format: uuid */
+            supplierId: string;
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        PurchaseOrderLine: {
+            /** Format: uuid */
+            id: string;
+            lineNo: number;
+            /** Format: uuid */
+            productId: string;
+            qty: components["schemas"]["DecimalString"];
+            unitCost: components["schemas"]["DecimalString"];
+            uom: string;
+        };
+        PurchaseOrderLineInput: {
+            /** Format: uuid */
+            productId: string;
+            qty: components["schemas"]["DecimalString"];
+            unitCost?: components["schemas"]["DecimalString"];
+            uom: string;
+        };
+        RegisterRequest: {
+            /** Format: email */
+            email: string;
+            name: string;
+            /** Format: password */
+            password: string;
+        };
+        /** @enum {string} */
+        Role: "owner" | "admin" | "warehouse" | "sales" | "viewer";
+        SalesOrder: {
+            /** Format: uuid */
+            customerId: string;
+            /** Format: date */
+            docDate: string;
+            docNumber?: string | null;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["SalesOrderLine"][];
+            notes: string;
+            /** Format: uuid */
+            reversedById?: string | null;
+            /** Format: uuid */
+            reversesId?: string | null;
+            status: components["schemas"]["DocumentStatus"];
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        SalesOrderInput: {
+            /** Format: uuid */
+            customerId: string;
+            /** Format: date */
+            docDate: string;
+            lines: components["schemas"]["SalesOrderLineInput"][];
+            notes?: string;
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        SalesOrderLine: {
+            /** Format: uuid */
+            id: string;
+            lineNo: number;
+            /** Format: uuid */
+            productId: string;
+            qty: components["schemas"]["DecimalString"];
+            unitPrice: components["schemas"]["DecimalString"];
+            uom: string;
+        };
+        SalesOrderLineInput: {
+            /** Format: uuid */
+            productId: string;
+            qty: components["schemas"]["DecimalString"];
+            unitPrice?: components["schemas"]["DecimalString"];
+            uom: string;
+        };
+        SessionInfo: {
+            /**
+             * Format: uuid
+             * @description Absent until a tenant is selected
+             */
+            activeTenantId?: string;
+            memberships: components["schemas"]["Membership"][];
+            user: components["schemas"]["User"];
+        };
+        StockAdjustment: {
+            /** Format: date */
+            docDate: string;
+            docNumber?: string | null;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["StockAdjustmentLine"][];
+            notes: string;
+            reason: string;
+            /** Format: uuid */
+            reversedById?: string | null;
+            /** Format: uuid */
+            reversesId?: string | null;
+            status: components["schemas"]["DocumentStatus"];
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        StockAdjustmentInput: {
+            /** Format: date */
+            docDate: string;
+            lines: components["schemas"]["StockAdjustmentLineInput"][];
+            notes?: string;
+            reason?: string;
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        StockAdjustmentLine: {
+            /** Format: uuid */
+            batchId?: string | null;
+            /** Format: uuid */
+            id: string;
+            lineNo: number;
+            /** Format: uuid */
+            productId: string;
+            qty: components["schemas"]["DecimalString"];
+            unitCost: components["schemas"]["DecimalString"];
+            uom: string;
+        };
+        StockAdjustmentLineInput: {
+            /** Format: uuid */
+            batchId?: string | null;
+            /** Format: uuid */
+            productId: string;
+            /** @description Signed - positive is found stock, negative is waste/damage; nonzero */
+            qty: components["schemas"]["DecimalString"];
+            unitCost?: components["schemas"]["DecimalString"];
+            uom: string;
+        };
+        StockCardEntry: {
+            /**
+             * Format: uuid
+             * @description Absent for stock that is not batch-tracked
+             */
+            batchId?: string;
+            /** Format: uuid */
+            docId?: string;
+            docType?: string;
+            /** Format: date-time */
+            effectiveAt: string;
+            /** Format: uuid */
+            movementId: string;
+            /** @enum {string} */
+            movementType: "receipt" | "issue" | "transfer_in" | "transfer_out" | "adjustment" | "opname" | "cost_correction" | "revaluation";
+            /** @description True when the movement was valued below zero stock (D6) */
+            provisional: boolean;
+            /** @description Signed movement quantity in base units, as a decimal string */
+            qty: string;
+            /** @description On-hand quantity after this movement, as a decimal string */
+            runningQty: string;
+            /** @description Total stock value after this movement, as a decimal string */
+            runningValue: string;
+            /** Format: int64 */
+            seq: number;
+            /** @description Cost booked for this movement by the costing engine, as a decimal string */
+            unitCost: string;
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        StockCardReport: {
+            entries: components["schemas"]["StockCardEntry"][];
+            /** Format: uuid */
+            productId: string;
+        };
+        StockOnHandReport: {
+            rows: components["schemas"]["StockOnHandRow"][];
+        };
+        StockOnHandRow: {
+            /**
+             * Format: uuid
+             * @description Absent for stock that is not batch-tracked
+             */
+            batchId?: string;
+            batchNo?: string;
+            /** Format: uuid */
+            productId: string;
+            productName: string;
+            /** @description On-hand quantity in base units, as a decimal string */
+            qtyOnHand: string;
+            sku: string;
+            warehouseCode: string;
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseName: string;
+        };
+        StockOpname: {
+            /** Format: date */
+            docDate: string;
+            docNumber?: string | null;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["StockOpnameLine"][];
+            notes: string;
+            /** Format: uuid */
+            reversedById?: string | null;
+            /** Format: uuid */
+            reversesId?: string | null;
+            status: components["schemas"]["DocumentStatus"];
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        StockOpnameInput: {
+            /** Format: date */
+            docDate: string;
+            lines: components["schemas"]["StockOpnameLineInput"][];
+            notes?: string;
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        StockOpnameLine: {
+            /** Format: uuid */
+            batchId?: string | null;
+            countedQty: components["schemas"]["DecimalString"];
+            /** Format: uuid */
+            id: string;
+            lineNo: number;
+            /** Format: uuid */
+            productId: string;
+            uom: string;
+        };
+        StockOpnameLineInput: {
+            /** Format: uuid */
+            batchId?: string | null;
+            countedQty: components["schemas"]["DecimalString"];
+            /** Format: uuid */
+            productId: string;
+            uom: string;
+        };
+        StockTransfer: {
+            /** Format: date */
+            docDate: string;
+            docNumber?: string | null;
+            /** Format: uuid */
+            fromWarehouseId: string;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["StockTransferLine"][];
+            notes: string;
+            /** Format: uuid */
+            reversedById?: string | null;
+            /** Format: uuid */
+            reversesId?: string | null;
+            status: components["schemas"]["DocumentStatus"];
+            /** Format: uuid */
+            toWarehouseId: string;
+        };
+        StockTransferInput: {
+            /** Format: date */
+            docDate: string;
+            /** Format: uuid */
+            fromWarehouseId: string;
+            lines: components["schemas"]["StockTransferLineInput"][];
+            notes?: string;
+            /** Format: uuid */
+            toWarehouseId: string;
+        };
+        StockTransferLine: {
+            /** Format: uuid */
+            batchId?: string | null;
+            /** Format: uuid */
+            id: string;
+            lineNo: number;
+            /** Format: uuid */
+            productId: string;
+            qty: components["schemas"]["DecimalString"];
+            uom: string;
+        };
+        StockTransferLineInput: {
+            /** Format: uuid */
+            batchId?: string | null;
+            /** Format: uuid */
+            productId: string;
+            qty: components["schemas"]["DecimalString"];
+            uom: string;
+        };
+        StockValuationReport: {
+            rows: components["schemas"]["StockValuationRow"][];
+            /** @description Sum of value across all rows, as a decimal string */
+            totalValue: string;
+        };
+        StockValuationRow: {
+            /** @description Weighted-average unit cost, as a decimal string */
+            avgCost: string;
+            /**
+             * Format: uuid
+             * @description Absent for stock that is not batch-tracked
+             */
+            batchId?: string;
+            batchNo?: string;
+            /** Format: uuid */
+            productId: string;
+            productName: string;
+            /** @description On-hand quantity in base units, as a decimal string */
+            qtyOnHand: string;
+            sku: string;
+            /** @description qtyOnHand * avgCost, as a decimal string */
+            value: string;
+            warehouseCode: string;
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseName: string;
+        };
+        SwitchTenantRequest: {
+            /** Format: uuid */
+            tenantId: string;
         };
         Tenant: {
             /** Format: uuid */
             id: string;
             name: string;
         };
-        /** @enum {string} */
-        Role: "owner" | "admin" | "warehouse" | "sales" | "viewer";
-        Membership: {
-            tenant: components["schemas"]["Tenant"];
+        TenantProfile: {
+            costingMethod: components["schemas"]["CostingMethod"];
+            fiscalYearStartMonth: number;
+            /** Format: uuid */
+            id: string;
+            legalName: string;
+            myRole: components["schemas"]["Role"];
+            name: string;
+        };
+        UpdateMemberRequest: {
             role: components["schemas"]["Role"];
         };
-        /**
-         * @description Locked at onboarding; switchable only at a fiscal year boundary (ADR-0002)
-         * @enum {string}
-         */
-        CostingMethod: "weightedAverage" | "fifo";
-        CreateTenantRequest: {
-            name: string;
+        /** @description Patch semantics; absent fields keep their current value */
+        UpdatePartnerRequest: {
+            /** @description Empty string clears the code */
+            code?: string;
+            isCustomer?: boolean;
+            isSupplier?: boolean;
+            name?: string;
+            status?: components["schemas"]["CatalogStatus"];
+        };
+        /** @description Patch semantics; absent fields keep their current value */
+        UpdateProductRequest: {
+            /** @description Empty string clears the barcode */
+            barcode?: string;
+            baseUom?: string;
+            isBatchTracked?: boolean;
+            name?: string;
+            status?: components["schemas"]["CatalogStatus"];
+        };
+        UpdateTenantRequest: {
+            fiscalYearStartMonth?: number;
             legalName?: string;
-            costingMethod: components["schemas"]["CostingMethod"];
-            /** @default 1 */
-            fiscalYearStartMonth: number;
-            warehouse: components["schemas"]["WarehouseInput"];
+            name?: string;
+        };
+        /** @description Patch semantics; absent fields keep their current value */
+        UpdateWarehouseRequest: {
+            code?: string;
+            name?: string;
+        };
+        User: {
+            /** Format: email */
+            email: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        Warehouse: {
+            code: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
         };
         WarehouseInput: {
             code: string;
             name: string;
         };
-        TenantProfile: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            legalName: string;
-            costingMethod: components["schemas"]["CostingMethod"];
-            fiscalYearStartMonth: number;
-            myRole: components["schemas"]["Role"];
-        };
-        UpdateTenantRequest: {
-            name?: string;
-            legalName?: string;
-            fiscalYearStartMonth?: number;
-        };
-        Member: {
-            /** Format: uuid */
-            userId: string;
-            name: string;
-            /** Format: email */
-            email: string;
-            role: components["schemas"]["Role"];
-        };
-        UpdateMemberRequest: {
-            role: components["schemas"]["Role"];
-        };
-        CreateInviteRequest: {
-            role: components["schemas"]["Role"];
-        };
-        Invite: {
-            /** Format: uuid */
-            id: string;
-            role: components["schemas"]["Role"];
-            token: string;
-            /** Format: date-time */
-            expiresAt: string;
-        };
-        InvitePublic: {
-            tenantName: string;
-            role: components["schemas"]["Role"];
-        };
-        SessionInfo: {
-            user: components["schemas"]["User"];
-            memberships: components["schemas"]["Membership"][];
-            /**
-             * Format: uuid
-             * @description Absent until a tenant is selected
-             */
-            activeTenantId?: string;
-        };
     };
     responses: {
-        /** @description Not authenticated */
-        Unauthorized: {
+        /** @description Resource already exists */
+        Conflict: {
             headers: {
                 [name: string]: unknown;
             };
@@ -390,8 +1688,17 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description Resource already exists */
-        Conflict: {
+        /** @description Resource not found */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Not authenticated */
+        Unauthorized: {
             headers: {
                 [name: string]: unknown;
             };
@@ -409,59 +1716,18 @@ export interface components {
             };
         };
     };
-    parameters: never;
+    parameters: {
+        DocumentId: string;
+        ProductFilter: string;
+        ProductId: string;
+        WarehouseFilter: string;
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    getHealth: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Service is up */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Health"];
-                };
-            };
-        };
-    };
-    register: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterRequest"];
-            };
-        };
-        responses: {
-            /** @description Account created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["User"];
-                };
-            };
-            409: components["responses"]["Conflict"];
-            422: components["responses"]["ValidationError"];
-        };
-    };
     login: {
         parameters: {
             query?: never;
@@ -504,6 +1770,32 @@ export interface operations {
                 content?: never;
             };
             401: components["responses"]["Unauthorized"];
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Account created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
         };
     };
     getSession: {
@@ -553,33 +1845,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
         };
     };
-    createTenant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateTenantRequest"];
-            };
-        };
-        responses: {
-            /** @description Tenant created and activated for this session */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TenantProfile"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            422: components["responses"]["ValidationError"];
-        };
-    };
-    getTenant: {
+    listDeliveries: {
         parameters: {
             query?: never;
             header?: never;
@@ -588,20 +1854,20 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Active tenant profile */
+            /** @description Deliveries */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TenantProfile"];
+                    "application/json": components["schemas"]["Delivery"][];
                 };
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
         };
     };
-    updateTenant: {
+    createDelivery: {
         parameters: {
             query?: never;
             header?: never;
@@ -610,17 +1876,17 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateTenantRequest"];
+                "application/json": components["schemas"]["DeliveryInput"];
             };
         };
         responses: {
-            /** @description Updated tenant profile */
-            200: {
+            /** @description Draft created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TenantProfile"];
+                    "application/json": components["schemas"]["Delivery"];
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -628,148 +1894,289 @@ export interface operations {
             422: components["responses"]["ValidationError"];
         };
     };
-    listMembers: {
+    getDelivery: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Members of the active tenant */
+            /** @description Delivery */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Member"][];
+                    "application/json": components["schemas"]["Delivery"];
                 };
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
-    removeMember: {
+    updateDelivery: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                userId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Member removed */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            409: components["responses"]["Conflict"];
-        };
-    };
-    updateMember: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                userId: string;
+                id: components["parameters"]["DocumentId"];
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateMemberRequest"];
+                "application/json": components["schemas"]["DeliveryInput"];
             };
         };
         responses: {
-            /** @description Updated member */
+            /** @description Draft updated */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Member"];
+                    "application/json": components["schemas"]["Delivery"];
                 };
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
         };
     };
-    listInvites: {
+    postDelivery: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Open invites */
+            /** @description Posted */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Invite"][];
+                    "application/json": components["schemas"]["Delivery"];
                 };
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
-    createInvite: {
+    reverseDelivery: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateInviteRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description Invite created */
+            /** @description Reversal document posted */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Invite"];
+                    "application/json": components["schemas"]["Delivery"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    listGoodsReceipts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Goods receipts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoodsReceipt"][];
                 };
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
         };
     };
-    revokeInvite: {
+    createGoodsReceipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoodsReceiptInput"];
+            };
+        };
+        responses: {
+            /** @description Draft created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoodsReceipt"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    getGoodsReceipt: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                inviteId: string;
+                id: components["parameters"]["DocumentId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Invite revoked */
-            204: {
+            /** @description Goods receipt */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["GoodsReceipt"];
+                };
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateGoodsReceipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoodsReceiptInput"];
+            };
+        };
+        responses: {
+            /** @description Draft updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoodsReceipt"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    postGoodsReceipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Posted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoodsReceipt"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    reverseGoodsReceipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reversal document posted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoodsReceipt"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Service is up */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Health"];
+                };
+            };
         };
     };
     getInvite: {
@@ -851,6 +2258,1521 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+        };
+    };
+    listPartners: {
+        parameters: {
+            query?: {
+                /** @description Filter to partners that are a supplier or a customer */
+                role?: "supplier" | "customer";
+                status?: components["schemas"]["CatalogStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Partners */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Partner"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createPartner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePartnerRequest"];
+            };
+        };
+        responses: {
+            /** @description Partner created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Partner"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    getPartner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Partner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Partner"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updatePartner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePartnerRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated partner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Partner"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    listProducts: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["CatalogStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Products */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProductRequest"];
+            };
+        };
+        responses: {
+            /** @description Product created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    getProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Product */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProductRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated product */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    listProductBatches: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Batches */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Batch"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    createBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Batch created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Batch"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    listProductUoms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unit conversions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductUom"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    createProductUom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProductUomRequest"];
+            };
+        };
+        responses: {
+            /** @description Unit conversion created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductUom"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    deleteProductUom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: components["parameters"]["ProductId"];
+                uomId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unit conversion removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listPurchaseOrders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Purchase orders */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrder"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createPurchaseOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseOrderInput"];
+            };
+        };
+        responses: {
+            /** @description Draft created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    getPurchaseOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Purchase order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updatePurchaseOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseOrderInput"];
+            };
+        };
+        responses: {
+            /** @description Draft updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    postPurchaseOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Posted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    reversePurchaseOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reversal document posted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    reportStockCard: {
+        parameters: {
+            query: {
+                productId: string;
+                warehouseId?: components["parameters"]["WarehouseFilter"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Movement history for the product */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockCardReport"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    reportStockOnHand: {
+        parameters: {
+            query?: {
+                warehouseId?: components["parameters"]["WarehouseFilter"];
+                productId?: components["parameters"]["ProductFilter"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description On-hand rows for the active tenant */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockOnHandReport"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    reportStockValuation: {
+        parameters: {
+            query?: {
+                warehouseId?: components["parameters"]["WarehouseFilter"];
+                productId?: components["parameters"]["ProductFilter"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Valuation rows for the active tenant */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockValuationReport"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    listSalesOrders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sales orders */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOrder"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createSalesOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesOrderInput"];
+            };
+        };
+        responses: {
+            /** @description Draft created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    getSalesOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sales order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateSalesOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesOrderInput"];
+            };
+        };
+        responses: {
+            /** @description Draft updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    postSalesOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Posted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    reverseSalesOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reversal document posted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    listStockAdjustments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stock adjustments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockAdjustment"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createStockAdjustment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockAdjustmentInput"];
+            };
+        };
+        responses: {
+            /** @description Draft created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockAdjustment"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    getStockAdjustment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stock adjustment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockAdjustment"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateStockAdjustment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockAdjustmentInput"];
+            };
+        };
+        responses: {
+            /** @description Draft updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockAdjustment"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    postStockAdjustment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Posted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockAdjustment"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    reverseStockAdjustment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reversal document posted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockAdjustment"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    listStockOpnames: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stock opnames */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockOpname"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createStockOpname: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockOpnameInput"];
+            };
+        };
+        responses: {
+            /** @description Draft created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockOpname"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    getStockOpname: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stock opname */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockOpname"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateStockOpname: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockOpnameInput"];
+            };
+        };
+        responses: {
+            /** @description Draft updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockOpname"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    postStockOpname: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Posted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockOpname"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    reverseStockOpname: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reversal document posted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockOpname"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    listStockTransfers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stock transfers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockTransfer"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createStockTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockTransferInput"];
+            };
+        };
+        responses: {
+            /** @description Draft created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockTransfer"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    getStockTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stock transfer */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockTransfer"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateStockTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockTransferInput"];
+            };
+        };
+        responses: {
+            /** @description Draft updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockTransfer"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    postStockTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Posted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockTransfer"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    reverseStockTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reversal document posted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockTransfer"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getTenant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Active tenant profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantProfile"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    updateTenant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTenantRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated tenant profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantProfile"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    listInvites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Open invites */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invite"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInviteRequest"];
+            };
+        };
+        responses: {
+            /** @description Invite created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invite"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    revokeInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                inviteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Invite revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    listMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Members of the active tenant */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    removeMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Member removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    updateMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMemberRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated member */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    createTenant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTenantRequest"];
+            };
+        };
+        responses: {
+            /** @description Tenant created and activated for this session */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantProfile"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    listWarehouses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Warehouses */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Warehouse"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createWarehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WarehouseInput"];
+            };
+        };
+        responses: {
+            /** @description Warehouse created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Warehouse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    updateWarehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                warehouseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWarehouseRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated warehouse */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Warehouse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
         };
     };
 }

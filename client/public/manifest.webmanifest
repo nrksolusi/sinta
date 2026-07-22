@@ -1,0 +1,20 @@
+{
+  "name": "SINTA",
+  "short_name": "SINTA",
+  "description": "Manajemen persediaan untuk gudang - penerimaan, surat jalan, dan opname.",
+  "lang": "id",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
