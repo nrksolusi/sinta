@@ -1,0 +1,14 @@
+# Build-context excludes for deploy/Dockerfile.server and Dockerfile.client.
+.git
+.run
+**/node_modules
+client/dist
+client/.tanstack
+client/.nitro
+client/.output
+server/bin
+**/*_test.go
+.env
+.env.*
+**/.DS_Store
+docs

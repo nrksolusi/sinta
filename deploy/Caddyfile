@@ -1,0 +1,26 @@
+# Sinta reverse proxy and static host.
+#
+# {$SINTA_DOMAIN} selects the site address. Set it to a real hostname
+# (e.g. app.sinta.example) in production for automatic HTTPS via Let's
+# Encrypt. Leave it unset to default to ":80" for a local
+# `docker compose up` smoke test with no TLS.
+{$SINTA_DOMAIN::80} {
+	encode zstd gzip
+
+	# API: proxy everything under /v1 to the Go server, prefix intact - the
+	# server mounts its routes under /v1 (server/internal/httpserver/server.go),
+	# so the path is NOT stripped. Caddy sets X-Forwarded-Proto automatically;
+	# the server reads it to mark session cookies Secure
+	# (server/internal/httpserver/session.go).
+	handle /v1/* {
+		reverse_proxy server:8080
+	}
+
+	# Everything else is the built SPA. try_files falls back to index.html so
+	# client-side routes (TanStack Router) resolve on hard reload.
+	handle {
+		root * /srv/www
+		try_files {path} /index.html
+		file_server
+	}
+}
