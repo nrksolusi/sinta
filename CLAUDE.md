@@ -41,6 +41,12 @@ pace - keep changes small and scoped.
   active UI language, because they read as words. Format only through
   `client/src/lib/format.ts`; do not call `toLocaleString`, `Intl.*`, or pass a
   locale ad hoc at call sites.
+- Industry terms in messages: for an English-origin domain/technical term, do
+  not translate reflexively. Check what Indonesian practitioners in this
+  industry actually say, and use that form - which is often the English term
+  kept as-is (e.g. `Weighted Average`, `FIFO`, both standard in Indonesian
+  accounting per PSAK 14 and local tools). Translate only when the Indonesian
+  word is the genuinely native usage. When unsure, search before deciding.
 - Banned vocabulary: ledger, workspace, organization, stocktake, item.
   See the glossary for the canonical terms.
 

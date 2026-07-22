@@ -25,7 +25,7 @@
   "onboarding_legal_name": "Nama legal (opsional)",
   "onboarding_fiscal_month": "Bulan awal tahun fiskal",
   "onboarding_costing_hint": "Metode penilaian persediaan. Terkunci setelah disimpan dan hanya dapat diubah saat pergantian tahun fiskal.",
-  "onboarding_costing_avg": "Rata-rata tertimbang",
+  "onboarding_costing_avg": "Weighted Average Cost",
   "onboarding_costing_avg_hint": "Setiap penerimaan menghitung ulang biaya rata-rata. Disarankan untuk sebagian besar distributor.",
   "onboarding_costing_fifo": "FIFO",
   "onboarding_costing_fifo_hint": "Stok terlama dikeluarkan lebih dulu dengan biayanya sendiri.",
@@ -67,7 +67,7 @@
   "nav_dashboard": "Beranda",
   "nav_settings": "Pengaturan",
   "error_generic": "Terjadi kesalahan. Silakan coba lagi.",
-  "onboarding_costing_fifo_soon": "Segera hadir - saat ini baru tersedia rata-rata tertimbang",
+  "onboarding_costing_fifo_soon": "Segera hadir - saat ini baru tersedia Weighted Average Cost",
   "settings_company_name": "Nama perusahaan",
   "settings_legal_name": "Nama legal",
   "settings_costing_label": "Penilaian persediaan:"

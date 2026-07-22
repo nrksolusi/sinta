@@ -49,7 +49,11 @@ function OnboardingWizard() {
         setFailed(true);
         return;
       }
-      await queryClient.refetchQueries(sessionQueryOptions);
+      // fetchQuery, not refetchQueries: login/register seed the session cache
+      // via setQueryData, which leaves the cached query without a queryFn, so
+      // refetchQueries would be a silent no-op and beforeLoad would bounce the
+      // user back here. fetchQuery runs the queryFn from the options directly.
+      await queryClient.fetchQuery(sessionQueryOptions);
       await router.invalidate();
       // Past the soft cap (ADR-0012) the tenant starts inactive - explain the
       // waiting state instead of dropping the user onto a 403'd dashboard.
