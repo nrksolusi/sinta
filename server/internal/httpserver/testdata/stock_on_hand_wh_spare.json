@@ -1,0 +1,13 @@
+{
+  "rows": [
+    {
+      "productId": "<prodA>",
+      "productName": "Produk A",
+      "qtyOnHand": "4",
+      "sku": "AAA",
+      "warehouseCode": "GD-02",
+      "warehouseId": "<whSpare>",
+      "warehouseName": "Gudang Cadangan"
+    }
+  ]
+}
