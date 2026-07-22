@@ -24,6 +24,7 @@ import { Route as AuthedCatalogIndexRouteImport } from './routes/_authed/catalog
 import { Route as AuthedCatalogPartnersRouteImport } from './routes/_authed/catalog/partners'
 import { Route as AuthedCatalogProductsRouteImport } from './routes/_authed/catalog/products'
 import { Route as AuthedCatalogWarehousesRouteImport } from './routes/_authed/catalog/warehouses'
+import { Route as AuthedReportsStockCardRouteImport } from './routes/_authed/reports/stock-card'
 import { Route as AuthedReportsStockOnHandRouteImport } from './routes/_authed/reports/stock-on-hand'
 import { Route as AuthedReportsValuationRouteImport } from './routes/_authed/reports/valuation'
 import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings/index'
@@ -108,6 +109,11 @@ const AuthedCatalogWarehousesRoute = AuthedCatalogWarehousesRouteImport.update({
   path: '/warehouses',
   getParentRoute: () => AuthedCatalogRouteRoute,
 } as any)
+const AuthedReportsStockCardRoute = AuthedReportsStockCardRouteImport.update({
+  id: '/reports/stock-card',
+  path: '/reports/stock-card',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
 const AuthedReportsStockOnHandRoute =
   AuthedReportsStockOnHandRouteImport.update({
     id: '/reports/stock-on-hand',
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/catalog/partners': typeof AuthedCatalogPartnersRouteWithChildren
   '/catalog/products': typeof AuthedCatalogProductsRouteWithChildren
   '/catalog/warehouses': typeof AuthedCatalogWarehousesRouteWithChildren
+  '/reports/stock-card': typeof AuthedReportsStockCardRoute
   '/reports/stock-on-hand': typeof AuthedReportsStockOnHandRoute
   '/reports/valuation': typeof AuthedReportsValuationRoute
   '/settings/invites': typeof AuthedSettingsInvitesRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/catalog/partners': typeof AuthedCatalogPartnersRouteWithChildren
   '/catalog/products': typeof AuthedCatalogProductsRouteWithChildren
   '/catalog/warehouses': typeof AuthedCatalogWarehousesRouteWithChildren
+  '/reports/stock-card': typeof AuthedReportsStockCardRoute
   '/reports/stock-on-hand': typeof AuthedReportsStockOnHandRoute
   '/reports/valuation': typeof AuthedReportsValuationRoute
   '/settings/invites': typeof AuthedSettingsInvitesRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/_authed/catalog/partners': typeof AuthedCatalogPartnersRouteWithChildren
   '/_authed/catalog/products': typeof AuthedCatalogProductsRouteWithChildren
   '/_authed/catalog/warehouses': typeof AuthedCatalogWarehousesRouteWithChildren
+  '/_authed/reports/stock-card': typeof AuthedReportsStockCardRoute
   '/_authed/reports/stock-on-hand': typeof AuthedReportsStockOnHandRoute
   '/_authed/reports/valuation': typeof AuthedReportsValuationRoute
   '/_authed/settings/invites': typeof AuthedSettingsInvitesRoute
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/catalog/partners'
     | '/catalog/products'
     | '/catalog/warehouses'
+    | '/reports/stock-card'
     | '/reports/stock-on-hand'
     | '/reports/valuation'
     | '/settings/invites'
@@ -270,6 +280,7 @@ export interface FileRouteTypes {
     | '/catalog/partners'
     | '/catalog/products'
     | '/catalog/warehouses'
+    | '/reports/stock-card'
     | '/reports/stock-on-hand'
     | '/reports/valuation'
     | '/settings/invites'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/_authed/catalog/partners'
     | '/_authed/catalog/products'
     | '/_authed/catalog/warehouses'
+    | '/_authed/reports/stock-card'
     | '/_authed/reports/stock-on-hand'
     | '/_authed/reports/valuation'
     | '/_authed/settings/invites'
@@ -421,6 +433,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/catalog/warehouses'
       preLoaderRoute: typeof AuthedCatalogWarehousesRouteImport
       parentRoute: typeof AuthedCatalogRouteRoute
+    }
+    '/_authed/reports/stock-card': {
+      id: '/_authed/reports/stock-card'
+      path: '/reports/stock-card'
+      fullPath: '/reports/stock-card'
+      preLoaderRoute: typeof AuthedReportsStockCardRouteImport
+      parentRoute: typeof AuthedRouteRoute
     }
     '/_authed/reports/stock-on-hand': {
       id: '/_authed/reports/stock-on-hand'
@@ -570,6 +589,7 @@ interface AuthedRouteRouteChildren {
   AuthedOpnameRoute: typeof AuthedOpnameRoute
   AuthedReceiveRoute: typeof AuthedReceiveRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedReportsStockCardRoute: typeof AuthedReportsStockCardRoute
   AuthedReportsStockOnHandRoute: typeof AuthedReportsStockOnHandRoute
   AuthedReportsValuationRoute: typeof AuthedReportsValuationRoute
 }
@@ -582,6 +602,7 @@ const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedOpnameRoute: AuthedOpnameRoute,
   AuthedReceiveRoute: AuthedReceiveRoute,
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedReportsStockCardRoute: AuthedReportsStockCardRoute,
   AuthedReportsStockOnHandRoute: AuthedReportsStockOnHandRoute,
   AuthedReportsValuationRoute: AuthedReportsValuationRoute,
 }
