@@ -38,13 +38,23 @@ func tenantProfile(tenant store.Tenant, role string) api.TenantProfile {
 		CostingMethod:        costingToAPI[tenant.CostingMethod],
 		FiscalYearStartMonth: int(tenant.FiscalYearStartMonth),
 		MyRole:               api.Role(role),
+		Active:               tenant.Active,
 	}
 }
+
+// ADR-0012: only this many self-served tenants per user start active; later
+// ones wait for manual activation.
+const selfServeActiveTenantCap = 3
 
 func (s *Server) CreateTenant(w http.ResponseWriter, r *http.Request) {
 	session, user, err := s.currentSession(r)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, "unauthenticated", "no valid session")
+		return
+	}
+
+	if s.createTenantLimiter.TooMany(user.ID.String()) {
+		writeError(w, http.StatusTooManyRequests, "too_many_attempts", "too many tenants created recently; try again later")
 		return
 	}
 
@@ -88,11 +98,17 @@ func (s *Server) CreateTenant(w http.ResponseWriter, r *http.Request) {
 		defer tx.Rollback(r.Context())
 		q := s.queries.WithTx(tx)
 
+		created, err := q.CountTenantsCreatedBy(r.Context(), pgUUID(user.ID))
+		if err != nil {
+			return err
+		}
 		tenant, err = q.CreateTenant(r.Context(), store.CreateTenantParams{
 			Name:                 req.Name,
 			LegalName:            legalName,
 			CostingMethod:        costing,
 			FiscalYearStartMonth: fiscalStart,
+			Active:               created < selfServeActiveTenantCap,
+			CreatedBy:            pgUUID(user.ID),
 		})
 		if err != nil {
 			return err
@@ -122,12 +138,19 @@ func (s *Server) CreateTenant(w http.ResponseWriter, r *http.Request) {
 		}); err != nil {
 			return err
 		}
+		if err := q.SetUserLastActiveTenant(r.Context(), store.SetUserLastActiveTenantParams{
+			ID:                 user.ID,
+			LastActiveTenantID: pgUUID(tenant.ID),
+		}); err != nil {
+			return err
+		}
 		return tx.Commit(r.Context())
 	}()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not onboard tenant")
+		writeInternal(w, err, "could not onboard tenant")
 		return
 	}
+	s.createTenantLimiter.Record(user.ID.String())
 
 	writeJSON(w, http.StatusCreated, tenantProfile(tenant, "owner"))
 }
@@ -185,7 +208,7 @@ func (s *Server) UpdateTenant(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not update tenant")
+		writeInternal(w, err, "could not update tenant")
 		return
 	}
 	writeJSON(w, http.StatusOK, tenantProfile(tenant, tc.role))
@@ -204,7 +227,7 @@ func (s *Server) ListMembers(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not list members")
+		writeInternal(w, err, "could not list members")
 		return
 	}
 
@@ -296,7 +319,7 @@ func (s *Server) UpdateMember(w http.ResponseWriter, r *http.Request, userId ope
 			writeError(w, http.StatusNotFound, "member_not_found", "no such member in this tenant")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, "internal", "could not update member")
+		writeInternal(w, err, "could not update member")
 		return
 	}
 	if conflict != "" {
@@ -335,7 +358,7 @@ func (s *Server) RemoveMember(w http.ResponseWriter, r *http.Request, userId ope
 			writeError(w, http.StatusNotFound, "member_not_found", "no such member in this tenant")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, "internal", "could not remove member")
+		writeInternal(w, err, "could not remove member")
 		return
 	}
 	if conflict != "" {
@@ -389,7 +412,7 @@ func (s *Server) ListInvites(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not list invites")
+		writeInternal(w, err, "could not list invites")
 		return
 	}
 
@@ -422,7 +445,7 @@ func (s *Server) CreateInvite(w http.ResponseWriter, r *http.Request) {
 
 	token, err := newInviteToken()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not create invite")
+		writeInternal(w, err, "could not create invite")
 		return
 	}
 
@@ -439,7 +462,7 @@ func (s *Server) CreateInvite(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not create invite")
+		writeInternal(w, err, "could not create invite")
 		return
 	}
 	writeJSON(w, http.StatusCreated, inviteToAPI(invite))
@@ -463,7 +486,7 @@ func (s *Server) RevokeInvite(w http.ResponseWriter, r *http.Request, inviteId o
 		return err
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not revoke invite")
+		writeInternal(w, err, "could not revoke invite")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -535,17 +558,23 @@ func (s *Server) AcceptInvite(w http.ResponseWriter, r *http.Request, token stri
 		}); err != nil {
 			return err
 		}
+		if err := q.SetUserLastActiveTenant(r.Context(), store.SetUserLastActiveTenantParams{
+			ID:                 user.ID,
+			LastActiveTenantID: pgUUID(invite.TenantID),
+		}); err != nil {
+			return err
+		}
 		return tx.Commit(r.Context())
 	}()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not join tenant")
+		writeInternal(w, err, "could not join tenant")
 		return
 	}
 
 	tenantID := invite.TenantID
 	info, err := s.sessionInfo(r.Context(), user, &tenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not load session")
+		writeInternal(w, err, "could not load session")
 		return
 	}
 	writeJSON(w, http.StatusOK, info)

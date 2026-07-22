@@ -17,8 +17,12 @@ import { Route as AuthedDeliveryRouteImport } from './routes/_authed/delivery'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboarding'
 import { Route as AuthedOpnameRouteImport } from './routes/_authed/opname'
 import { Route as AuthedReceiveRouteImport } from './routes/_authed/receive'
-import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
+import { Route as AuthedSettingsRouteRouteImport } from './routes/_authed/settings/route'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings/index'
+import { Route as AuthedSettingsInvitesRouteImport } from './routes/_authed/settings/invites'
+import { Route as AuthedSettingsMembersRouteImport } from './routes/_authed/settings/members'
+import { Route as AuthedSettingsProfileRouteImport } from './routes/_authed/settings/profile'
 
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
@@ -59,7 +63,7 @@ const AuthedReceiveRoute = AuthedReceiveRouteImport.update({
   path: '/receive',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
-const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+const AuthedSettingsRouteRoute = AuthedSettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthedRouteRoute,
@@ -69,17 +73,41 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedSettingsIndexRoute = AuthedSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedSettingsRouteRoute,
+} as any)
+const AuthedSettingsInvitesRoute = AuthedSettingsInvitesRouteImport.update({
+  id: '/invites',
+  path: '/invites',
+  getParentRoute: () => AuthedSettingsRouteRoute,
+} as any)
+const AuthedSettingsMembersRoute = AuthedSettingsMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => AuthedSettingsRouteRoute,
+} as any)
+const AuthedSettingsProfileRoute = AuthedSettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthedSettingsRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof AuthedSettingsRouteRouteWithChildren
   '/delivery': typeof AuthedDeliveryRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/opname': typeof AuthedOpnameRoute
   '/receive': typeof AuthedReceiveRoute
-  '/settings': typeof AuthedSettingsRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/settings/invites': typeof AuthedSettingsInvitesRoute
+  '/settings/members': typeof AuthedSettingsMembersRoute
+  '/settings/profile': typeof AuthedSettingsProfileRoute
+  '/settings/': typeof AuthedSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -88,22 +116,29 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthedOnboardingRoute
   '/opname': typeof AuthedOpnameRoute
   '/receive': typeof AuthedReceiveRoute
-  '/settings': typeof AuthedSettingsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/': typeof AuthedIndexRoute
+  '/settings/invites': typeof AuthedSettingsInvitesRoute
+  '/settings/members': typeof AuthedSettingsMembersRoute
+  '/settings/profile': typeof AuthedSettingsProfileRoute
+  '/settings': typeof AuthedSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/_authed/settings': typeof AuthedSettingsRouteRouteWithChildren
   '/_authed/delivery': typeof AuthedDeliveryRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
   '/_authed/opname': typeof AuthedOpnameRoute
   '/_authed/receive': typeof AuthedReceiveRoute
-  '/_authed/settings': typeof AuthedSettingsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/settings/invites': typeof AuthedSettingsInvitesRoute
+  '/_authed/settings/members': typeof AuthedSettingsMembersRoute
+  '/_authed/settings/profile': typeof AuthedSettingsProfileRoute
+  '/_authed/settings/': typeof AuthedSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,12 +146,16 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/settings'
     | '/delivery'
     | '/onboarding'
     | '/opname'
     | '/receive'
-    | '/settings'
     | '/invite/$token'
+    | '/settings/invites'
+    | '/settings/members'
+    | '/settings/profile'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -125,21 +164,28 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/opname'
     | '/receive'
-    | '/settings'
     | '/invite/$token'
     | '/'
+    | '/settings/invites'
+    | '/settings/members'
+    | '/settings/profile'
+    | '/settings'
   id:
     | '__root__'
     | '/_authed'
     | '/login'
     | '/register'
+    | '/_authed/settings'
     | '/_authed/delivery'
     | '/_authed/onboarding'
     | '/_authed/opname'
     | '/_authed/receive'
-    | '/_authed/settings'
     | '/invite/$token'
     | '/_authed/'
+    | '/_authed/settings/invites'
+    | '/_authed/settings/members'
+    | '/_authed/settings/profile'
+    | '/_authed/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -211,7 +257,7 @@ declare module '@tanstack/react-router' {
       id: '/_authed/settings'
       path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof AuthedSettingsRouteImport
+      preLoaderRoute: typeof AuthedSettingsRouteRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
     '/invite/$token': {
@@ -221,24 +267,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/settings/': {
+      id: '/_authed/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthedSettingsIndexRouteImport
+      parentRoute: typeof AuthedSettingsRouteRoute
+    }
+    '/_authed/settings/invites': {
+      id: '/_authed/settings/invites'
+      path: '/invites'
+      fullPath: '/settings/invites'
+      preLoaderRoute: typeof AuthedSettingsInvitesRouteImport
+      parentRoute: typeof AuthedSettingsRouteRoute
+    }
+    '/_authed/settings/members': {
+      id: '/_authed/settings/members'
+      path: '/members'
+      fullPath: '/settings/members'
+      preLoaderRoute: typeof AuthedSettingsMembersRouteImport
+      parentRoute: typeof AuthedSettingsRouteRoute
+    }
+    '/_authed/settings/profile': {
+      id: '/_authed/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AuthedSettingsProfileRouteImport
+      parentRoute: typeof AuthedSettingsRouteRoute
+    }
   }
 }
 
+interface AuthedSettingsRouteRouteChildren {
+  AuthedSettingsInvitesRoute: typeof AuthedSettingsInvitesRoute
+  AuthedSettingsMembersRoute: typeof AuthedSettingsMembersRoute
+  AuthedSettingsProfileRoute: typeof AuthedSettingsProfileRoute
+  AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
+}
+
+const AuthedSettingsRouteRouteChildren: AuthedSettingsRouteRouteChildren = {
+  AuthedSettingsInvitesRoute: AuthedSettingsInvitesRoute,
+  AuthedSettingsMembersRoute: AuthedSettingsMembersRoute,
+  AuthedSettingsProfileRoute: AuthedSettingsProfileRoute,
+  AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,
+}
+
+const AuthedSettingsRouteRouteWithChildren =
+  AuthedSettingsRouteRoute._addFileChildren(AuthedSettingsRouteRouteChildren)
+
 interface AuthedRouteRouteChildren {
+  AuthedSettingsRouteRoute: typeof AuthedSettingsRouteRouteWithChildren
   AuthedDeliveryRoute: typeof AuthedDeliveryRoute
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
   AuthedOpnameRoute: typeof AuthedOpnameRoute
   AuthedReceiveRoute: typeof AuthedReceiveRoute
-  AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
+  AuthedSettingsRouteRoute: AuthedSettingsRouteRouteWithChildren,
   AuthedDeliveryRoute: AuthedDeliveryRoute,
   AuthedOnboardingRoute: AuthedOnboardingRoute,
   AuthedOpnameRoute: AuthedOpnameRoute,
   AuthedReceiveRoute: AuthedReceiveRoute,
-  AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedIndexRoute: AuthedIndexRoute,
 }
 

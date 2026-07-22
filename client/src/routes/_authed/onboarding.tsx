@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
+import { monthName } from "@/lib/format";
 import { queryClient } from "@/lib/query";
 import { sessionQueryOptions } from "@/lib/session";
 import { m } from "@/paraglide/messages";
-import { getLocale } from "@/paraglide/runtime";
 
 export const Route = createFileRoute("/_authed/onboarding")({
   component: OnboardingWizard,
@@ -23,6 +23,7 @@ function OnboardingWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [pendingActivation, setPendingActivation] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -48,8 +49,18 @@ function OnboardingWizard() {
         setFailed(true);
         return;
       }
-      await queryClient.refetchQueries(sessionQueryOptions);
+      // fetchQuery, not refetchQueries: login/register seed the session cache
+      // via setQueryData, which leaves the cached query without a queryFn, so
+      // refetchQueries would be a silent no-op and beforeLoad would bounce the
+      // user back here. fetchQuery runs the queryFn from the options directly.
+      await queryClient.fetchQuery(sessionQueryOptions);
       await router.invalidate();
+      // Past the soft cap (ADR-0012) the tenant starts inactive - explain the
+      // waiting state instead of dropping the user onto a 403'd dashboard.
+      if (!data.active) {
+        setPendingActivation(true);
+        return;
+      }
       await router.navigate({ to: "/" });
     },
   });
@@ -59,6 +70,22 @@ function OnboardingWizard() {
     m.onboarding_step_costing(),
     m.onboarding_step_warehouse(),
   ];
+
+  if (pendingActivation) {
+    return (
+      <main className="mx-auto w-full max-w-lg space-y-4 p-4">
+        <h1 className="text-2xl font-semibold">
+          {m.onboarding_pending_title()}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {m.onboarding_pending_hint()}
+        </p>
+        <Button onClick={() => router.navigate({ to: "/" })}>
+          {m.onboarding_pending_continue()}
+        </Button>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto w-full max-w-lg space-y-6 p-4">
@@ -129,13 +156,10 @@ function OnboardingWizard() {
                     onChange={(e) => field.handleChange(Number(e.target.value))}
                   >
                     {Array.from({ length: 12 }, (_, i) => {
-                      const monthName = new Date(2000, i, 1).toLocaleString(
-                        getLocale(),
-                        { month: "long" },
-                      );
+                      const name = monthName(i + 1);
                       return (
-                        <option key={monthName} value={i + 1}>
-                          {monthName}
+                        <option key={name} value={i + 1}>
+                          {name}
                         </option>
                       );
                     })}

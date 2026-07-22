@@ -25,7 +25,7 @@ hard-to-reverse decisions are recorded with their rationale in `adr/`.
 | D11 | AuthN | In-house: email/password, argon2id, server-side sessions. Google sign-in + TOTP later |
 | D12 | Warehouse UX | One responsive React app; warehouse screens mobile-first; camera barcode via PWA; online-only |
 | D13 | Hosting | Single VPS in Indonesia (Biznet Gio / IDCloudHost / GCP Jakarta) |
-| D14 | Billing | Manual invoicing + activation flag; zero billing code in v1 |
+| D14 | Billing | Manual invoicing + activation flag; zero billing code in v1. Amended by ADR-0012: first 3 self-served tenants per user start active, later ones await manual activation |
 | D15 | Sequencing | Pilot on average costing first; FIFO, fiscal-year switch, batch UX polish in later milestones |
 | D16 | Doc numbering | Gapless at posting per tenant/type/year; tenant-configurable template, edits apply at year rollover; default template in M1, config UI in M2 |
 
@@ -175,6 +175,8 @@ start selling - that is the D1 risk coming due.**
 - Automated cost_correction emission on reconciliation and backdated receipts
 - FEFO pick suggestions and expiry reporting for batch products
 - Document number template configuration UI, year-rollover activation (D16)
+- SMTP + email verification and password reset (completes ADR-0006; login
+  rate limiting shipped with the M0 review polish)
 
 Decomposed for parallel development (3 isolated tracks + a contract-freeze step)
 in `plans/m2-parallel.md`. Tracks fork only after the M1 baseline is on `main`.

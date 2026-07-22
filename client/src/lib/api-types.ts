@@ -1607,11 +1607,15 @@ export interface components {
             tenantId: string;
         };
         Tenant: {
+            /** @description Inactive tenants answer 403 tenant_inactive on every tenant-scoped request (ADR-0012) */
+            active: boolean;
             /** Format: uuid */
             id: string;
             name: string;
         };
         TenantProfile: {
+            /** @description Inactive tenants answer 403 tenant_inactive on every tenant-scoped request (ADR-0012) */
+            active: boolean;
             costingMethod: components["schemas"]["CostingMethod"];
             fiscalYearStartMonth: number;
             /** Format: uuid */
@@ -1697,6 +1701,15 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
+        /** @description Rate limit reached; retry later */
+        TooManyRequests: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
         /** @description Not authenticated */
         Unauthorized: {
             headers: {
@@ -1751,6 +1764,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     logout: {
@@ -3681,7 +3695,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Tenant created and activated for this session */
+            /** @description Tenant created and selected for this session; starts inactive past the creator's soft cap (ADR-0012) */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -3692,6 +3706,7 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             422: components["responses"]["ValidationError"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     listWarehouses: {

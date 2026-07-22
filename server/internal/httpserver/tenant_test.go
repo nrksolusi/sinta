@@ -129,3 +129,39 @@ func TestSwitchTenantWithoutSessionIsUnauthorized(t *testing.T) {
 		t.Fatalf("status = %d, want 401", resp.StatusCode)
 	}
 }
+
+func TestLoginRestoresLastActiveTenant(t *testing.T) {
+	ts := newTestServer(t)
+	cookie, tenantID := onboard(t, ts, "budi@toko-makmur.co.id")
+
+	// End the session entirely, then log in fresh.
+	req, _ := http.NewRequest(http.MethodPost, ts.URL+"/v1/auth/logout", nil)
+	req.AddCookie(cookie)
+	if resp, err := http.DefaultClient.Do(req); err == nil {
+		resp.Body.Close()
+	}
+	fresh := login(t, ts, "budi@toko-makmur.co.id", "kata-sandi-panjang")
+
+	status, active := getSessionInfo(t, ts, fresh)
+	if status != http.StatusOK || active != tenantID {
+		t.Errorf("fresh login activeTenantId = %q (status %d), want last active %q", active, status, tenantID)
+	}
+}
+
+func TestLoginIgnoresStaleLastActiveTenant(t *testing.T) {
+	ts := newTestServer(t)
+	cookie, tenantID := onboard(t, ts, "budi@toko-makmur.co.id")
+	_ = cookie
+
+	// Membership disappears (e.g. removed from the tenant).
+	if _, err := testPool.Exec(context.Background(),
+		"DELETE FROM memberships WHERE tenant_id = $1", tenantID); err != nil {
+		t.Fatalf("remove membership: %v", err)
+	}
+
+	fresh := login(t, ts, "budi@toko-makmur.co.id", "kata-sandi-panjang")
+	status, active := getSessionInfo(t, ts, fresh)
+	if status != http.StatusOK || active != "" {
+		t.Errorf("login with stale last-active tenant: activeTenantId = %q (status %d), want empty", active, status)
+	}
+}

@@ -9,7 +9,20 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const countTenantsCreatedBy = `-- name: CountTenantsCreatedBy :one
+SELECT count(*) FROM tenants
+WHERE created_by = $1
+`
+
+func (q *Queries) CountTenantsCreatedBy(ctx context.Context, createdBy pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countTenantsCreatedBy, createdBy)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const createMembership = `-- name: CreateMembership :one
 INSERT INTO memberships (user_id, tenant_id, role)
@@ -37,9 +50,9 @@ func (q *Queries) CreateMembership(ctx context.Context, arg CreateMembershipPara
 }
 
 const createTenant = `-- name: CreateTenant :one
-INSERT INTO tenants (name, legal_name, costing_method, fiscal_year_start_month, active)
-VALUES ($1, $2, $3, $4, true)
-RETURNING id, name, legal_name, costing_method, fiscal_year_start_month, active, created_at, updated_at
+INSERT INTO tenants (name, legal_name, costing_method, fiscal_year_start_month, active, created_by)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, name, legal_name, costing_method, fiscal_year_start_month, active, created_at, updated_at, created_by
 `
 
 type CreateTenantParams struct {
@@ -47,6 +60,8 @@ type CreateTenantParams struct {
 	LegalName            string
 	CostingMethod        string
 	FiscalYearStartMonth int32
+	Active               bool
+	CreatedBy            pgtype.UUID
 }
 
 func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Tenant, error) {
@@ -55,6 +70,8 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 		arg.LegalName,
 		arg.CostingMethod,
 		arg.FiscalYearStartMonth,
+		arg.Active,
+		arg.CreatedBy,
 	)
 	var i Tenant
 	err := row.Scan(
@@ -66,6 +83,7 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
 	)
 	return i, err
 }
@@ -97,7 +115,7 @@ func (q *Queries) CreateWarehouse(ctx context.Context, arg CreateWarehouseParams
 }
 
 const getTenant = `-- name: GetTenant :one
-SELECT id, name, legal_name, costing_method, fiscal_year_start_month, active, created_at, updated_at FROM tenants
+SELECT id, name, legal_name, costing_method, fiscal_year_start_month, active, created_at, updated_at, created_by FROM tenants
 WHERE id = $1
 `
 
@@ -113,6 +131,7 @@ func (q *Queries) GetTenant(ctx context.Context, id uuid.UUID) (Tenant, error) {
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
 	)
 	return i, err
 }
@@ -124,7 +143,7 @@ SET name = $2,
     fiscal_year_start_month = $4,
     updated_at = now()
 WHERE id = $1
-RETURNING id, name, legal_name, costing_method, fiscal_year_start_month, active, created_at, updated_at
+RETURNING id, name, legal_name, costing_method, fiscal_year_start_month, active, created_at, updated_at, created_by
 `
 
 type UpdateTenantParams struct {
@@ -151,6 +170,7 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Ten
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CreatedBy,
 	)
 	return i, err
 }

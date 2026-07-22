@@ -51,6 +51,12 @@ components:
                     schema:
                         $ref: '#/components/schemas/Error'
             description: Resource not found
+        TooManyRequests:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+            description: Rate limit reached; retry later
         Unauthorized:
             content:
                 application/json:
@@ -1374,6 +1380,9 @@ components:
             type: object
         Tenant:
             properties:
+                active:
+                    description: Inactive tenants answer 403 tenant_inactive on every tenant-scoped request (ADR-0012)
+                    type: boolean
                 id:
                     format: uuid
                     type: string
@@ -1382,9 +1391,13 @@ components:
             required:
                 - id
                 - name
+                - active
             type: object
         TenantProfile:
             properties:
+                active:
+                    description: Inactive tenants answer 403 tenant_inactive on every tenant-scoped request (ADR-0012)
+                    type: boolean
                 costingMethod:
                     $ref: '#/components/schemas/CostingMethod'
                 fiscalYearStartMonth:
@@ -1405,6 +1418,7 @@ components:
                 - costingMethod
                 - fiscalYearStartMonth
                 - myRole
+                - active
             type: object
         UpdateMemberRequest:
             properties:
@@ -1539,6 +1553,8 @@ paths:
                     description: Session started (session cookie set)
                 "401":
                     $ref: '#/components/responses/Unauthorized'
+                "429":
+                    $ref: '#/components/responses/TooManyRequests'
             security: []
             summary: Authenticate and start a session
     /auth/logout:
@@ -3191,11 +3207,13 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/TenantProfile'
-                    description: Tenant created and activated for this session
+                    description: Tenant created and selected for this session; starts inactive past the creator's soft cap (ADR-0012)
                 "401":
                     $ref: '#/components/responses/Unauthorized'
                 "422":
                     $ref: '#/components/responses/ValidationError'
+                "429":
+                    $ref: '#/components/responses/TooManyRequests'
             summary: Onboard a new tenant with its first warehouse; creator becomes owner
     /warehouses:
         get:

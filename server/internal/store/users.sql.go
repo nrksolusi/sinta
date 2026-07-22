@@ -9,12 +9,13 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (email, password_hash, name)
 VALUES ($1, $2, $3)
-RETURNING id, email, password_hash, name, status, created_at, updated_at
+RETURNING id, email, password_hash, name, status, created_at, updated_at, last_active_tenant_id
 `
 
 type CreateUserParams struct {
@@ -34,12 +35,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastActiveTenantID,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password_hash, name, status, created_at, updated_at FROM users
+SELECT id, email, password_hash, name, status, created_at, updated_at, last_active_tenant_id FROM users
 WHERE email = $1
 `
 
@@ -54,12 +56,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastActiveTenantID,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, password_hash, name, status, created_at, updated_at FROM users
+SELECT id, email, password_hash, name, status, created_at, updated_at, last_active_tenant_id FROM users
 WHERE id = $1
 `
 
@@ -74,6 +77,24 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastActiveTenantID,
 	)
 	return i, err
+}
+
+const setUserLastActiveTenant = `-- name: SetUserLastActiveTenant :exec
+UPDATE users
+SET last_active_tenant_id = $2,
+    updated_at = now()
+WHERE id = $1
+`
+
+type SetUserLastActiveTenantParams struct {
+	ID                 uuid.UUID
+	LastActiveTenantID pgtype.UUID
+}
+
+func (q *Queries) SetUserLastActiveTenant(ctx context.Context, arg SetUserLastActiveTenantParams) error {
+	_, err := q.db.Exec(ctx, setUserLastActiveTenant, arg.ID, arg.LastActiveTenantID)
+	return err
 }

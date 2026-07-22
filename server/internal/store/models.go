@@ -324,16 +324,18 @@ type Tenant struct {
 	Active               bool
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
+	CreatedBy            pgtype.UUID
 }
 
 type User struct {
-	ID           uuid.UUID
-	Email        string
-	PasswordHash string
-	Name         string
-	Status       string
-	CreatedAt    pgtype.Timestamptz
-	UpdatedAt    pgtype.Timestamptz
+	ID                 uuid.UUID
+	Email              string
+	PasswordHash       string
+	Name               string
+	Status             string
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+	LastActiveTenantID pgtype.UUID
 }
 
 type Warehouse struct {

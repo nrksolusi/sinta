@@ -4,7 +4,12 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { expect, test, vi } from "vitest";
 import type { Product } from "@/lib/catalog";
+import { overwriteGetLocale } from "@/paraglide/runtime";
 import { type DocLine, LineEditor } from "./line-editor";
+
+// The app's baseLocale is Indonesian (primary UI language); pin English here so
+// these assertions on UI copy are deterministic.
+overwriteGetLocale(() => "en");
 
 // Stub the camera scanner: it only needs to surface a "scan" button that fires
 // onScan with a known barcode. The real BarcodeScanner is exercised by its own

@@ -1,6 +1,6 @@
 -- name: CreateSession :one
-INSERT INTO sessions (user_id, expires_at)
-VALUES ($1, $2)
+INSERT INTO sessions (user_id, active_tenant_id, expires_at)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetSession :one

@@ -2,7 +2,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
+import { overwriteGetLocale } from "@/paraglide/runtime";
 import { BarcodeScanner } from "./barcode-scanner";
+
+// The app's baseLocale is Indonesian (primary UI language); pin English here so
+// these assertions on UI copy are deterministic.
+overwriteGetLocale(() => "en");
 
 // Under jsdom navigator.mediaDevices.getUserMedia is absent, so the component
 // takes the "unsupported" branch and must still let the user enter a barcode by

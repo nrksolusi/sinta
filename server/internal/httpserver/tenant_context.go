@@ -50,7 +50,7 @@ func (s *Server) requireTenant(w http.ResponseWriter, r *http.Request) (tenantCt
 
 	tenant, err := s.queries.GetTenant(r.Context(), tenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not load tenant")
+		writeInternal(w, err, "could not load tenant")
 		return tenantCtx{}, false
 	}
 	// D14: the activation flag is the manual billing kill-switch.

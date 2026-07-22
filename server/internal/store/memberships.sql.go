@@ -35,7 +35,7 @@ func (q *Queries) GetMembership(ctx context.Context, arg GetMembershipParams) (M
 }
 
 const listMembershipsForUser = `-- name: ListMembershipsForUser :many
-SELECT m.role, t.id AS tenant_id, t.name AS tenant_name
+SELECT m.role, t.id AS tenant_id, t.name AS tenant_name, t.active AS tenant_active
 FROM memberships m
 JOIN tenants t ON t.id = m.tenant_id
 WHERE m.user_id = $1
@@ -43,9 +43,10 @@ ORDER BY t.name
 `
 
 type ListMembershipsForUserRow struct {
-	Role       string
-	TenantID   uuid.UUID
-	TenantName string
+	Role         string
+	TenantID     uuid.UUID
+	TenantName   string
+	TenantActive bool
 }
 
 func (q *Queries) ListMembershipsForUser(ctx context.Context, userID uuid.UUID) ([]ListMembershipsForUserRow, error) {
@@ -57,7 +58,12 @@ func (q *Queries) ListMembershipsForUser(ctx context.Context, userID uuid.UUID) 
 	var items []ListMembershipsForUserRow
 	for rows.Next() {
 		var i ListMembershipsForUserRow
-		if err := rows.Scan(&i.Role, &i.TenantID, &i.TenantName); err != nil {
+		if err := rows.Scan(
+			&i.Role,
+			&i.TenantID,
+			&i.TenantName,
+			&i.TenantActive,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

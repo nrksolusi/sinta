@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,7 +27,7 @@ func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 
 	hash, err := auth.HashPassword(req.Password)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not process password")
+		writeInternal(w, err, "could not process password")
 		return
 	}
 
@@ -41,7 +42,7 @@ func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusConflict, "email_taken", "an account with this email already exists")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, "internal", "could not create account")
+		writeInternal(w, err, "could not create account")
 		return
 	}
 
@@ -59,32 +60,57 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	limiterKey := strings.ToLower(string(req.Email))
+	if s.loginLimiter.TooMany(limiterKey) {
+		writeError(w, http.StatusTooManyRequests, "too_many_attempts", "too many failed attempts; try again later")
+		return
+	}
+
 	user, err := s.queries.GetUserByEmail(r.Context(), string(req.Email))
 	if err != nil {
 		// Same response as a wrong password so accounts cannot be enumerated.
+		s.loginLimiter.Record(limiterKey)
 		writeError(w, http.StatusUnauthorized, "invalid_credentials", "email or password is incorrect")
 		return
 	}
 
 	ok, err := auth.VerifyPassword(user.PasswordHash, req.Password)
 	if err != nil || !ok {
+		s.loginLimiter.Record(limiterKey)
 		writeError(w, http.StatusUnauthorized, "invalid_credentials", "email or password is incorrect")
 		return
+	}
+	s.loginLimiter.Reset(limiterKey)
+
+	// Restore the user's last active tenant, but only if the membership still
+	// exists - never guess a default.
+	var activeTenant pgtype.UUID
+	var activeTenantID *uuid.UUID
+	if user.LastActiveTenantID.Valid {
+		lastActive := uuid.UUID(user.LastActiveTenantID.Bytes)
+		if _, err := s.queries.GetMembership(r.Context(), store.GetMembershipParams{
+			UserID:   user.ID,
+			TenantID: lastActive,
+		}); err == nil {
+			activeTenant = user.LastActiveTenantID
+			activeTenantID = &lastActive
+		}
 	}
 
 	expires := time.Now().Add(sessionTTL)
 	session, err := s.queries.CreateSession(r.Context(), store.CreateSessionParams{
-		UserID:    user.ID,
-		ExpiresAt: pgtype.Timestamptz{Time: expires, Valid: true},
+		UserID:         user.ID,
+		ActiveTenantID: activeTenant,
+		ExpiresAt:      pgtype.Timestamptz{Time: expires, Valid: true},
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not start session")
+		writeInternal(w, err, "could not start session")
 		return
 	}
 
-	info, err := s.sessionInfo(r.Context(), user, nil)
+	info, err := s.sessionInfo(r.Context(), user, activeTenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not load session")
+		writeInternal(w, err, "could not load session")
 		return
 	}
 
@@ -99,7 +125,7 @@ func (s *Server) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.queries.DeleteSession(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not end session")
+		writeInternal(w, err, "could not end session")
 		return
 	}
 	clearSessionCookie(w, r)
@@ -121,7 +147,7 @@ func (s *Server) GetSession(w http.ResponseWriter, r *http.Request) {
 
 	info, err := s.sessionInfo(r.Context(), user, activeTenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not load session")
+		writeInternal(w, err, "could not load session")
 		return
 	}
 	writeJSON(w, http.StatusOK, info)
@@ -153,13 +179,21 @@ func (s *Server) SwitchTenant(w http.ResponseWriter, r *http.Request) {
 		ID:             session.ID,
 		ActiveTenantID: pgtype.UUID{Bytes: req.TenantId, Valid: true},
 	}); err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not switch tenant")
+		writeInternal(w, err, "could not switch tenant")
+		return
+	}
+	// Remember the choice so the next login starts here.
+	if err := s.queries.SetUserLastActiveTenant(r.Context(), store.SetUserLastActiveTenantParams{
+		ID:                 user.ID,
+		LastActiveTenantID: pgtype.UUID{Bytes: req.TenantId, Valid: true},
+	}); err != nil {
+		writeInternal(w, err, "could not switch tenant")
 		return
 	}
 
 	info, err := s.sessionInfo(r.Context(), user, &req.TenantId)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not load session")
+		writeInternal(w, err, "could not load session")
 		return
 	}
 	writeJSON(w, http.StatusOK, info)

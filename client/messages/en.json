@@ -25,7 +25,7 @@
   "onboarding_legal_name": "Legal name (optional)",
   "onboarding_fiscal_month": "Fiscal year starts in",
   "onboarding_costing_hint": "How stock is valued. This is locked after setup and can only change at a fiscal year boundary.",
-  "onboarding_costing_avg": "Weighted average",
+  "onboarding_costing_avg": "Weighted Average Cost",
   "onboarding_costing_avg_hint": "Each receipt re-averages the cost. Recommended for most distributors.",
   "onboarding_costing_fifo": "FIFO",
   "onboarding_costing_fifo_hint": "Oldest stock is issued first at its own cost.",
@@ -36,6 +36,10 @@
   "onboarding_next": "Next",
   "onboarding_submit": "Create company",
   "onboarding_failed": "Could not create the company. Please try again.",
+  "onboarding_pending_title": "Awaiting activation",
+  "onboarding_pending_hint": "Your company was created but is not active yet. Contact us to activate it.",
+  "onboarding_pending_continue": "Go to dashboard",
+  "tenant_inactive_banner": "This company is awaiting activation. Contact us to activate it.",
   "settings_title": "Company settings",
   "settings_profile": "Profile",
   "settings_save": "Save",
@@ -63,7 +67,7 @@
   "nav_dashboard": "Dashboard",
   "nav_settings": "Settings",
   "error_generic": "Something went wrong. Please try again.",
-  "onboarding_costing_fifo_soon": "Available soon - the pilot runs on weighted average first",
+  "onboarding_costing_fifo_soon": "Available soon - only Weighted Average Cost is available for now",
   "nav_receive": "Receive",
   "nav_delivery": "Delivery",
   "nav_opname": "Opname",
@@ -97,5 +101,8 @@
   "scan_close": "Close",
   "doc_create_failed": "Could not create the document. Please try again.",
   "doc_post_failed": "Could not post the document. Please try again.",
-  "doc_posted": "Document {number} posted"
+  "doc_posted": "Document {number} posted",
+  "settings_company_name": "Company name",
+  "settings_legal_name": "Legal name",
+  "settings_costing_label": "Stock valuation:"
 }

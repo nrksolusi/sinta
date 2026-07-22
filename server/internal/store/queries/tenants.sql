@@ -1,7 +1,11 @@
 -- name: CreateTenant :one
-INSERT INTO tenants (name, legal_name, costing_method, fiscal_year_start_month, active)
-VALUES ($1, $2, $3, $4, true)
+INSERT INTO tenants (name, legal_name, costing_method, fiscal_year_start_month, active, created_by)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
+
+-- name: CountTenantsCreatedBy :one
+SELECT count(*) FROM tenants
+WHERE created_by = $1;
 
 -- name: GetTenant :one
 SELECT * FROM tenants
