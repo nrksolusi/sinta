@@ -11,6 +11,9 @@ server/bin/
 # dev.sh runtime (pids, logs)
 .run/
 
+# Git worktrees for parallel tracks
+.wt/
+
 # Environment - secrets never enter git (CONVENTIONS.md)
 .env
 .env.*

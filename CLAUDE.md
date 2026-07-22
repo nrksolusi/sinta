@@ -49,6 +49,14 @@ pace - keep changes small and scoped.
   word is the genuinely native usage. When unsure, search before deciding.
 - Banned vocabulary: ledger, workspace, organization, stocktake, item.
   See the glossary for the canonical terms.
+- Client UI stack (docs/PLAN.md stack decision): interactive primitives come
+  from shadcn components in `client/src/components/ui` - generate the component
+  (`pnpm dlx shadcn@latest add <name>`) instead of hand-rolling styled
+  `<input>`/`<select>`/`<table>` elements. Forms go through TanStack Form; data
+  lists and reports go through TanStack Table. Retrofit of pre-existing screens
+  is tracked in `docs/plans/fix-1-ui-stack-retrofit.md`; layout and visual
+  design (app shell, page templates, prototypes) in
+  `docs/plans/fix-2-ui-redesign.md`.
 
 ## Workflow
 
