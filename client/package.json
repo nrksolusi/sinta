@@ -61,6 +61,7 @@
     "typescript": "~6",
     "typescript-eslint": "^8",
     "vite": "^8",
+    "vite-plugin-mkcert": "^2.1.0",
     "vitest": "^4.1.10"
   }
 }
