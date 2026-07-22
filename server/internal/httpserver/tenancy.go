@@ -357,7 +357,7 @@ func newInviteToken() (string, error) {
 
 func validRole(role api.Role) bool {
 	switch role {
-	case api.Owner, api.Admin, api.Warehouse, api.Sales, api.Viewer:
+	case api.RoleOwner, api.RoleAdmin, api.RoleWarehouse, api.RoleSales, api.RoleViewer:
 		return true
 	}
 	return false

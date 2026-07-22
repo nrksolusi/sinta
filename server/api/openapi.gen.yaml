@@ -3,6 +3,14 @@
 # Edit those, then run `go generate ./...` from server/.
 
 components:
+    parameters:
+        ProductId:
+            in: path
+            name: productId
+            required: true
+            schema:
+                format: uuid
+                type: string
     responses:
         Conflict:
             content:
@@ -16,6 +24,12 @@ components:
                     schema:
                         $ref: '#/components/schemas/Error'
             description: Authenticated but not permitted
+        NotFound:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+            description: Resource not found
         Unauthorized:
             content:
                 application/json:
@@ -29,18 +43,102 @@ components:
                         $ref: '#/components/schemas/Error'
             description: Request failed validation
     schemas:
+        Batch:
+            properties:
+                batchNo:
+                    type: string
+                expiryDate:
+                    description: Optional expiry date
+                    format: date
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                productId:
+                    format: uuid
+                    type: string
+            required:
+                - id
+                - productId
+                - batchNo
+            type: object
+        CatalogStatus:
+            enum:
+                - active
+                - archived
+            type: string
         CostingMethod:
             description: Locked at onboarding; switchable only at a fiscal year boundary (ADR-0002)
             enum:
                 - weightedAverage
                 - fifo
             type: string
+        CreateBatchRequest:
+            properties:
+                batchNo:
+                    minLength: 1
+                    type: string
+                expiryDate:
+                    format: date
+                    type: string
+            required:
+                - batchNo
+            type: object
         CreateInviteRequest:
             properties:
                 role:
                     $ref: '#/components/schemas/Role'
             required:
                 - role
+            type: object
+        CreatePartnerRequest:
+            properties:
+                code:
+                    type: string
+                isCustomer:
+                    default: false
+                    type: boolean
+                isSupplier:
+                    default: false
+                    type: boolean
+                name:
+                    minLength: 1
+                    type: string
+            required:
+                - name
+            type: object
+        CreateProductRequest:
+            properties:
+                barcode:
+                    type: string
+                baseUom:
+                    minLength: 1
+                    type: string
+                isBatchTracked:
+                    default: false
+                    type: boolean
+                name:
+                    minLength: 1
+                    type: string
+                sku:
+                    minLength: 1
+                    type: string
+            required:
+                - sku
+                - name
+                - baseUom
+            type: object
+        CreateProductUomRequest:
+            properties:
+                factorToBase:
+                    description: Positive decimal factor to the base unit
+                    type: string
+                uom:
+                    minLength: 1
+                    type: string
+            required:
+                - uom
+                - factorToBase
             type: object
         CreateTenantRequest:
             properties:
@@ -155,6 +253,75 @@ components:
                 - tenant
                 - role
             type: object
+        Partner:
+            properties:
+                code:
+                    description: Optional; unique within a tenant when present
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                isCustomer:
+                    type: boolean
+                isSupplier:
+                    type: boolean
+                name:
+                    type: string
+                status:
+                    $ref: '#/components/schemas/CatalogStatus'
+            required:
+                - id
+                - name
+                - isSupplier
+                - isCustomer
+                - status
+            type: object
+        Product:
+            properties:
+                barcode:
+                    description: Optional; unique within a tenant when present
+                    type: string
+                baseUom:
+                    description: The unit a product's stock is counted in (glossary "Base unit")
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                isBatchTracked:
+                    type: boolean
+                name:
+                    type: string
+                sku:
+                    type: string
+                status:
+                    $ref: '#/components/schemas/CatalogStatus'
+            required:
+                - id
+                - sku
+                - name
+                - baseUom
+                - isBatchTracked
+                - status
+            type: object
+        ProductUom:
+            properties:
+                factorToBase:
+                    description: Decimal factor to the base unit (carton = "24"); numeric, sent as string to preserve precision
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                productId:
+                    format: uuid
+                    type: string
+                uom:
+                    type: string
+            required:
+                - id
+                - productId
+                - uom
+                - factorToBase
+            type: object
         RegisterRequest:
             properties:
                 email:
@@ -245,6 +412,39 @@ components:
             required:
                 - role
             type: object
+        UpdatePartnerRequest:
+            description: Patch semantics; absent fields keep their current value
+            properties:
+                code:
+                    description: Empty string clears the code
+                    type: string
+                isCustomer:
+                    type: boolean
+                isSupplier:
+                    type: boolean
+                name:
+                    minLength: 1
+                    type: string
+                status:
+                    $ref: '#/components/schemas/CatalogStatus'
+            type: object
+        UpdateProductRequest:
+            description: Patch semantics; absent fields keep their current value
+            properties:
+                barcode:
+                    description: Empty string clears the barcode
+                    type: string
+                baseUom:
+                    minLength: 1
+                    type: string
+                isBatchTracked:
+                    type: boolean
+                name:
+                    minLength: 1
+                    type: string
+                status:
+                    $ref: '#/components/schemas/CatalogStatus'
+            type: object
         UpdateTenantRequest:
             properties:
                 fiscalYearStartMonth:
@@ -252,6 +452,16 @@ components:
                     minimum: 1
                     type: integer
                 legalName:
+                    type: string
+                name:
+                    minLength: 1
+                    type: string
+            type: object
+        UpdateWarehouseRequest:
+            description: Patch semantics; absent fields keep their current value
+            properties:
+                code:
+                    minLength: 1
                     type: string
                 name:
                     minLength: 1
@@ -270,6 +480,20 @@ components:
             required:
                 - id
                 - email
+                - name
+            type: object
+        Warehouse:
+            properties:
+                code:
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+                name:
+                    type: string
+            required:
+                - id
+                - code
                 - name
             type: object
         WarehouseInput:
@@ -454,6 +678,319 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Invite expired
             summary: Join the inviting tenant with the invite's role
+    /partners:
+        get:
+            operationId: listPartners
+            parameters:
+                - description: Filter to partners that are a supplier or a customer
+                  in: query
+                  name: role
+                  required: false
+                  schema:
+                    enum:
+                        - supplier
+                        - customer
+                    type: string
+                - in: query
+                  name: status
+                  required: false
+                  schema:
+                    $ref: '#/components/schemas/CatalogStatus'
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/Partner'
+                                type: array
+                    description: Partners
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: List partners in the active tenant
+        post:
+            operationId: createPartner
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreatePartnerRequest'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Partner'
+                    description: Partner created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a partner
+    /partners/{partnerId}:
+        get:
+            operationId: getPartner
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Partner'
+                    description: Partner
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: Get a partner
+        parameters:
+            - in: path
+              name: partnerId
+              required: true
+              schema:
+                format: uuid
+                type: string
+        patch:
+            operationId: updatePartner
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdatePartnerRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Partner'
+                    description: Updated partner
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Update a partner
+    /products:
+        get:
+            operationId: listProducts
+            parameters:
+                - in: query
+                  name: status
+                  required: false
+                  schema:
+                    $ref: '#/components/schemas/CatalogStatus'
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/Product'
+                                type: array
+                    description: Products
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: List products in the active tenant
+        post:
+            operationId: createProduct
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateProductRequest'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Product'
+                    description: Product created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a product
+    /products/{productId}:
+        get:
+            operationId: getProduct
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Product'
+                    description: Product
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: Get a product
+        parameters:
+            - $ref: '#/components/parameters/ProductId'
+        patch:
+            operationId: updateProduct
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateProductRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Product'
+                    description: Updated product
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Update a product
+    /products/{productId}/batches:
+        get:
+            operationId: listProductBatches
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/Batch'
+                                type: array
+                    description: Batches
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: List a product's batches
+        parameters:
+            - $ref: '#/components/parameters/ProductId'
+        post:
+            operationId: createBatch
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateBatchRequest'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Batch'
+                    description: Batch created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a batch for a batch-tracked product
+    /products/{productId}/uoms:
+        get:
+            operationId: listProductUoms
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/ProductUom'
+                                type: array
+                    description: Unit conversions
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: List a product's unit conversions
+        parameters:
+            - $ref: '#/components/parameters/ProductId'
+        post:
+            operationId: createProductUom
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateProductUomRequest'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProductUom'
+                    description: Unit conversion created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Add a unit conversion to a product
+    /products/{productId}/uoms/{uomId}:
+        delete:
+            operationId: deleteProductUom
+            responses:
+                "204":
+                    description: Unit conversion removed
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+            summary: Remove a unit conversion
+        parameters:
+            - $ref: '#/components/parameters/ProductId'
+            - in: path
+              name: uomId
+              required: true
+              schema:
+                format: uuid
+                type: string
     /tenant:
         get:
             operationId: getTenant
@@ -626,6 +1163,81 @@ paths:
                 "422":
                     $ref: '#/components/responses/ValidationError'
             summary: Onboard a new tenant with its first warehouse; creator becomes owner
+    /warehouses:
+        get:
+            operationId: listWarehouses
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/Warehouse'
+                                type: array
+                    description: Warehouses
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+            summary: List warehouses in the active tenant
+        post:
+            operationId: createWarehouse
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WarehouseInput'
+                required: true
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Warehouse'
+                    description: Warehouse created
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Create a warehouse
+    /warehouses/{warehouseId}:
+        parameters:
+            - in: path
+              name: warehouseId
+              required: true
+              schema:
+                format: uuid
+                type: string
+        patch:
+            operationId: updateWarehouse
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateWarehouseRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Warehouse'
+                    description: Updated warehouse
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+                "422":
+                    $ref: '#/components/responses/ValidationError'
+            summary: Update a warehouse
 security:
     - sessionCookie: []
 servers:
