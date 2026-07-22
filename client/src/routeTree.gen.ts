@@ -33,6 +33,9 @@ import { Route as AuthedSettingsProfileRouteImport } from './routes/_authed/sett
 import { Route as AuthedCatalogPartnersIdRouteImport } from './routes/_authed/catalog/partners.$id'
 import { Route as AuthedCatalogProductsIdRouteImport } from './routes/_authed/catalog/products.$id'
 import { Route as AuthedCatalogWarehousesIdRouteImport } from './routes/_authed/catalog/warehouses.$id'
+import { Route as AuthedSalesDeliveriesIndexRouteImport } from './routes/_authed/sales/deliveries/index'
+import { Route as AuthedSalesDeliveriesIdRouteImport } from './routes/_authed/sales/deliveries/$id'
+import { Route as AuthedSalesDeliveriesNewRouteImport } from './routes/_authed/sales/deliveries/new'
 
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
@@ -155,6 +158,23 @@ const AuthedCatalogWarehousesIdRoute =
     path: '/$id',
     getParentRoute: () => AuthedCatalogWarehousesRoute,
   } as any)
+const AuthedSalesDeliveriesIndexRoute =
+  AuthedSalesDeliveriesIndexRouteImport.update({
+    id: '/sales/deliveries/',
+    path: '/sales/deliveries/',
+    getParentRoute: () => AuthedRouteRoute,
+  } as any)
+const AuthedSalesDeliveriesIdRoute = AuthedSalesDeliveriesIdRouteImport.update({
+  id: '/sales/deliveries/$id',
+  path: '/sales/deliveries/$id',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedSalesDeliveriesNewRoute =
+  AuthedSalesDeliveriesNewRouteImport.update({
+    id: '/sales/deliveries/new',
+    path: '/sales/deliveries/new',
+    getParentRoute: () => AuthedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -180,6 +200,9 @@ export interface FileRoutesByFullPath {
   '/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/sales/deliveries/$id': typeof AuthedSalesDeliveriesIdRoute
+  '/sales/deliveries/new': typeof AuthedSalesDeliveriesNewRoute
+  '/sales/deliveries/': typeof AuthedSalesDeliveriesIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -203,6 +226,9 @@ export interface FileRoutesByTo {
   '/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/sales/deliveries/$id': typeof AuthedSalesDeliveriesIdRoute
+  '/sales/deliveries/new': typeof AuthedSalesDeliveriesNewRoute
+  '/sales/deliveries': typeof AuthedSalesDeliveriesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -230,6 +256,9 @@ export interface FileRoutesById {
   '/_authed/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/_authed/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/_authed/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/_authed/sales/deliveries/$id': typeof AuthedSalesDeliveriesIdRoute
+  '/_authed/sales/deliveries/new': typeof AuthedSalesDeliveriesNewRoute
+  '/_authed/sales/deliveries/': typeof AuthedSalesDeliveriesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -257,6 +286,9 @@ export interface FileRouteTypes {
     | '/catalog/partners/$id'
     | '/catalog/products/$id'
     | '/catalog/warehouses/$id'
+    | '/sales/deliveries/$id'
+    | '/sales/deliveries/new'
+    | '/sales/deliveries/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -280,6 +312,9 @@ export interface FileRouteTypes {
     | '/catalog/partners/$id'
     | '/catalog/products/$id'
     | '/catalog/warehouses/$id'
+    | '/sales/deliveries/$id'
+    | '/sales/deliveries/new'
+    | '/sales/deliveries'
   id:
     | '__root__'
     | '/_authed'
@@ -306,6 +341,9 @@ export interface FileRouteTypes {
     | '/_authed/catalog/partners/$id'
     | '/_authed/catalog/products/$id'
     | '/_authed/catalog/warehouses/$id'
+    | '/_authed/sales/deliveries/$id'
+    | '/_authed/sales/deliveries/new'
+    | '/_authed/sales/deliveries/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -485,6 +523,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCatalogWarehousesIdRouteImport
       parentRoute: typeof AuthedCatalogWarehousesRoute
     }
+    '/_authed/sales/deliveries/': {
+      id: '/_authed/sales/deliveries/'
+      path: '/sales/deliveries'
+      fullPath: '/sales/deliveries/'
+      preLoaderRoute: typeof AuthedSalesDeliveriesIndexRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/sales/deliveries/$id': {
+      id: '/_authed/sales/deliveries/$id'
+      path: '/sales/deliveries/$id'
+      fullPath: '/sales/deliveries/$id'
+      preLoaderRoute: typeof AuthedSalesDeliveriesIdRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/sales/deliveries/new': {
+      id: '/_authed/sales/deliveries/new'
+      path: '/sales/deliveries/new'
+      fullPath: '/sales/deliveries/new'
+      preLoaderRoute: typeof AuthedSalesDeliveriesNewRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
   }
 }
 
@@ -572,6 +631,9 @@ interface AuthedRouteRouteChildren {
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedReportsStockOnHandRoute: typeof AuthedReportsStockOnHandRoute
   AuthedReportsValuationRoute: typeof AuthedReportsValuationRoute
+  AuthedSalesDeliveriesIdRoute: typeof AuthedSalesDeliveriesIdRoute
+  AuthedSalesDeliveriesNewRoute: typeof AuthedSalesDeliveriesNewRoute
+  AuthedSalesDeliveriesIndexRoute: typeof AuthedSalesDeliveriesIndexRoute
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
@@ -584,6 +646,9 @@ const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedReportsStockOnHandRoute: AuthedReportsStockOnHandRoute,
   AuthedReportsValuationRoute: AuthedReportsValuationRoute,
+  AuthedSalesDeliveriesIdRoute: AuthedSalesDeliveriesIdRoute,
+  AuthedSalesDeliveriesNewRoute: AuthedSalesDeliveriesNewRoute,
+  AuthedSalesDeliveriesIndexRoute: AuthedSalesDeliveriesIndexRoute,
 }
 
 const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
