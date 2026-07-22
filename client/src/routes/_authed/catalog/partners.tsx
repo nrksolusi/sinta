@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -63,17 +65,96 @@ function PartnersPage() {
     await invalidatePartners();
   };
 
-  const setStatus = async (partner: Partner, status: "active" | "archived") => {
-    const { response } = await api.PATCH("/partners/{partnerId}", {
-      params: { path: { partnerId: partner.id } },
-      body: { status },
-    });
-    if (!response.ok) {
-      toast.error(m.error_generic());
-      return;
-    }
-    await invalidatePartners();
-  };
+  const setStatus = useCallback(
+    async (partner: Partner, status: "active" | "archived") => {
+      const { response } = await api.PATCH("/partners/{partnerId}", {
+        params: { path: { partnerId: partner.id } },
+        body: { status },
+      });
+      if (!response.ok) {
+        toast.error(m.error_generic());
+        return;
+      }
+      await invalidatePartners();
+    },
+    [],
+  );
+
+  const editingId = editing !== "new" && editing ? editing.id : null;
+
+  const columns = useMemo<ColumnDef<Partner>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: m.field_partner_name(),
+        cell: ({ row }) => (
+          <span className="font-medium">
+            {row.original.name}
+            {row.original.status === "archived" && (
+              <Badge variant="secondary" className="ml-2 font-normal">
+                {m.catalog_status_archived()}
+              </Badge>
+            )}
+          </span>
+        ),
+      },
+      {
+        id: "details",
+        enableSorting: false,
+        header: () => null,
+        cell: ({ row }) => {
+          const partner = row.original;
+          return (
+            <span className="text-sm text-muted-foreground">
+              {[
+                partner.code,
+                partner.isSupplier ? m.field_supplier() : null,
+                partner.isCustomer ? m.field_customer() : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
+          );
+        },
+      },
+      {
+        id: "actions",
+        enableSorting: false,
+        header: () => null,
+        cell: ({ row }) => {
+          const partner = row.original;
+          return (
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setEditing(editingId === partner.id ? null : partner)
+                }
+              >
+                {m.action_edit()}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setStatus(
+                    partner,
+                    partner.status === "active" ? "archived" : "active",
+                  )
+                }
+              >
+                {partner.status === "active"
+                  ? m.catalog_archive()
+                  : m.catalog_activate()}
+              </Button>
+            </div>
+          );
+        },
+      },
+    ],
+    [editingId, setStatus],
+  );
 
   return (
     <section className="space-y-4">
@@ -103,74 +184,24 @@ function PartnersPage() {
         </div>
       )}
 
-      {partners.length === 0 && editing !== "new" && (
+      {partners.length === 0 && editing !== "new" ? (
         <p className="text-sm text-muted-foreground">{m.catalog_empty()}</p>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={partners}
+          getRowId={(p) => p.id}
+          expandedRowId={editingId}
+          renderExpandedRow={(partner) => (
+            <PartnerForm
+              key={partner.id}
+              partner={partner}
+              onSubmit={save}
+              onCancel={() => setEditing(null)}
+            />
+          )}
+        />
       )}
-
-      <ul className="divide-y rounded-md border empty:hidden">
-        {partners.map((partner) => (
-          <li key={partner.id} className="space-y-3 p-3">
-            <div className="flex items-center gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">
-                  {partner.name}
-                  {partner.status === "archived" && (
-                    <Badge variant="secondary" className="ml-2 font-normal">
-                      {m.catalog_status_archived()}
-                    </Badge>
-                  )}
-                </p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {[
-                    partner.code,
-                    partner.isSupplier ? m.field_supplier() : null,
-                    partner.isCustomer ? m.field_customer() : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setEditing(
-                    editing !== "new" && editing?.id === partner.id
-                      ? null
-                      : partner,
-                  )
-                }
-              >
-                {m.action_edit()}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setStatus(
-                    partner,
-                    partner.status === "active" ? "archived" : "active",
-                  )
-                }
-              >
-                {partner.status === "active"
-                  ? m.catalog_archive()
-                  : m.catalog_activate()}
-              </Button>
-            </div>
-            {editing !== "new" && editing?.id === partner.id && (
-              <div className="rounded-md border p-4">
-                <PartnerForm
-                  key={partner.id}
-                  partner={editing}
-                  onSubmit={save}
-                  onCancel={() => setEditing(null)}
-                />
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }

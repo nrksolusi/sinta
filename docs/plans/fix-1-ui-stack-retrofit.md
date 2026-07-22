@@ -90,6 +90,25 @@ wrapper instead of the `<ul>` pattern.
 TDD seam: component tests per converted screen asserting rows render and
 sort toggles order (English locale pinned via `overwriteGetLocale`).
 
+Done notes:
+
+- The tested seam is `data-table.tsx` itself (rows render, sortable header
+  toggles order, expanded row renders) - `data-table.test.tsx`. The route
+  screens need router/query/session context to render, so they are covered by
+  typecheck + build and by keeping behavior identical, not per-screen tests;
+  the sort/expansion logic they rely on is proven once at the wrapper seam.
+- `DataTable` API: `columns`/`data`/`getRowId`, client-side sorting on accessor
+  columns (headers become buttons; icon-only indicators keep the accessible
+  name = header text), and controlled inline edit via `expandedRowId` +
+  `renderExpandedRow`. Column defs live in each screen behind `useMemo`;
+  per-row mutation handlers are wrapped in `useCallback` (Biome
+  exhaustive-deps).
+- Added header message keys `field_name`/`field_email`/`field_role` (en+id) for
+  the members/invites columns; ran `pnpm generate-i18n`.
+- Left as `<ul>`: the UomSection unit list inside the product edit expansion (a
+  small key-value sub-list, not a primary data list) and `line-editor.tsx`
+  document lines (a Step 3 target).
+
 ### Step 3 - TanStack Form migration (`fix/ui-tanstack-form`)
 
 Lowest urgency - current forms are simple - but do it before document entry
@@ -115,5 +134,5 @@ screens grow line-item editing, where hand-rolled field arrays get painful.
 ## Status
 
 - [x] Step 1 - shadcn primitives sweep
-- [ ] Step 2 - TanStack Table list screens
+- [x] Step 2 - TanStack Table list screens
 - [ ] Step 3 - TanStack Form migration

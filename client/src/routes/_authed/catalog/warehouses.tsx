@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +51,46 @@ function WarehousesPage() {
     await invalidateWarehouses();
   };
 
+  const editingId = editing !== "new" && editing ? editing.id : null;
+
+  const columns = useMemo<ColumnDef<Warehouse>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: m.field_warehouse_name(),
+        cell: ({ getValue }) => (
+          <span className="font-medium">{getValue<string>()}</span>
+        ),
+      },
+      {
+        accessorKey: "code",
+        header: m.field_warehouse_code(),
+        cell: ({ getValue }) => (
+          <span className="text-muted-foreground">{getValue<string>()}</span>
+        ),
+      },
+      {
+        id: "actions",
+        enableSorting: false,
+        header: () => null,
+        cell: ({ row }) => (
+          <div className="text-right">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setEditing(editingId === row.id ? null : row.original)
+              }
+            >
+              {m.action_edit()}
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [editingId],
+  );
+
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -64,47 +106,24 @@ function WarehousesPage() {
         </div>
       )}
 
-      {warehouses.length === 0 && editing !== "new" && (
+      {warehouses.length === 0 && editing !== "new" ? (
         <p className="text-sm text-muted-foreground">{m.catalog_empty()}</p>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={warehouses}
+          getRowId={(w) => w.id}
+          expandedRowId={editingId}
+          renderExpandedRow={(warehouse) => (
+            <WarehouseForm
+              key={warehouse.id}
+              warehouse={warehouse}
+              onSubmit={save}
+              onCancel={() => setEditing(null)}
+            />
+          )}
+        />
       )}
-
-      <ul className="divide-y rounded-md border empty:hidden">
-        {warehouses.map((warehouse) => (
-          <li key={warehouse.id} className="space-y-3 p-3">
-            <div className="flex items-center gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{warehouse.name}</p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {warehouse.code}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setEditing(
-                    editing !== "new" && editing?.id === warehouse.id
-                      ? null
-                      : warehouse,
-                  )
-                }
-              >
-                {m.action_edit()}
-              </Button>
-            </div>
-            {editing !== "new" && editing?.id === warehouse.id && (
-              <div className="rounded-md border p-4">
-                <WarehouseForm
-                  key={warehouse.id}
-                  warehouse={editing}
-                  onSubmit={save}
-                  onCancel={() => setEditing(null)}
-                />
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }

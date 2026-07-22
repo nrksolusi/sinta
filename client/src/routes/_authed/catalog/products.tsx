@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   ProductForm,
   type ProductPayload,
 } from "@/components/catalog/product-form";
+import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -71,17 +73,92 @@ function ProductsPage() {
     await invalidateProducts();
   };
 
-  const setStatus = async (product: Product, status: "active" | "archived") => {
-    const { response } = await api.PATCH("/products/{productId}", {
-      params: { path: { productId: product.id } },
-      body: { status },
-    });
-    if (!response.ok) {
-      toast.error(m.error_generic());
-      return;
-    }
-    await invalidateProducts();
-  };
+  const setStatus = useCallback(
+    async (product: Product, status: "active" | "archived") => {
+      const { response } = await api.PATCH("/products/{productId}", {
+        params: { path: { productId: product.id } },
+        body: { status },
+      });
+      if (!response.ok) {
+        toast.error(m.error_generic());
+        return;
+      }
+      await invalidateProducts();
+    },
+    [],
+  );
+
+  const editingId = editing !== "new" && editing ? editing.id : null;
+
+  const columns = useMemo<ColumnDef<Product>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: m.field_product_name(),
+        cell: ({ row }) => (
+          <span className="font-medium">
+            {row.original.name}
+            {row.original.status === "archived" && (
+              <Badge variant="secondary" className="ml-2 font-normal">
+                {m.catalog_status_archived()}
+              </Badge>
+            )}
+          </span>
+        ),
+      },
+      {
+        id: "details",
+        enableSorting: false,
+        header: () => null,
+        cell: ({ row }) => {
+          const product = row.original;
+          return (
+            <span className="text-sm text-muted-foreground">
+              {product.sku} · {product.baseUom}
+              {product.barcode ? ` · ${product.barcode}` : ""}
+              {product.isBatchTracked ? ` · ${m.field_batch_tracked()}` : ""}
+            </span>
+          );
+        },
+      },
+      {
+        id: "actions",
+        enableSorting: false,
+        header: () => null,
+        cell: ({ row }) => {
+          const product = row.original;
+          return (
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setEditing(editingId === product.id ? null : product)
+                }
+              >
+                {m.action_edit()}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setStatus(
+                    product,
+                    product.status === "active" ? "archived" : "active",
+                  )
+                }
+              >
+                {product.status === "active"
+                  ? m.catalog_archive()
+                  : m.catalog_activate()}
+              </Button>
+            </div>
+          );
+        },
+      },
+    ],
+    [editingId, setStatus],
+  );
 
   return (
     <section className="space-y-4">
@@ -111,73 +188,27 @@ function ProductsPage() {
         </div>
       )}
 
-      {products.length === 0 && editing !== "new" && (
+      {products.length === 0 && editing !== "new" ? (
         <p className="text-sm text-muted-foreground">{m.catalog_empty()}</p>
-      )}
-
-      <ul className="divide-y rounded-md border empty:hidden">
-        {products.map((product) => (
-          <li key={product.id} className="space-y-3 p-3">
-            <div className="flex items-center gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">
-                  {product.name}
-                  {product.status === "archived" && (
-                    <Badge variant="secondary" className="ml-2 font-normal">
-                      {m.catalog_status_archived()}
-                    </Badge>
-                  )}
-                </p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {product.sku} · {product.baseUom}
-                  {product.barcode ? ` · ${product.barcode}` : ""}
-                  {product.isBatchTracked
-                    ? ` · ${m.field_batch_tracked()}`
-                    : ""}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setEditing(
-                    editing !== "new" && editing?.id === product.id
-                      ? null
-                      : product,
-                  )
-                }
-              >
-                {m.action_edit()}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setStatus(
-                    product,
-                    product.status === "active" ? "archived" : "active",
-                  )
-                }
-              >
-                {product.status === "active"
-                  ? m.catalog_archive()
-                  : m.catalog_activate()}
-              </Button>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={products}
+          getRowId={(p) => p.id}
+          expandedRowId={editingId}
+          renderExpandedRow={(product) => (
+            <div className="space-y-4">
+              <ProductForm
+                key={product.id}
+                product={product}
+                onSubmit={save}
+                onCancel={() => setEditing(null)}
+              />
+              <UomSection product={product} />
             </div>
-            {editing !== "new" && editing?.id === product.id && (
-              <div className="space-y-4 rounded-md border p-4">
-                <ProductForm
-                  key={product.id}
-                  product={editing}
-                  onSubmit={save}
-                  onCancel={() => setEditing(null)}
-                />
-                <UomSection product={editing} />
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+          )}
+        />
+      )}
     </section>
   );
 }

@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,10 +13,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import type { components } from "@/lib/api-types";
 import { formatDate } from "@/lib/format";
 import { ROLES, type Role, roleLabel } from "@/lib/roles";
 import { activeRole } from "@/lib/session";
 import { m } from "@/paraglide/messages";
+
+type Invite = components["schemas"]["Invite"];
 
 export const Route = createFileRoute("/_authed/settings/invites")({
   beforeLoad: ({ context }) => {
@@ -49,23 +54,74 @@ function InvitesSection({ tenantId }: { tenantId: string }) {
     await refetch();
   };
 
-  const copy = async (token: string) => {
+  const copy = useCallback(async (token: string) => {
     await navigator.clipboard.writeText(
       `${window.location.origin}/invite/${token}`,
     );
     toast.success(m.settings_invite_copied());
-  };
+  }, []);
 
-  const revoke = async (inviteId: string) => {
-    const { response } = await api.DELETE("/tenant/invites/{inviteId}", {
-      params: { path: { inviteId } },
-    });
-    if (!response.ok) {
-      toast.error(m.error_generic());
-      return;
-    }
-    await refetch();
-  };
+  const revoke = useCallback(
+    async (inviteId: string) => {
+      const { response } = await api.DELETE("/tenant/invites/{inviteId}", {
+        params: { path: { inviteId } },
+      });
+      if (!response.ok) {
+        toast.error(m.error_generic());
+        return;
+      }
+      await refetch();
+    },
+    [refetch],
+  );
+
+  const columns = useMemo<ColumnDef<Invite>[]>(
+    () => [
+      {
+        accessorKey: "role",
+        header: m.field_role(),
+        cell: ({ row }) => (
+          <span className="font-medium">{roleLabel(row.original.role)}</span>
+        ),
+      },
+      {
+        id: "expires",
+        enableSorting: false,
+        header: () => null,
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {m.settings_invite_expires({
+              date: formatDate(row.original.expiresAt),
+            })}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        enableSorting: false,
+        header: () => null,
+        cell: ({ row }) => (
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => copy(row.original.token)}
+            >
+              {m.settings_invite_copy()}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => revoke(row.original.id)}
+            >
+              {m.settings_invite_revoke()}
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [copy, revoke],
+  );
 
   return (
     <section className="space-y-3">
@@ -90,34 +146,11 @@ function InvitesSection({ tenantId }: { tenantId: string }) {
           {m.settings_invite_create()}
         </Button>
       </div>
-      <ul className="divide-y rounded-md border">
-        {(invites ?? []).map((invite) => (
-          <li key={invite.id} className="flex items-center gap-3 p-3">
-            <div className="min-w-0 flex-1">
-              <p className="font-medium">{roleLabel(invite.role)}</p>
-              <p className="text-sm text-muted-foreground">
-                {m.settings_invite_expires({
-                  date: formatDate(invite.expiresAt),
-                })}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => copy(invite.token)}
-            >
-              {m.settings_invite_copy()}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => revoke(invite.id)}
-            >
-              {m.settings_invite_revoke()}
-            </Button>
-          </li>
-        ))}
-      </ul>
+      <DataTable
+        columns={columns}
+        data={invites ?? []}
+        getRowId={(invite) => invite.id}
+      />
     </section>
   );
 }
