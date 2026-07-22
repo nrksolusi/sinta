@@ -175,6 +175,8 @@ start selling - that is the D1 risk coming due.**
 - Automated cost_correction emission on reconciliation and backdated receipts
 - FEFO pick suggestions and expiry reporting for batch products
 - Document number template configuration UI, year-rollover activation (D16)
+- SMTP + email verification and password reset (completes ADR-0006; login
+  rate limiting shipped with the M0 review polish)
 
 Decomposed for parallel development (3 isolated tracks + a contract-freeze step)
 in `plans/m2-parallel.md`. Tracks fork only after the M1 baseline is on `main`.

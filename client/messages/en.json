@@ -63,5 +63,8 @@
   "nav_dashboard": "Dashboard",
   "nav_settings": "Settings",
   "error_generic": "Something went wrong. Please try again.",
-  "onboarding_costing_fifo_soon": "Available soon - the pilot runs on weighted average first"
+  "onboarding_costing_fifo_soon": "Available soon - the pilot runs on weighted average first",
+  "settings_company_name": "Company name",
+  "settings_legal_name": "Legal name",
+  "settings_costing_label": "Stock valuation:"
 }

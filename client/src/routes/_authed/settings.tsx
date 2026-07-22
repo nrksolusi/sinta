@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { formatDate } from "@/lib/format";
 import { queryClient } from "@/lib/query";
 import { ROLES, type Role, roleLabel } from "@/lib/roles";
 import { m } from "@/paraglide/messages";
@@ -58,9 +59,7 @@ function TenantProfileSection({ editable }: { editable: boolean }) {
     <section className="space-y-3">
       <h2 className="text-lg font-medium">{m.settings_profile()}</h2>
       <label className="block space-y-1">
-        <span className="text-sm font-medium">
-          {m.onboarding_company_name()}
-        </span>
+        <span className="text-sm font-medium">{m.settings_company_name()}</span>
         <input
           className="w-full rounded-md border px-3 py-2 disabled:opacity-60"
           disabled={!editable}
@@ -69,7 +68,7 @@ function TenantProfileSection({ editable }: { editable: boolean }) {
         />
       </label>
       <label className="block space-y-1">
-        <span className="text-sm font-medium">{m.onboarding_legal_name()}</span>
+        <span className="text-sm font-medium">{m.settings_legal_name()}</span>
         <input
           className="w-full rounded-md border px-3 py-2 disabled:opacity-60"
           disabled={!editable}
@@ -78,7 +77,7 @@ function TenantProfileSection({ editable }: { editable: boolean }) {
         />
       </label>
       <p className="text-sm text-muted-foreground">
-        {m.onboarding_costing_hint()}{" "}
+        {m.settings_costing_label()}{" "}
         <strong>
           {tenant.costingMethod === "fifo"
             ? m.onboarding_costing_fifo()
@@ -242,7 +241,7 @@ function InvitesSection() {
               <p className="font-medium">{roleLabel(invite.role)}</p>
               <p className="text-sm text-muted-foreground">
                 {m.settings_invite_expires({
-                  date: new Date(invite.expiresAt).toLocaleDateString("id-ID"),
+                  date: formatDate(invite.expiresAt),
                 })}
               </p>
             </div>

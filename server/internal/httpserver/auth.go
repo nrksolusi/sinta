@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -59,18 +60,27 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	limiterKey := strings.ToLower(string(req.Email))
+	if s.loginLimiter.TooMany(limiterKey) {
+		writeError(w, http.StatusTooManyRequests, "too_many_attempts", "too many failed attempts; try again later")
+		return
+	}
+
 	user, err := s.queries.GetUserByEmail(r.Context(), string(req.Email))
 	if err != nil {
 		// Same response as a wrong password so accounts cannot be enumerated.
+		s.loginLimiter.RecordFailure(limiterKey)
 		writeError(w, http.StatusUnauthorized, "invalid_credentials", "email or password is incorrect")
 		return
 	}
 
 	ok, err := auth.VerifyPassword(user.PasswordHash, req.Password)
 	if err != nil || !ok {
+		s.loginLimiter.RecordFailure(limiterKey)
 		writeError(w, http.StatusUnauthorized, "invalid_credentials", "email or password is incorrect")
 		return
 	}
+	s.loginLimiter.RecordSuccess(limiterKey)
 
 	expires := time.Now().Add(sessionTTL)
 	session, err := s.queries.CreateSession(r.Context(), store.CreateSessionParams{

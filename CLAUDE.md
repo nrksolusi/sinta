@@ -34,6 +34,13 @@ pace - keep changes small and scoped.
 - Primary keys are UUIDv7 everywhere (ADR-0009). Document numbers are a
   separate, human-facing concept assigned at posting (ADR-0010).
 - Posted documents are immutable; cancellation is a reversal document.
+- Locale: the default UI message language is Indonesian (Paraglide `baseLocale`
+  is `id`, `messages/`); English exists as an alternate locale, no switcher yet.
+  Numbers, currency, and numeric dates use the Indonesian region format
+  regardless of UI language - `id-ID`, `IDR`. Month and day names follow the
+  active UI language, because they read as words. Format only through
+  `client/src/lib/format.ts`; do not call `toLocaleString`, `Intl.*`, or pass a
+  locale ad hoc at call sites.
 - Banned vocabulary: ledger, workspace, organization, stocktake, item.
   See the glossary for the canonical terms.
 

@@ -63,5 +63,8 @@
   "nav_dashboard": "Dasbor",
   "nav_settings": "Pengaturan",
   "error_generic": "Terjadi kesalahan. Silakan coba lagi.",
-  "onboarding_costing_fifo_soon": "Segera hadir - pilot berjalan dengan rata-rata tertimbang dulu"
+  "onboarding_costing_fifo_soon": "Segera hadir - pilot berjalan dengan rata-rata tertimbang dulu",
+  "settings_company_name": "Nama perusahaan",
+  "settings_legal_name": "Nama legal",
+  "settings_costing_label": "Penilaian persediaan:"
 }

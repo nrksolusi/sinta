@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
+import { monthName } from "@/lib/format";
 import { queryClient } from "@/lib/query";
 import { sessionQueryOptions } from "@/lib/session";
 import { m } from "@/paraglide/messages";
-import { getLocale } from "@/paraglide/runtime";
 
 export const Route = createFileRoute("/_authed/onboarding")({
   component: OnboardingWizard,
@@ -129,13 +129,10 @@ function OnboardingWizard() {
                     onChange={(e) => field.handleChange(Number(e.target.value))}
                   >
                     {Array.from({ length: 12 }, (_, i) => {
-                      const monthName = new Date(2000, i, 1).toLocaleString(
-                        getLocale(),
-                        { month: "long" },
-                      );
+                      const name = monthName(i + 1);
                       return (
-                        <option key={monthName} value={i + 1}>
-                          {monthName}
+                        <option key={name} value={i + 1}>
+                          {name}
                         </option>
                       );
                     })}

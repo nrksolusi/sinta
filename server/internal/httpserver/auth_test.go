@@ -287,3 +287,28 @@ func TestLoginCookieSecureFlagFollowsRequestScheme(t *testing.T) {
 		t.Error("Secure flag missing when request came via https (X-Forwarded-Proto)")
 	}
 }
+
+func TestLoginRateLimited(t *testing.T) {
+	ts := newTestServer(t)
+	registerUser(t, ts, "budi@toko-makmur.co.id", "kata-sandi-panjang")
+
+	attempt := func(password string) int {
+		resp, err := http.Post(ts.URL+"/v1/auth/login", "application/json",
+			strings.NewReader(jsonBody("email", "budi@toko-makmur.co.id", "password", password)))
+		if err != nil {
+			t.Fatalf("login: %v", err)
+		}
+		resp.Body.Close()
+		return resp.StatusCode
+	}
+
+	for i := range 5 {
+		if got := attempt("salah-terus"); got != http.StatusUnauthorized {
+			t.Fatalf("attempt %d status = %d, want 401", i+1, got)
+		}
+	}
+	// Limit reached: even the correct password is refused now.
+	if got := attempt("kata-sandi-panjang"); got != http.StatusTooManyRequests {
+		t.Fatalf("post-limit status = %d, want 429", got)
+	}
+}

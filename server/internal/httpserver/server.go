@@ -5,20 +5,27 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/nrksolusi/sinta/internal/api"
+	"github.com/nrksolusi/sinta/internal/auth"
 	"github.com/nrksolusi/sinta/internal/store"
 )
 
 type Server struct {
-	pool    *pgxpool.Pool
-	queries *store.Queries
+	pool         *pgxpool.Pool
+	queries      *store.Queries
+	loginLimiter *auth.LoginLimiter
 }
 
 func New(pool *pgxpool.Pool) *Server {
-	return &Server{pool: pool, queries: store.New(pool)}
+	return &Server{
+		pool:         pool,
+		queries:      store.New(pool),
+		loginLimiter: auth.NewLoginLimiter(5, 15*time.Minute),
+	}
 }
 
 // Handler mounts the API under /v1 as declared in the OpenAPI spec.
