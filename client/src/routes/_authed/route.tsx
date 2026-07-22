@@ -1,12 +1,11 @@
 import {
   createFileRoute,
-  Link,
   Outlet,
   redirect,
   useRouter,
 } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { SelectField } from "@/components/select-field";
+import { AppShell } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query";
@@ -61,64 +60,47 @@ function AuthedLayout() {
     await router.navigate({ to: "/login", search: { redirect: undefined } });
   };
 
-  return (
-    <div className="min-h-svh">
-      <header className="flex items-center gap-4 border-b px-4 py-2">
-        <span className="font-semibold">{m.app_name()}</span>
-        {session.memberships.length > 0 && (
-          <nav className="flex gap-3 text-sm">
-            <Link to="/" className="[&.active]:font-semibold">
-              {m.nav_dashboard()}
-            </Link>
-            <Link to="/receive" className="[&.active]:font-semibold">
-              {m.nav_receive()}
-            </Link>
-            <Link to="/delivery" className="[&.active]:font-semibold">
-              {m.nav_delivery()}
-            </Link>
-            <Link to="/opname" className="[&.active]:font-semibold">
-              {m.nav_opname()}
-            </Link>
-            <Link to="/catalog" className="[&.active]:font-semibold">
-              {m.nav_catalog()}
-            </Link>
-            <Link to="/settings" className="[&.active]:font-semibold">
-              {m.nav_settings()}
-            </Link>
-          </nav>
-        )}
-
-        {session.memberships.length > 0 ? (
-          <div className="ml-auto flex items-center gap-2 text-sm">
-            <span id="tenant-select-label">{m.tenant_select_label()}</span>
-            <SelectField
-              options={session.memberships.map(({ tenant }) => ({
-                value: tenant.id,
-                label: tenant.name,
-              }))}
-              value={session.activeTenantId ?? undefined}
-              onValueChange={(value) => value && switchTenant(value)}
-              placeholder="-"
-              size="sm"
-              aria-labelledby="tenant-select-label"
-            />
-          </div>
-        ) : (
+  // A user with no memberships only ever sees the onboarding wizard - no nav,
+  // no tenant switcher (there is nothing to switch to). Keep a minimal frame
+  // with just app name and sign-out, as the old layout did.
+  if (session.memberships.length === 0) {
+    return (
+      <div className="min-h-svh">
+        <header className="flex items-center gap-4 border-b px-4 py-2">
+          <span className="font-semibold">{m.app_name()}</span>
           <span className="ml-auto text-sm text-muted-foreground">
             {m.tenant_none()}
           </span>
-        )}
+          <Button variant="outline" size="sm" onClick={logout}>
+            {m.logout()}
+          </Button>
+        </header>
+        <Outlet />
+      </div>
+    );
+  }
 
-        <Button variant="outline" size="sm" onClick={logout}>
-          {m.logout()}
-        </Button>
-      </header>
-      {activeTenant && !activeTenant.active && (
-        <p className="border-b bg-amber-100 px-4 py-2 text-sm text-amber-900">
-          {m.tenant_inactive_banner()}
-        </p>
-      )}
+  const banner =
+    activeTenant && !activeTenant.active ? (
+      <p className="border-b bg-warning/15 px-4 py-2 text-sm text-warning-foreground">
+        {m.tenant_inactive_banner()}
+      </p>
+    ) : undefined;
+
+  return (
+    <AppShell
+      tenants={session.memberships.map(({ tenant }) => ({
+        id: tenant.id,
+        name: tenant.name,
+      }))}
+      activeTenantId={session.activeTenantId ?? null}
+      onSwitchTenant={switchTenant}
+      userName={session.user.name}
+      userEmail={session.user.email}
+      onLogout={logout}
+      banner={banner}
+    >
       <Outlet />
-    </div>
+    </AppShell>
   );
 }
