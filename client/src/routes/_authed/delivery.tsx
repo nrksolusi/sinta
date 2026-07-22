@@ -2,16 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+import { SelectField } from "@/components/select-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { type DocLine, LineEditor } from "@/components/warehouse/line-editor";
 import { api } from "@/lib/api";
@@ -90,46 +84,29 @@ function DeliveryPage() {
 
       <div className="space-y-1">
         <Label id="delivery-customer-label">{m.field_customer()}</Label>
-        <Select
+        <SelectField
+          options={customers.map((c) => ({ value: c.id, label: c.name }))}
           value={customerId || undefined}
           onValueChange={(value) => value && setCustomerId(value)}
-        >
-          <SelectTrigger
-            aria-labelledby="delivery-customer-label"
-            className="w-full"
-          >
-            <SelectValue placeholder={m.field_select()} />
-          </SelectTrigger>
-          <SelectContent>
-            {customers.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          placeholder={m.field_select()}
+          aria-labelledby="delivery-customer-label"
+          className="w-full"
+        />
       </div>
 
       <div className="space-y-1">
         <Label id="delivery-warehouse-label">{m.field_warehouse()}</Label>
-        <Select
+        <SelectField
+          options={warehouses.map((w) => ({
+            value: w.id,
+            label: `${w.code} - ${w.name}`,
+          }))}
           value={warehouseId || undefined}
           onValueChange={(value) => value && setWarehouseId(value)}
-        >
-          <SelectTrigger
-            aria-labelledby="delivery-warehouse-label"
-            className="w-full"
-          >
-            <SelectValue placeholder={m.field_select()} />
-          </SelectTrigger>
-          <SelectContent>
-            {warehouses.map((w) => (
-              <SelectItem key={w.id} value={w.id}>
-                {w.code} - {w.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          placeholder={m.field_select()}
+          aria-labelledby="delivery-warehouse-label"
+          className="w-full"
+        />
       </div>
 
       <div className="space-y-1">

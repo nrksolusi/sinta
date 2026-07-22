@@ -4,14 +4,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { DataTable } from "@/components/data-table";
+import { SelectField } from "@/components/select-field";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 import { ROLES, type Role, roleLabel } from "@/lib/roles";
@@ -115,23 +109,17 @@ function MembersSection({
           }
           return (
             <div className="flex justify-end gap-2">
-              <Select
+              <SelectField
+                options={ROLES.map((role) => ({
+                  value: role,
+                  label: roleLabel(role),
+                }))}
                 value={member.role}
                 onValueChange={(value) =>
                   value && changeRole(member.userId, value as Role)
                 }
-              >
-                <SelectTrigger size="sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLES.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {roleLabel(role)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                size="sm"
+              />
               {member.userId !== myUserId && (
                 <Button
                   variant="outline"

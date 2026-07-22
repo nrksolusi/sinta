@@ -1,16 +1,10 @@
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { SelectField } from "@/components/select-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 import { monthName } from "@/lib/format";
@@ -159,29 +153,18 @@ function OnboardingWizard() {
                   <Label id="onboarding-fiscal-month-label">
                     {m.onboarding_fiscal_month()}
                   </Label>
-                  <Select
+                  <SelectField
+                    options={Array.from({ length: 12 }, (_, i) => ({
+                      value: String(i + 1),
+                      label: monthName(i + 1),
+                    }))}
                     value={String(field.state.value)}
                     onValueChange={(value) =>
                       value && field.handleChange(Number(value))
                     }
-                  >
-                    <SelectTrigger
-                      aria-labelledby="onboarding-fiscal-month-label"
-                      className="w-full"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 12 }, (_, i) => {
-                        const name = monthName(i + 1);
-                        return (
-                          <SelectItem key={name} value={String(i + 1)}>
-                            {name}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
+                    aria-labelledby="onboarding-fiscal-month-label"
+                    className="w-full"
+                  />
                 </div>
               )}
             </form.Field>

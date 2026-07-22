@@ -5,14 +5,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { DataTable } from "@/components/data-table";
+import { SelectField } from "@/components/select-field";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import type { components } from "@/lib/api-types";
 import { formatDate } from "@/lib/format";
@@ -139,23 +133,17 @@ function InvitesSection({ tenantId }: { tenantId: string }) {
       >
         <form.Field name="role">
           {(field) => (
-            <Select
+            <SelectField
+              options={ROLES.filter((r) => r !== "owner").map((r) => ({
+                value: r,
+                label: roleLabel(r),
+              }))}
               value={field.state.value}
               onValueChange={(value) =>
                 value && field.handleChange(value as Role)
               }
-            >
-              <SelectTrigger size="sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLES.filter((r) => r !== "owner").map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {roleLabel(r)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              size="sm"
+            />
           )}
         </form.Field>
         <Button size="sm" type="submit">

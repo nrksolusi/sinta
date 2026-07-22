@@ -6,14 +6,8 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { SelectField } from "@/components/select-field";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/query";
 import { sessionQueryOptions } from "@/lib/session";
@@ -97,21 +91,17 @@ function AuthedLayout() {
         {session.memberships.length > 0 ? (
           <div className="ml-auto flex items-center gap-2 text-sm">
             <span id="tenant-select-label">{m.tenant_select_label()}</span>
-            <Select
+            <SelectField
+              options={session.memberships.map(({ tenant }) => ({
+                value: tenant.id,
+                label: tenant.name,
+              }))}
               value={session.activeTenantId ?? undefined}
               onValueChange={(value) => value && switchTenant(value)}
-            >
-              <SelectTrigger aria-labelledby="tenant-select-label" size="sm">
-                <SelectValue placeholder="-" />
-              </SelectTrigger>
-              <SelectContent>
-                {session.memberships.map(({ tenant }) => (
-                  <SelectItem key={tenant.id} value={tenant.id}>
-                    {tenant.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="-"
+              size="sm"
+              aria-labelledby="tenant-select-label"
+            />
           </div>
         ) : (
           <span className="ml-auto text-sm text-muted-foreground">
