@@ -730,23 +730,23 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/health", wrapper.GetHealth)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/register", wrapper.Register)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/login", wrapper.Login)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/logout", wrapper.Logout)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/register", wrapper.Register)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/session", wrapper.GetSession)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/switch-tenant", wrapper.SwitchTenant)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/tenants", wrapper.CreateTenant)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/health", wrapper.GetHealth)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/invites/{token}", wrapper.GetInvite)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/invites/{token}/accept", wrapper.AcceptInvite)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant", wrapper.GetTenant)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/tenant", wrapper.UpdateTenant)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant/members", wrapper.ListMembers)
-	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/tenant/members/{userId}", wrapper.RemoveMember)
-	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/tenant/members/{userId}", wrapper.UpdateMember)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant/invites", wrapper.ListInvites)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/tenant/invites", wrapper.CreateInvite)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/tenant/invites/{inviteId}", wrapper.RevokeInvite)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/invites/{token}", wrapper.GetInvite)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/invites/{token}/accept", wrapper.AcceptInvite)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/tenant/members", wrapper.ListMembers)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/tenant/members/{userId}", wrapper.RemoveMember)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/tenant/members/{userId}", wrapper.UpdateMember)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/tenants", wrapper.CreateTenant)
 
 	return m
 }

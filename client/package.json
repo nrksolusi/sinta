@@ -9,7 +9,7 @@
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",
-    "generate-api": "openapi-typescript ../server/api/openapi.yaml -o src/lib/api-types.ts",
+    "generate-api": "openapi-typescript ../server/api/openapi.gen.yaml -o src/lib/api-types.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "test": "vitest run",

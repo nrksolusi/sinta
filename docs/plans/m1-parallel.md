@@ -37,12 +37,22 @@ Frozen and merged before any track branches:
    shape, advisory-lock contract), and the store repository interfaces. This is
    what lets Documents and Reports build in parallel with the journal/costing
    implementation.
-3. **OpenAPI split** into per-domain files referenced via `$ref`, so each track
-   edits its own file, never the shared blocks:
+3. **OpenAPI split via a bundler**, so each track owns its own spec file. Note:
+   oapi-codegen does not generate schemas from external `$ref` files (verified
+   in Track 0), so a plain cross-file `$ref` split does not work for the Go
+   side. Instead `server/cmd/bundle` deep-merges the sources into a flat,
+   committed `api/openapi.gen.yaml` that both oapi-codegen and openapi-typescript
+   consume (`go generate ./...` runs the bundle first):
+   - `api/openapi.yaml` - root plus shared components (Error, responses, Role)
    - `api/paths/catalog.yaml` (Track A)
    - `api/paths/documents.yaml` (Track C)
    - `api/paths/reports.yaml` (Track D)
-   - shared `api/components/` for reused schemas
+
+   Fragments own their paths and schemas and may reference shared root
+   components (e.g. `#/components/responses/Unauthorized`); the reference
+   resolves after the merge. The bundler fails on a duplicate path or a
+   conflicting component name, so cross-track collisions surface at generate
+   time, not in production.
 4. **Migration range map** for additive migrations a track discovers it needs
    after the freeze (preserves the `NNNN_name.sql` convention):
 

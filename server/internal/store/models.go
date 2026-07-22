@@ -9,6 +9,77 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Batch struct {
+	ID         uuid.UUID
+	TenantID   uuid.UUID
+	ProductID  uuid.UUID
+	BatchNo    string
+	ExpiryDate pgtype.Date
+	CreatedAt  pgtype.Timestamptz
+}
+
+type Delivery struct {
+	ID           uuid.UUID
+	TenantID     uuid.UUID
+	DocNumber    pgtype.Text
+	Status       string
+	SalesOrderID pgtype.UUID
+	CustomerID   uuid.UUID
+	WarehouseID  uuid.UUID
+	DocDate      pgtype.Date
+	Notes        string
+	PostedAt     pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	CreatedBy    uuid.UUID
+}
+
+type DeliveryLine struct {
+	ID               uuid.UUID
+	TenantID         uuid.UUID
+	DeliveryID       uuid.UUID
+	LineNo           int32
+	SalesOrderLineID pgtype.UUID
+	ProductID        uuid.UUID
+	BatchID          pgtype.UUID
+	Uom              string
+	Qty              pgtype.Numeric
+}
+
+type DocumentNumberSequence struct {
+	TenantID uuid.UUID
+	DocType  string
+	Year     int32
+	NextSeq  int64
+}
+
+type GoodsReceipt struct {
+	ID              uuid.UUID
+	TenantID        uuid.UUID
+	DocNumber       pgtype.Text
+	Status          string
+	PurchaseOrderID pgtype.UUID
+	SupplierID      uuid.UUID
+	WarehouseID     uuid.UUID
+	DocDate         pgtype.Date
+	Notes           string
+	PostedAt        pgtype.Timestamptz
+	CreatedAt       pgtype.Timestamptz
+	CreatedBy       uuid.UUID
+}
+
+type GoodsReceiptLine struct {
+	ID                  uuid.UUID
+	TenantID            uuid.UUID
+	GoodsReceiptID      uuid.UUID
+	LineNo              int32
+	PurchaseOrderLineID pgtype.UUID
+	ProductID           uuid.UUID
+	BatchID             pgtype.UUID
+	Uom                 string
+	Qty                 pgtype.Numeric
+	UnitCost            pgtype.Numeric
+}
+
 type Invitation struct {
 	ID        uuid.UUID
 	TenantID  uuid.UUID
@@ -27,12 +98,207 @@ type Membership struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type MembershipWarehouse struct {
+	MembershipID uuid.UUID
+	WarehouseID  uuid.UUID
+	TenantID     uuid.UUID
+}
+
+type Partner struct {
+	ID         uuid.UUID
+	TenantID   uuid.UUID
+	Code       pgtype.Text
+	Name       string
+	IsSupplier bool
+	IsCustomer bool
+	Status     string
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+}
+
+type Product struct {
+	ID             uuid.UUID
+	TenantID       uuid.UUID
+	Sku            string
+	Name           string
+	BaseUom        string
+	IsBatchTracked bool
+	Barcode        pgtype.Text
+	Status         string
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type ProductUom struct {
+	ID           uuid.UUID
+	TenantID     uuid.UUID
+	ProductID    uuid.UUID
+	Uom          string
+	FactorToBase pgtype.Numeric
+	CreatedAt    pgtype.Timestamptz
+}
+
+type PurchaseOrder struct {
+	ID          uuid.UUID
+	TenantID    uuid.UUID
+	DocNumber   pgtype.Text
+	Status      string
+	SupplierID  uuid.UUID
+	WarehouseID uuid.UUID
+	DocDate     pgtype.Date
+	Notes       string
+	PostedAt    pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	CreatedBy   uuid.UUID
+}
+
+type PurchaseOrderLine struct {
+	ID              uuid.UUID
+	TenantID        uuid.UUID
+	PurchaseOrderID uuid.UUID
+	LineNo          int32
+	ProductID       uuid.UUID
+	Uom             string
+	Qty             pgtype.Numeric
+	UnitCost        pgtype.Numeric
+}
+
+type SalesOrder struct {
+	ID          uuid.UUID
+	TenantID    uuid.UUID
+	DocNumber   pgtype.Text
+	Status      string
+	CustomerID  uuid.UUID
+	WarehouseID uuid.UUID
+	DocDate     pgtype.Date
+	Notes       string
+	PostedAt    pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	CreatedBy   uuid.UUID
+}
+
+type SalesOrderLine struct {
+	ID           uuid.UUID
+	TenantID     uuid.UUID
+	SalesOrderID uuid.UUID
+	LineNo       int32
+	ProductID    uuid.UUID
+	Uom          string
+	Qty          pgtype.Numeric
+	UnitPrice    pgtype.Numeric
+}
+
 type Session struct {
 	ID             uuid.UUID
 	UserID         uuid.UUID
 	ActiveTenantID pgtype.UUID
 	ExpiresAt      pgtype.Timestamptz
 	CreatedAt      pgtype.Timestamptz
+}
+
+type StockAdjustment struct {
+	ID          uuid.UUID
+	TenantID    uuid.UUID
+	DocNumber   pgtype.Text
+	Status      string
+	WarehouseID uuid.UUID
+	Reason      string
+	DocDate     pgtype.Date
+	Notes       string
+	PostedAt    pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	CreatedBy   uuid.UUID
+}
+
+type StockAdjustmentLine struct {
+	ID                uuid.UUID
+	TenantID          uuid.UUID
+	StockAdjustmentID uuid.UUID
+	LineNo            int32
+	ProductID         uuid.UUID
+	BatchID           pgtype.UUID
+	Uom               string
+	Qty               pgtype.Numeric
+	UnitCost          pgtype.Numeric
+}
+
+type StockLevel struct {
+	TenantID    uuid.UUID
+	ProductID   uuid.UUID
+	WarehouseID uuid.UUID
+	BatchID     pgtype.UUID
+	QtyOnHand   pgtype.Numeric
+	AvgCost     pgtype.Numeric
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type StockMovement struct {
+	ID                     uuid.UUID
+	TenantID               uuid.UUID
+	ProductID              uuid.UUID
+	WarehouseID            uuid.UUID
+	BatchID                pgtype.UUID
+	QtyBase                pgtype.Numeric
+	UnitCost               pgtype.Numeric
+	MovementType           string
+	DocType                string
+	DocID                  uuid.UUID
+	DocLineID              pgtype.UUID
+	EffectiveAt            pgtype.Timestamptz
+	Seq                    int64
+	IsProvisional          bool
+	ReconciledByMovementID pgtype.UUID
+	CreatedAt              pgtype.Timestamptz
+	CreatedBy              uuid.UUID
+}
+
+type StockOpname struct {
+	ID          uuid.UUID
+	TenantID    uuid.UUID
+	DocNumber   pgtype.Text
+	Status      string
+	WarehouseID uuid.UUID
+	DocDate     pgtype.Date
+	Notes       string
+	PostedAt    pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	CreatedBy   uuid.UUID
+}
+
+type StockOpnameLine struct {
+	ID            uuid.UUID
+	TenantID      uuid.UUID
+	StockOpnameID uuid.UUID
+	LineNo        int32
+	ProductID     uuid.UUID
+	BatchID       pgtype.UUID
+	Uom           string
+	CountedQty    pgtype.Numeric
+}
+
+type StockTransfer struct {
+	ID              uuid.UUID
+	TenantID        uuid.UUID
+	DocNumber       pgtype.Text
+	Status          string
+	FromWarehouseID uuid.UUID
+	ToWarehouseID   uuid.UUID
+	DocDate         pgtype.Date
+	Notes           string
+	PostedAt        pgtype.Timestamptz
+	CreatedAt       pgtype.Timestamptz
+	CreatedBy       uuid.UUID
+}
+
+type StockTransferLine struct {
+	ID              uuid.UUID
+	TenantID        uuid.UUID
+	StockTransferID uuid.UUID
+	LineNo          int32
+	ProductID       uuid.UUID
+	BatchID         pgtype.UUID
+	Uom             string
+	Qty             pgtype.Numeric
 }
 
 type Tenant struct {

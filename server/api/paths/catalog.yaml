@@ -1,0 +1,7 @@
+# Catalog domain (Track A - docs/plans/m1-parallel.md). A spec fragment merged
+# into api/openapi.gen.yaml by cmd/bundle. Owns catalog paths (products, uoms,
+# batches, warehouses, partners) and their schemas; may reference shared root
+# components such as #/components/responses/Unauthorized (they resolve after the
+# merge). Track A authors the contents; keep everything catalog under this file
+# so tracks never collide on the spec.
+paths: {}

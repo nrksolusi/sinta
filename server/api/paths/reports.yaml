@@ -1,0 +1,6 @@
+# Reports domain (Track D - docs/plans/m1-parallel.md). A spec fragment merged
+# into api/openapi.gen.yaml by cmd/bundle. Owns the reporting paths (stock on
+# hand, stock card, stock valuation) and their schemas; may reference shared
+# root components (they resolve after the merge). Track D authors the contents;
+# keep all report endpoints under this file.
+paths: {}
