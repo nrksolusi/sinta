@@ -34,6 +34,9 @@ import { Route as AuthedSettingsProfileRouteImport } from './routes/_authed/sett
 import { Route as AuthedCatalogPartnersIdRouteImport } from './routes/_authed/catalog/partners.$id'
 import { Route as AuthedCatalogProductsIdRouteImport } from './routes/_authed/catalog/products.$id'
 import { Route as AuthedCatalogWarehousesIdRouteImport } from './routes/_authed/catalog/warehouses.$id'
+import { Route as AuthedPurchasesOrdersIndexRouteImport } from './routes/_authed/purchases/orders/index'
+import { Route as AuthedPurchasesOrdersIdRouteImport } from './routes/_authed/purchases/orders/$id'
+import { Route as AuthedPurchasesOrdersNewRouteImport } from './routes/_authed/purchases/orders/new'
 import { Route as AuthedPurchasesReceiptsIndexRouteImport } from './routes/_authed/purchases/receipts/index'
 import { Route as AuthedPurchasesReceiptsIdRouteImport } from './routes/_authed/purchases/receipts/$id'
 import { Route as AuthedPurchasesReceiptsNewRouteImport } from './routes/_authed/purchases/receipts/new'
@@ -176,6 +179,23 @@ const AuthedCatalogWarehousesIdRoute =
     path: '/$id',
     getParentRoute: () => AuthedCatalogWarehousesRoute,
   } as any)
+const AuthedPurchasesOrdersIndexRoute =
+  AuthedPurchasesOrdersIndexRouteImport.update({
+    id: '/purchases/orders/',
+    path: '/purchases/orders/',
+    getParentRoute: () => AuthedRouteRoute,
+  } as any)
+const AuthedPurchasesOrdersIdRoute = AuthedPurchasesOrdersIdRouteImport.update({
+  id: '/purchases/orders/$id',
+  path: '/purchases/orders/$id',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedPurchasesOrdersNewRoute =
+  AuthedPurchasesOrdersNewRouteImport.update({
+    id: '/purchases/orders/new',
+    path: '/purchases/orders/new',
+    getParentRoute: () => AuthedRouteRoute,
+  } as any)
 const AuthedPurchasesReceiptsIndexRoute =
   AuthedPurchasesReceiptsIndexRouteImport.update({
     id: '/purchases/receipts/',
@@ -286,6 +306,8 @@ export interface FileRoutesByFullPath {
   '/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/purchases/orders/$id': typeof AuthedPurchasesOrdersIdRoute
+  '/purchases/orders/new': typeof AuthedPurchasesOrdersNewRoute
   '/purchases/receipts/$id': typeof AuthedPurchasesReceiptsIdRoute
   '/purchases/receipts/new': typeof AuthedPurchasesReceiptsNewRoute
   '/sales/deliveries/$id': typeof AuthedSalesDeliveriesIdRoute
@@ -296,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/stock/opnames/new': typeof AuthedStockOpnamesNewRoute
   '/stock/transfers/$id': typeof AuthedStockTransfersIdRoute
   '/stock/transfers/new': typeof AuthedStockTransfersNewRoute
+  '/purchases/orders/': typeof AuthedPurchasesOrdersIndexRoute
   '/purchases/receipts/': typeof AuthedPurchasesReceiptsIndexRoute
   '/sales/deliveries/': typeof AuthedSalesDeliveriesIndexRoute
   '/stock/adjustments/': typeof AuthedStockAdjustmentsIndexRoute
@@ -325,6 +348,8 @@ export interface FileRoutesByTo {
   '/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/purchases/orders/$id': typeof AuthedPurchasesOrdersIdRoute
+  '/purchases/orders/new': typeof AuthedPurchasesOrdersNewRoute
   '/purchases/receipts/$id': typeof AuthedPurchasesReceiptsIdRoute
   '/purchases/receipts/new': typeof AuthedPurchasesReceiptsNewRoute
   '/sales/deliveries/$id': typeof AuthedSalesDeliveriesIdRoute
@@ -335,6 +360,7 @@ export interface FileRoutesByTo {
   '/stock/opnames/new': typeof AuthedStockOpnamesNewRoute
   '/stock/transfers/$id': typeof AuthedStockTransfersIdRoute
   '/stock/transfers/new': typeof AuthedStockTransfersNewRoute
+  '/purchases/orders': typeof AuthedPurchasesOrdersIndexRoute
   '/purchases/receipts': typeof AuthedPurchasesReceiptsIndexRoute
   '/sales/deliveries': typeof AuthedSalesDeliveriesIndexRoute
   '/stock/adjustments': typeof AuthedStockAdjustmentsIndexRoute
@@ -368,6 +394,8 @@ export interface FileRoutesById {
   '/_authed/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/_authed/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/_authed/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/_authed/purchases/orders/$id': typeof AuthedPurchasesOrdersIdRoute
+  '/_authed/purchases/orders/new': typeof AuthedPurchasesOrdersNewRoute
   '/_authed/purchases/receipts/$id': typeof AuthedPurchasesReceiptsIdRoute
   '/_authed/purchases/receipts/new': typeof AuthedPurchasesReceiptsNewRoute
   '/_authed/sales/deliveries/$id': typeof AuthedSalesDeliveriesIdRoute
@@ -378,6 +406,7 @@ export interface FileRoutesById {
   '/_authed/stock/opnames/new': typeof AuthedStockOpnamesNewRoute
   '/_authed/stock/transfers/$id': typeof AuthedStockTransfersIdRoute
   '/_authed/stock/transfers/new': typeof AuthedStockTransfersNewRoute
+  '/_authed/purchases/orders/': typeof AuthedPurchasesOrdersIndexRoute
   '/_authed/purchases/receipts/': typeof AuthedPurchasesReceiptsIndexRoute
   '/_authed/sales/deliveries/': typeof AuthedSalesDeliveriesIndexRoute
   '/_authed/stock/adjustments/': typeof AuthedStockAdjustmentsIndexRoute
@@ -411,6 +440,8 @@ export interface FileRouteTypes {
     | '/catalog/partners/$id'
     | '/catalog/products/$id'
     | '/catalog/warehouses/$id'
+    | '/purchases/orders/$id'
+    | '/purchases/orders/new'
     | '/purchases/receipts/$id'
     | '/purchases/receipts/new'
     | '/sales/deliveries/$id'
@@ -421,6 +452,7 @@ export interface FileRouteTypes {
     | '/stock/opnames/new'
     | '/stock/transfers/$id'
     | '/stock/transfers/new'
+    | '/purchases/orders/'
     | '/purchases/receipts/'
     | '/sales/deliveries/'
     | '/stock/adjustments/'
@@ -450,6 +482,8 @@ export interface FileRouteTypes {
     | '/catalog/partners/$id'
     | '/catalog/products/$id'
     | '/catalog/warehouses/$id'
+    | '/purchases/orders/$id'
+    | '/purchases/orders/new'
     | '/purchases/receipts/$id'
     | '/purchases/receipts/new'
     | '/sales/deliveries/$id'
@@ -460,6 +494,7 @@ export interface FileRouteTypes {
     | '/stock/opnames/new'
     | '/stock/transfers/$id'
     | '/stock/transfers/new'
+    | '/purchases/orders'
     | '/purchases/receipts'
     | '/sales/deliveries'
     | '/stock/adjustments'
@@ -492,6 +527,8 @@ export interface FileRouteTypes {
     | '/_authed/catalog/partners/$id'
     | '/_authed/catalog/products/$id'
     | '/_authed/catalog/warehouses/$id'
+    | '/_authed/purchases/orders/$id'
+    | '/_authed/purchases/orders/new'
     | '/_authed/purchases/receipts/$id'
     | '/_authed/purchases/receipts/new'
     | '/_authed/sales/deliveries/$id'
@@ -502,6 +539,7 @@ export interface FileRouteTypes {
     | '/_authed/stock/opnames/new'
     | '/_authed/stock/transfers/$id'
     | '/_authed/stock/transfers/new'
+    | '/_authed/purchases/orders/'
     | '/_authed/purchases/receipts/'
     | '/_authed/sales/deliveries/'
     | '/_authed/stock/adjustments/'
@@ -692,6 +730,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/catalog/warehouses/$id'
       preLoaderRoute: typeof AuthedCatalogWarehousesIdRouteImport
       parentRoute: typeof AuthedCatalogWarehousesRoute
+    }
+    '/_authed/purchases/orders/': {
+      id: '/_authed/purchases/orders/'
+      path: '/purchases/orders'
+      fullPath: '/purchases/orders/'
+      preLoaderRoute: typeof AuthedPurchasesOrdersIndexRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/purchases/orders/$id': {
+      id: '/_authed/purchases/orders/$id'
+      path: '/purchases/orders/$id'
+      fullPath: '/purchases/orders/$id'
+      preLoaderRoute: typeof AuthedPurchasesOrdersIdRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/purchases/orders/new': {
+      id: '/_authed/purchases/orders/new'
+      path: '/purchases/orders/new'
+      fullPath: '/purchases/orders/new'
+      preLoaderRoute: typeof AuthedPurchasesOrdersNewRouteImport
+      parentRoute: typeof AuthedRouteRoute
     }
     '/_authed/purchases/receipts/': {
       id: '/_authed/purchases/receipts/'
@@ -886,6 +945,8 @@ interface AuthedRouteRouteChildren {
   AuthedReportsStockCardRoute: typeof AuthedReportsStockCardRoute
   AuthedReportsStockOnHandRoute: typeof AuthedReportsStockOnHandRoute
   AuthedReportsValuationRoute: typeof AuthedReportsValuationRoute
+  AuthedPurchasesOrdersIdRoute: typeof AuthedPurchasesOrdersIdRoute
+  AuthedPurchasesOrdersNewRoute: typeof AuthedPurchasesOrdersNewRoute
   AuthedPurchasesReceiptsIdRoute: typeof AuthedPurchasesReceiptsIdRoute
   AuthedPurchasesReceiptsNewRoute: typeof AuthedPurchasesReceiptsNewRoute
   AuthedSalesDeliveriesIdRoute: typeof AuthedSalesDeliveriesIdRoute
@@ -896,6 +957,7 @@ interface AuthedRouteRouteChildren {
   AuthedStockOpnamesNewRoute: typeof AuthedStockOpnamesNewRoute
   AuthedStockTransfersIdRoute: typeof AuthedStockTransfersIdRoute
   AuthedStockTransfersNewRoute: typeof AuthedStockTransfersNewRoute
+  AuthedPurchasesOrdersIndexRoute: typeof AuthedPurchasesOrdersIndexRoute
   AuthedPurchasesReceiptsIndexRoute: typeof AuthedPurchasesReceiptsIndexRoute
   AuthedSalesDeliveriesIndexRoute: typeof AuthedSalesDeliveriesIndexRoute
   AuthedStockAdjustmentsIndexRoute: typeof AuthedStockAdjustmentsIndexRoute
@@ -914,6 +976,8 @@ const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedReportsStockCardRoute: AuthedReportsStockCardRoute,
   AuthedReportsStockOnHandRoute: AuthedReportsStockOnHandRoute,
   AuthedReportsValuationRoute: AuthedReportsValuationRoute,
+  AuthedPurchasesOrdersIdRoute: AuthedPurchasesOrdersIdRoute,
+  AuthedPurchasesOrdersNewRoute: AuthedPurchasesOrdersNewRoute,
   AuthedPurchasesReceiptsIdRoute: AuthedPurchasesReceiptsIdRoute,
   AuthedPurchasesReceiptsNewRoute: AuthedPurchasesReceiptsNewRoute,
   AuthedSalesDeliveriesIdRoute: AuthedSalesDeliveriesIdRoute,
@@ -924,6 +988,7 @@ const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedStockOpnamesNewRoute: AuthedStockOpnamesNewRoute,
   AuthedStockTransfersIdRoute: AuthedStockTransfersIdRoute,
   AuthedStockTransfersNewRoute: AuthedStockTransfersNewRoute,
+  AuthedPurchasesOrdersIndexRoute: AuthedPurchasesOrdersIndexRoute,
   AuthedPurchasesReceiptsIndexRoute: AuthedPurchasesReceiptsIndexRoute,
   AuthedSalesDeliveriesIndexRoute: AuthedSalesDeliveriesIndexRoute,
   AuthedStockAdjustmentsIndexRoute: AuthedStockAdjustmentsIndexRoute,
