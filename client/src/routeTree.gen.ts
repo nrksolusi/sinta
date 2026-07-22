@@ -33,6 +33,9 @@ import { Route as AuthedSettingsProfileRouteImport } from './routes/_authed/sett
 import { Route as AuthedCatalogPartnersIdRouteImport } from './routes/_authed/catalog/partners.$id'
 import { Route as AuthedCatalogProductsIdRouteImport } from './routes/_authed/catalog/products.$id'
 import { Route as AuthedCatalogWarehousesIdRouteImport } from './routes/_authed/catalog/warehouses.$id'
+import { Route as AuthedStockTransfersIndexRouteImport } from './routes/_authed/stock/transfers/index'
+import { Route as AuthedStockTransfersIdRouteImport } from './routes/_authed/stock/transfers/$id'
+import { Route as AuthedStockTransfersNewRouteImport } from './routes/_authed/stock/transfers/new'
 
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
@@ -155,6 +158,22 @@ const AuthedCatalogWarehousesIdRoute =
     path: '/$id',
     getParentRoute: () => AuthedCatalogWarehousesRoute,
   } as any)
+const AuthedStockTransfersIndexRoute =
+  AuthedStockTransfersIndexRouteImport.update({
+    id: '/stock/transfers/',
+    path: '/stock/transfers/',
+    getParentRoute: () => AuthedRouteRoute,
+  } as any)
+const AuthedStockTransfersIdRoute = AuthedStockTransfersIdRouteImport.update({
+  id: '/stock/transfers/$id',
+  path: '/stock/transfers/$id',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedStockTransfersNewRoute = AuthedStockTransfersNewRouteImport.update({
+  id: '/stock/transfers/new',
+  path: '/stock/transfers/new',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -180,6 +199,9 @@ export interface FileRoutesByFullPath {
   '/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/stock/transfers/$id': typeof AuthedStockTransfersIdRoute
+  '/stock/transfers/new': typeof AuthedStockTransfersNewRoute
+  '/stock/transfers/': typeof AuthedStockTransfersIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -203,6 +225,9 @@ export interface FileRoutesByTo {
   '/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/stock/transfers/$id': typeof AuthedStockTransfersIdRoute
+  '/stock/transfers/new': typeof AuthedStockTransfersNewRoute
+  '/stock/transfers': typeof AuthedStockTransfersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -230,6 +255,9 @@ export interface FileRoutesById {
   '/_authed/catalog/partners/$id': typeof AuthedCatalogPartnersIdRoute
   '/_authed/catalog/products/$id': typeof AuthedCatalogProductsIdRoute
   '/_authed/catalog/warehouses/$id': typeof AuthedCatalogWarehousesIdRoute
+  '/_authed/stock/transfers/$id': typeof AuthedStockTransfersIdRoute
+  '/_authed/stock/transfers/new': typeof AuthedStockTransfersNewRoute
+  '/_authed/stock/transfers/': typeof AuthedStockTransfersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -257,6 +285,9 @@ export interface FileRouteTypes {
     | '/catalog/partners/$id'
     | '/catalog/products/$id'
     | '/catalog/warehouses/$id'
+    | '/stock/transfers/$id'
+    | '/stock/transfers/new'
+    | '/stock/transfers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -280,6 +311,9 @@ export interface FileRouteTypes {
     | '/catalog/partners/$id'
     | '/catalog/products/$id'
     | '/catalog/warehouses/$id'
+    | '/stock/transfers/$id'
+    | '/stock/transfers/new'
+    | '/stock/transfers'
   id:
     | '__root__'
     | '/_authed'
@@ -306,6 +340,9 @@ export interface FileRouteTypes {
     | '/_authed/catalog/partners/$id'
     | '/_authed/catalog/products/$id'
     | '/_authed/catalog/warehouses/$id'
+    | '/_authed/stock/transfers/$id'
+    | '/_authed/stock/transfers/new'
+    | '/_authed/stock/transfers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -485,6 +522,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCatalogWarehousesIdRouteImport
       parentRoute: typeof AuthedCatalogWarehousesRoute
     }
+    '/_authed/stock/transfers/': {
+      id: '/_authed/stock/transfers/'
+      path: '/stock/transfers'
+      fullPath: '/stock/transfers/'
+      preLoaderRoute: typeof AuthedStockTransfersIndexRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/stock/transfers/$id': {
+      id: '/_authed/stock/transfers/$id'
+      path: '/stock/transfers/$id'
+      fullPath: '/stock/transfers/$id'
+      preLoaderRoute: typeof AuthedStockTransfersIdRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/stock/transfers/new': {
+      id: '/_authed/stock/transfers/new'
+      path: '/stock/transfers/new'
+      fullPath: '/stock/transfers/new'
+      preLoaderRoute: typeof AuthedStockTransfersNewRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
   }
 }
 
@@ -572,6 +630,9 @@ interface AuthedRouteRouteChildren {
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedReportsStockOnHandRoute: typeof AuthedReportsStockOnHandRoute
   AuthedReportsValuationRoute: typeof AuthedReportsValuationRoute
+  AuthedStockTransfersIdRoute: typeof AuthedStockTransfersIdRoute
+  AuthedStockTransfersNewRoute: typeof AuthedStockTransfersNewRoute
+  AuthedStockTransfersIndexRoute: typeof AuthedStockTransfersIndexRoute
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
@@ -584,6 +645,9 @@ const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedReportsStockOnHandRoute: AuthedReportsStockOnHandRoute,
   AuthedReportsValuationRoute: AuthedReportsValuationRoute,
+  AuthedStockTransfersIdRoute: AuthedStockTransfersIdRoute,
+  AuthedStockTransfersNewRoute: AuthedStockTransfersNewRoute,
+  AuthedStockTransfersIndexRoute: AuthedStockTransfersIndexRoute,
 }
 
 const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
