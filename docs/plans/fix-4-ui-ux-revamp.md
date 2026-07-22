@@ -4,6 +4,10 @@
 > schema, API, or client change described here has been built. ADRs 0016-0020
 > record the decisions; nothing is committed. Larger than fix-3 (server-enforced
 > fulfillment + full read-query contract); sequence as its own milestone.
+>
+> **Execution:** the backend/frontend sprint split and sync points are in
+> `fix-4-sprint-plan.md`; the pick-up-and-go handoffs are jobs `SN-0001`..`SN-0011`
+> in `../jobs/` (board: `../jobs/BOARD.md`).
 
 Translates a stashed scratch file of revamp notes into technical work. It pulls
 the three `scale`-deferred incidents forward (INC-4 fulfillment, INC-5 list

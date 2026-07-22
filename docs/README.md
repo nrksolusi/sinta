@@ -12,11 +12,13 @@ inventory management for Indonesian SME distributors (Go `server/`, React
 | `adr/` | Architecture Decision Records - one hard-to-reverse decision each. | Append-only; supersede, don't rewrite |
 | `design/` | Living design system / UI build contracts. | Living |
 | `discovery/` | Raw evidence and gap logs (interviews, PRDs, incidents). | Point-in-time; append notes |
-| `plans/` | Build plans and slices. Each carries a Status banner. | Status changes as work ships |
+| `plans/` | **Thinking**: design docs and build plans. No handoffs. Each carries a Status banner. | Status changes as work ships |
+| `jobs/` | **Doing**: executable handoffs (`wo/SN-####.md`) + generated board/journal. See [jobs/README.md](jobs/README.md). | Append-only log; state in front-matter |
 
 Rule of thumb: a **decision** goes in `adr/`; a **plan to build it** goes in
-`plans/`; the **evidence behind it** goes in `discovery/`; **standing rules** go
-in `reference/` or `design/`.
+`plans/`; the **executable handoff of that plan** goes in `jobs/`; the
+**evidence behind it** goes in `discovery/`; **standing rules** go in
+`reference/` or `design/`.
 
 ## Status legend
 
@@ -59,7 +61,9 @@ not yet built). `0002` accepted but FIFO half pending M2.
 | [incidents.md](discovery/incidents.md) - API gaps INC-1..6 | INC-1/2/3 -> fix-3; INC-4/5/6 -> fix-4 |
 | [fix-2-deferred-scope.md](discovery/fix-2-deferred-scope.md) - what fix-2 deliberately did not build | Reference |
 
-## plans/
+## plans/ - thinking
+
+Design docs and ADR-backed plans. No handoffs here; jobs cite these.
 
 | Plan | Status |
 |------|--------|
@@ -69,6 +73,17 @@ not yet built). `0002` accepted but FIFO half pending M2.
 | [fix-2-ui-worktree-allocation.md](plans/fix-2-ui-worktree-allocation.md) - fix-2 work allocation | Done |
 | [fix-3-lifecycle-and-slice-a.md](plans/fix-3-lifecycle-and-slice-a.md) - INC-1/2/3, approval, printing, numbering UI | Proposed |
 | [fix-4-ui-ux-revamp.md](plans/fix-4-ui-ux-revamp.md) - AppShell/orders revamp; folds INC-4/5/6 | Proposed |
+| [fix-4-sprint-plan.md](plans/fix-4-sprint-plan.md) - fix-4 BE/FE sprint + parallelization | Proposed |
 | [tenant-configurability-catalog.md](plans/tenant-configurability-catalog.md) - configurable-surface catalog | Proposed (reference) |
 | [m2-m3-roadmap.md](plans/m2-m3-roadmap.md) - unified M2/M3 sequencing | Proposed |
 | [m2-parallel.md](plans/m2-parallel.md) - original M2 decomposition | Superseded by the roadmap |
+
+## jobs/ - doing
+
+Executable handoffs. Each `wo/SN-####.md` is one self-contained job - references,
+scope fence, gates, and an append-only log. Protocol + gates:
+[README.md](jobs/README.md). State views (generated): [BOARD.md](jobs/BOARD.md) /
+[INCIDENTS.md](jobs/INCIDENTS.md) / [JOURNAL.md](jobs/JOURNAL.md). Mint with
+`python3 docs/jobs/_jobs.py new --type <TYPE> --title "..."`; regenerate with
+`python3 docs/jobs/_jobs.py gen`. Jobs are minted in the main tree only (Claude
+hook enforced). Currently seeded: fix-4 jobs `SN-0001`..`SN-0011`.

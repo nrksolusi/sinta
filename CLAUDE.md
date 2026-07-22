@@ -12,6 +12,13 @@ pace - keep changes small and scoped.
 - `docs/adr/` - rationale for hard-to-reverse decisions. Do not "fix" what an
   ADR says is deliberate.
 - `docs/reference/CONVENTIONS.md` - git and naming rules.
+- `docs/plans/` - **thinking only**: design docs and ADR-backed plans (fix-*, m*,
+  roadmap, catalog). No handoffs here.
+- `docs/jobs/README.md` - **jobs protocol (load-bearing).** Executable work is
+  handed off as job files `docs/jobs/wo/SN-####.md` (references + scope fence +
+  gates + append-only log); `BOARD.md`/`INCIDENTS.md`/`JOURNAL.md` are generated.
+  File a job and log the work - not just the commit. See the load-bearing rule
+  below.
 - `docs/reference/CONTEXT.md` - glossary. Use these exact terms in code, API, and
   UI; respect the avoid-lists. Extended version with relationships and flagged
   ambiguities: `docs/reference/UBIQUITOUS_LANGUAGE.md`.
@@ -24,6 +31,18 @@ pace - keep changes small and scoped.
 
 ## Load-bearing rules
 
+- Work is tracked per `docs/jobs/README.md`: before writing code, mint a job
+  with `python3 docs/jobs/_jobs.py new --type <TYPE> --title "..."` (ids are a
+  global `SN-####` sequence; job files live in `docs/jobs/wo/`). Jobs/incidents
+  may only be created in the **main working tree**, never a `.wt/` worktree - a
+  `.claude/settings.json` PreToolUse hook enforces this. Keep an append-only
+  `## Log` of the actual work - decisions, dead-ends, verification, hand-offs -
+  citing commits rather than restating diffs; set the job's `branch`. Mint ids on
+  main, but do the implementation **in a worktree** under `.wt/` - a PostToolUse
+  Read hook reminds when a `ready`/`in-progress` job is read on the main checkout.
+  `BOARD.md`/`INCIDENTS.md`/`JOURNAL.md` are generated - never hand-edit them; run
+  `python3 docs/jobs/_jobs.py gen`. A change lands with its job file, not just a
+  commit. Plans in `docs/plans/` are the thinking a job cites - never a handoff.
 - The `stock_movements` journal is append-only and the sole source of truth
   for stock. Never update or delete journal rows; corrections are new entries
   (ADR-0001, ADR-0003).
@@ -31,11 +50,13 @@ pace - keep changes small and scoped.
   without one is a security bug (ADR-0004).
 - Quantities and money are Postgres `numeric`, never floats; quantities are
   stored in base units.
-- API is spec-first: edit `server/api/openapi.yaml`, then run `go generate .`
-  in server/ (oapi-codegen + sqlc) and `pnpm generate-api` in client. Never
-  edit generated files (`api-types.ts`, `routeTree.gen.ts`, `src/paraglide/`,
-  `server/internal/api/`, sqlc output in `server/internal/store/` - the
-  `queries/*.sql` files are the hand-written source).
+- API is spec-first: edit `server/api/openapi.yaml` + `server/api/paths/*.yaml`
+  (the source), then run `go generate ./...` in server/ (bundles to
+  `openapi.gen.yaml` via `cmd/bundle`, then oapi-codegen + sqlc) and
+  `pnpm generate-api` in client. Never edit generated files (`openapi.gen.yaml`,
+  `api-types.ts`, `routeTree.gen.ts`, `src/paraglide/`, `server/internal/api/`,
+  sqlc output in `server/internal/store/` - the `queries/*.sql` files are the
+  hand-written source).
 - Migrations: goose format in `server/migrations/`, applied with
   `go run ./cmd/migrate up`; sqlc reads the same files as schema.
 - Primary keys are UUIDv7 everywhere (ADR-0009). Document numbers are a

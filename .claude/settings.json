@@ -27,5 +27,29 @@
       "Read(**/.env)",
       "Read(**/.env.*)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 docs/jobs/_jobs.py guard"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 docs/jobs/_jobs.py onread"
+          }
+        ]
+      }
+    ]
   }
 }
