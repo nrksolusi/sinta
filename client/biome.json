@@ -8,6 +8,7 @@
       "!project.inlang/.meta.json",
       "!src/lib/api-types.ts",
       "!src/components/ui",
+      "!src/hooks",
       "!src/styles.css",
       "!.output",
       "!.nitro",
