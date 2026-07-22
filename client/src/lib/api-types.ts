@@ -297,6 +297,8 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            /** @description Inactive tenants answer 403 tenant_inactive on every tenant-scoped request (ADR-0012) */
+            active: boolean;
         };
         /** @enum {string} */
         Role: "owner" | "admin" | "warehouse" | "sales" | "viewer";
@@ -329,6 +331,8 @@ export interface components {
             costingMethod: components["schemas"]["CostingMethod"];
             fiscalYearStartMonth: number;
             myRole: components["schemas"]["Role"];
+            /** @description Inactive tenants answer 403 tenant_inactive on every tenant-scoped request (ADR-0012) */
+            active: boolean;
         };
         UpdateTenantRequest: {
             name?: string;
@@ -401,6 +405,15 @@ export interface components {
         };
         /** @description Request failed validation */
         ValidationError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Rate limit reached; retry later */
+        TooManyRequests: {
             headers: {
                 [name: string]: unknown;
             };
@@ -485,6 +498,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     logout: {
@@ -566,7 +580,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Tenant created and activated for this session */
+            /** @description Tenant created and selected for this session; starts inactive past the creator's soft cap (ADR-0012) */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -577,6 +591,7 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             422: components["responses"]["ValidationError"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
     getTenant: {

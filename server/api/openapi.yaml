@@ -69,6 +69,8 @@ paths:
                 $ref: "#/components/schemas/SessionInfo"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
   /auth/logout:
     post:
@@ -128,7 +130,7 @@ paths:
               $ref: "#/components/schemas/CreateTenantRequest"
       responses:
         "201":
-          description: Tenant created and activated for this session
+          description: Tenant created and selected for this session; starts inactive past the creator's soft cap (ADR-0012)
           content:
             application/json:
               schema:
@@ -137,6 +139,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "422":
           $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
   /tenant:
     get:
@@ -389,6 +393,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+    TooManyRequests:
+      description: Rate limit reached; retry later
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
 
   schemas:
     Health:
@@ -462,13 +472,16 @@ components:
 
     Tenant:
       type: object
-      required: [id, name]
+      required: [id, name, active]
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
+        active:
+          type: boolean
+          description: Inactive tenants answer 403 tenant_inactive on every tenant-scoped request (ADR-0012)
 
     Role:
       type: string
@@ -520,7 +533,7 @@ components:
 
     TenantProfile:
       type: object
-      required: [id, name, legalName, costingMethod, fiscalYearStartMonth, myRole]
+      required: [id, name, legalName, costingMethod, fiscalYearStartMonth, myRole, active]
       properties:
         id:
           type: string
@@ -535,6 +548,9 @@ components:
           type: integer
         myRole:
           $ref: "#/components/schemas/Role"
+        active:
+          type: boolean
+          description: Inactive tenants answer 403 tenant_inactive on every tenant-scoped request (ADR-0012)
 
     UpdateTenantRequest:
       type: object

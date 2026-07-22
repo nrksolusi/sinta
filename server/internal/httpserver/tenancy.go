@@ -38,13 +38,23 @@ func tenantProfile(tenant store.Tenant, role string) api.TenantProfile {
 		CostingMethod:        costingToAPI[tenant.CostingMethod],
 		FiscalYearStartMonth: int(tenant.FiscalYearStartMonth),
 		MyRole:               api.Role(role),
+		Active:               tenant.Active,
 	}
 }
+
+// ADR-0012: only this many self-served tenants per user start active; later
+// ones wait for manual activation.
+const selfServeActiveTenantCap = 3
 
 func (s *Server) CreateTenant(w http.ResponseWriter, r *http.Request) {
 	session, user, err := s.currentSession(r)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, "unauthenticated", "no valid session")
+		return
+	}
+
+	if s.createTenantLimiter.TooMany(user.ID.String()) {
+		writeError(w, http.StatusTooManyRequests, "too_many_attempts", "too many tenants created recently; try again later")
 		return
 	}
 
@@ -88,11 +98,17 @@ func (s *Server) CreateTenant(w http.ResponseWriter, r *http.Request) {
 		defer tx.Rollback(r.Context())
 		q := s.queries.WithTx(tx)
 
+		created, err := q.CountTenantsCreatedBy(r.Context(), pgUUID(user.ID))
+		if err != nil {
+			return err
+		}
 		tenant, err = q.CreateTenant(r.Context(), store.CreateTenantParams{
 			Name:                 req.Name,
 			LegalName:            legalName,
 			CostingMethod:        costing,
 			FiscalYearStartMonth: fiscalStart,
+			Active:               created < selfServeActiveTenantCap,
+			CreatedBy:            pgUUID(user.ID),
 		})
 		if err != nil {
 			return err
@@ -134,6 +150,7 @@ func (s *Server) CreateTenant(w http.ResponseWriter, r *http.Request) {
 		writeInternal(w, err, "could not onboard tenant")
 		return
 	}
+	s.createTenantLimiter.Record(user.ID.String())
 
 	writeJSON(w, http.StatusCreated, tenantProfile(tenant, "owner"))
 }

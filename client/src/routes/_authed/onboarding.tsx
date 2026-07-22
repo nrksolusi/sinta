@@ -23,6 +23,7 @@ function OnboardingWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [pendingActivation, setPendingActivation] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -50,6 +51,12 @@ function OnboardingWizard() {
       }
       await queryClient.refetchQueries(sessionQueryOptions);
       await router.invalidate();
+      // Past the soft cap (ADR-0012) the tenant starts inactive - explain the
+      // waiting state instead of dropping the user onto a 403'd dashboard.
+      if (!data.active) {
+        setPendingActivation(true);
+        return;
+      }
       await router.navigate({ to: "/" });
     },
   });
@@ -59,6 +66,22 @@ function OnboardingWizard() {
     m.onboarding_step_costing(),
     m.onboarding_step_warehouse(),
   ];
+
+  if (pendingActivation) {
+    return (
+      <main className="mx-auto w-full max-w-lg space-y-4 p-4">
+        <h1 className="text-2xl font-semibold">
+          {m.onboarding_pending_title()}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {m.onboarding_pending_hint()}
+        </p>
+        <Button onClick={() => router.navigate({ to: "/" })}>
+          {m.onboarding_pending_continue()}
+        </Button>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto w-full max-w-lg space-y-6 p-4">

@@ -34,6 +34,9 @@ export const Route = createFileRoute("/_authed")({
 function AuthedLayout() {
   const { session } = Route.useRouteContext();
   const router = useRouter();
+  const activeTenant = session.memberships.find(
+    (mb) => mb.tenant.id === session.activeTenantId,
+  )?.tenant;
 
   const switchTenant = async (tenantId: string) => {
     const { data } = await api.POST("/auth/switch-tenant", {
@@ -100,6 +103,11 @@ function AuthedLayout() {
           {m.logout()}
         </Button>
       </header>
+      {activeTenant && !activeTenant.active && (
+        <p className="border-b bg-amber-100 px-4 py-2 text-sm text-amber-900">
+          {m.tenant_inactive_banner()}
+        </p>
+      )}
       <Outlet />
     </div>
   );

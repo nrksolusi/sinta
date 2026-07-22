@@ -89,7 +89,7 @@ func (s *Server) sessionInfo(ctx context.Context, user store.User, activeTenantI
 	for _, row := range rows {
 		memberships = append(memberships, api.Membership{
 			Role:   api.Role(row.Role),
-			Tenant: api.Tenant{Id: row.TenantID, Name: row.TenantName},
+			Tenant: api.Tenant{Id: row.TenantID, Name: row.TenantName, Active: row.TenantActive},
 		})
 	}
 

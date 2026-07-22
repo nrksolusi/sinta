@@ -69,18 +69,18 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	user, err := s.queries.GetUserByEmail(r.Context(), string(req.Email))
 	if err != nil {
 		// Same response as a wrong password so accounts cannot be enumerated.
-		s.loginLimiter.RecordFailure(limiterKey)
+		s.loginLimiter.Record(limiterKey)
 		writeError(w, http.StatusUnauthorized, "invalid_credentials", "email or password is incorrect")
 		return
 	}
 
 	ok, err := auth.VerifyPassword(user.PasswordHash, req.Password)
 	if err != nil || !ok {
-		s.loginLimiter.RecordFailure(limiterKey)
+		s.loginLimiter.Record(limiterKey)
 		writeError(w, http.StatusUnauthorized, "invalid_credentials", "email or password is incorrect")
 		return
 	}
-	s.loginLimiter.RecordSuccess(limiterKey)
+	s.loginLimiter.Reset(limiterKey)
 
 	// Restore the user's last active tenant, but only if the membership still
 	// exists - never guess a default.

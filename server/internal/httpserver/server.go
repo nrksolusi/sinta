@@ -16,16 +16,20 @@ import (
 )
 
 type Server struct {
-	pool         *pgxpool.Pool
-	queries      *store.Queries
-	loginLimiter *auth.LoginLimiter
+	pool                *pgxpool.Pool
+	queries             *store.Queries
+	loginLimiter        *auth.RateLimiter
+	createTenantLimiter *auth.RateLimiter
 }
 
 func New(pool *pgxpool.Pool) *Server {
 	return &Server{
 		pool:         pool,
 		queries:      store.New(pool),
-		loginLimiter: auth.NewLoginLimiter(5, 15*time.Minute),
+		loginLimiter: auth.NewRateLimiter(5, 15*time.Minute),
+		// ADR-0012: the soft cap handles free-tenant abuse; this only has to
+		// stop someone scripting bulk creations.
+		createTenantLimiter: auth.NewRateLimiter(5, time.Hour),
 	}
 }
 

@@ -44,6 +44,7 @@ type Tenant struct {
 	Active               bool
 	CreatedAt            pgtype.Timestamptz
 	UpdatedAt            pgtype.Timestamptz
+	CreatedBy            pgtype.UUID
 }
 
 type User struct {
