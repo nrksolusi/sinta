@@ -124,6 +124,26 @@ screens grow line-item editing, where hand-rolled field arrays get painful.
 - Existing payload-shape tests (e.g. `product-form.test.tsx` barcode
   omit/clear semantics) are the regression net; they must pass unmodified.
 
+Done notes:
+
+- Migrated to `useForm`: ProductForm, PartnerForm, WarehouseForm, settings
+  profile, settings invites (create-invite role picker). login/register/
+  onboarding were already on TanStack Form. `product-form.test.tsx` passes
+  unmodified.
+- PartnerForm's "supplier or customer" rule now runs through the form
+  (`validators.onMount`/`onChange`) and the submit button reflects
+  `form.state.canSubmit` instead of ad-hoc `disabled`.
+- Profile split into a loader section + `TenantProfileForm` child so `useForm`
+  defaultValues bind to the loaded tenant (hooks can't sit after the null
+  guard). PATCH now always sends the current name/legalName rather than
+  omitting untouched fields - idempotent, same observed result.
+- `line-editor.tsx` field-array deferred by decision: it is a controlled
+  component (parents own `lines`), so the field-array payoff only lands when
+  receive/delivery/opname adopt `useForm` with `lines` as a field array. That
+  belongs with the document-entry form work under fix-2's document lifecycle,
+  not a risky refactor of those untested screens here. line-editor keeps its
+  controlled `lines`/`onChange` contract and its test is untouched.
+
 ## Rules
 
 - No behavior or API change anywhere in this plan; payloads stay identical.
@@ -135,4 +155,5 @@ screens grow line-item editing, where hand-rolled field arrays get painful.
 
 - [x] Step 1 - shadcn primitives sweep
 - [x] Step 2 - TanStack Table list screens
-- [ ] Step 3 - TanStack Form migration
+- [x] Step 3 - TanStack Form migration (line-editor field array deferred to the
+      document-entry form work; see done notes)
