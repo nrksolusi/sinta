@@ -3,6 +3,9 @@
 //	DATABASE_URL=postgres://... go run ./cmd/migrate up
 //	DATABASE_URL=postgres://... go run ./cmd/migrate down
 //	DATABASE_URL=postgres://... go run ./cmd/migrate status
+//
+// DATABASE_URL is read from the environment; a .env file at the repo root is
+// loaded automatically (LoadDotEnv). Real environment variables take precedence.
 package main
 
 import (
@@ -13,12 +16,17 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 
+	"github.com/nrksolusi/sinta/internal/config"
 	"github.com/nrksolusi/sinta/migrations"
 )
 
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatal("usage: migrate <up|down|status>")
+	}
+
+	if err := config.LoadDotEnv(); err != nil {
+		log.Fatalf("load .env: %v", err)
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")

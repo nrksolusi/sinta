@@ -24,6 +24,12 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUN_DIR="$ROOT/.run"
 mkdir -p "$RUN_DIR"
 
+# Load the root .env (single source of truth for the stack) so the script's own
+# references ($PORT below) and docker compose pick it up. The Go server/migrate
+# commands also load it themselves via godotenv; values already exported here win.
+set -a
+[[ -f "$ROOT/.env" ]] && . "$ROOT/.env"
+set +a
 export DATABASE_URL="${DATABASE_URL:-postgres://sinta:sinta_dev@localhost:5432/sinta?sslmode=disable}"
 export PORT="${PORT:-8080}"
 

@@ -2,15 +2,17 @@ services:
   postgres:
     image: postgres:18
     environment:
-      POSTGRES_USER: sinta
-      POSTGRES_PASSWORD: sinta_dev # local development only; production uses env outside git
-      POSTGRES_DB: sinta
+      # Values come from the root .env (compose auto-loads it); defaults keep
+      # the stack working without one. Production uses env outside git.
+      POSTGRES_USER: ${POSTGRES_USER:-sinta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sinta_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-sinta}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sinta"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sinta}"]
       interval: 5s
       timeout: 3s
       retries: 10
