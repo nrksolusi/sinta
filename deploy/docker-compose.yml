@@ -1,0 +1,126 @@
+# Production Sinta stack: postgres + server (Go API) + caddy (TLS + SPA),
+# with one-shot migrate/role-password init steps and a nightly backup sidecar.
+#
+# RLS model (ADR-0004): migrations and the app role password are set by the
+# database OWNER (POSTGRES_USER); the long-running server connects as the
+# non-superuser sinta_app role so RLS policies actually apply.
+#
+# All secrets come from .env (see deploy/.env.example) - never commit it.
+#
+# Bring up:   docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d
+# Validate:   docker compose -f deploy/docker-compose.yml --env-file deploy/.env config
+
+name: sinta
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sinta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:-sinta}
+    volumes:
+      # postgres:18 wants the mount at /var/lib/postgresql (data lands in a
+      # PGDATA subdir), matching the dev docker-compose.yml at the repo root.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sinta} -d ${POSTGRES_DB:-sinta}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # No published ports: only the compose network reaches Postgres.
+
+  # One-shot: apply goose migrations as the database OWNER. Creates the
+  # sinta_app role (password-less) among other schema objects.
+  migrate:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.server
+    image: sinta-server:latest
+    entrypoint: ["/usr/local/bin/migrate", "up"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sinta}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sinta}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # One-shot: set the sinta_app role's login password. Migrations create the
+  # role without one (passwords never live in migrations); the server logs in
+  # with SINTA_APP_PASSWORD. Runs as OWNER via psql from the postgres image.
+  setapppw:
+    image: postgres:18
+    entrypoint: ["psql"]
+    command:
+      - postgres://${POSTGRES_USER:-sinta}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sinta}?sslmode=disable
+      - -v
+      - ON_ERROR_STOP=1
+      - -c
+      - ALTER ROLE sinta_app WITH LOGIN PASSWORD '${SINTA_APP_PASSWORD}';
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  server:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.server
+    image: sinta-server:latest
+    restart: unless-stopped
+    environment:
+      # Connect as the RLS-constrained sinta_app role, NOT the owner.
+      DATABASE_URL: postgres://sinta_app:${SINTA_APP_PASSWORD:?SINTA_APP_PASSWORD required}@postgres:5432/${POSTGRES_DB:-sinta}?sslmode=disable
+      PORT: "8080"
+      SESSION_SECRET: ${SESSION_SECRET}
+    depends_on:
+      setapppw:
+        condition: service_completed_successfully
+    expose:
+      - "8080"
+
+  caddy:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.client
+    image: sinta-caddy:latest
+    restart: unless-stopped
+    environment:
+      SINTA_DOMAIN: ${SINTA_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - server
+
+  # Nightly pg_dump shipped offsite. The sidecar sleeps until the next 02:00
+  # local run; see deploy/backup.sh. Alternatively schedule backup.sh from the
+  # host crontab against the same env (see deploy/README.md).
+  backup:
+    image: postgres:18
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/usr/local/bin/backup.sh", "--loop"]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-sinta}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-sinta}
+      BACKUP_HOUR: ${BACKUP_HOUR:-02}
+      BACKUP_S3_TARGET: ${BACKUP_S3_TARGET:-}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - ./backup.sh:/usr/local/bin/backup.sh:ro
+      - backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+  backups:

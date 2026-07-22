@@ -1,0 +1,22 @@
+# Multi-stage build for the Sinta client: pnpm vite build, then serve the
+# static output from Caddy. Caddy also reverse-proxies /v1 to the server
+# (see deploy/Caddyfile). Build context is the repo root.
+
+FROM node:24-slim AS build
+WORKDIR /src
+
+RUN corepack enable
+
+# openapi-typescript reads ../server/api/openapi.gen.yaml at generate time,
+# but the committed src/lib/api-types.ts is what the build consumes, so only
+# the client tree is needed here.
+COPY client/package.json client/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY client/ ./
+RUN pnpm build
+
+# Caddy serves the built SPA and terminates TLS.
+FROM caddy:2-alpine AS runtime
+COPY --from=build /src/dist /srv/www
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
