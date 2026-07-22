@@ -41,15 +41,23 @@ func TestMain(m *testing.M) {
 		os.Exit(0)
 	}
 
-	if _, err := admin.ExecContext(ctx, "DROP DATABASE IF EXISTS sinta_test (FORCE)"); err != nil {
+	// The test database name is overridable so parallel worktrees (one per M1
+	// track) can run their suites against isolated databases on one Postgres
+	// instance without racing on DROP/CREATE (docs/plans/m1-parallel.md).
+	dbName := os.Getenv("TEST_DATABASE_NAME")
+	if dbName == "" {
+		dbName = "sinta_test"
+	}
+
+	if _, err := admin.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS %s (FORCE)", dbName)); err != nil {
 		log.Fatalf("drop test db: %v", err)
 	}
-	if _, err := admin.ExecContext(ctx, "CREATE DATABASE sinta_test"); err != nil {
+	if _, err := admin.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s", dbName)); err != nil {
 		log.Fatalf("create test db: %v", err)
 	}
 	admin.Close()
 
-	testURL := "postgres://sinta:sinta_dev@localhost:5432/sinta_test?sslmode=disable"
+	testURL := fmt.Sprintf("postgres://sinta:sinta_dev@localhost:5432/%s?sslmode=disable", dbName)
 
 	migrateDB, err := sql.Open("pgx", testURL)
 	if err != nil {
@@ -77,7 +85,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("pool: %v", err)
 	}
 	appPool, err = pgxpool.New(ctx,
-		"postgres://sinta_app:sinta_app_test@localhost:5432/sinta_test?sslmode=disable")
+		fmt.Sprintf("postgres://sinta_app:sinta_app_test@localhost:5432/%s?sslmode=disable", dbName))
 	if err != nil {
 		log.Fatalf("app pool: %v", err)
 	}
