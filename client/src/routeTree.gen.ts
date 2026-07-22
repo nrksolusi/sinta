@@ -46,6 +46,9 @@ import { Route as AuthedStockAdjustmentsNewRouteImport } from './routes/_authed/
 import { Route as AuthedStockOpnamesIndexRouteImport } from './routes/_authed/stock/opnames/index'
 import { Route as AuthedStockOpnamesIdRouteImport } from './routes/_authed/stock/opnames/$id'
 import { Route as AuthedStockOpnamesNewRouteImport } from './routes/_authed/stock/opnames/new'
+import { Route as AuthedStockTransfersIndexRouteImport } from './routes/_authed/stock/transfers/index'
+import { Route as AuthedStockTransfersIdRouteImport } from './routes/_authed/stock/transfers/$id'
+import { Route as AuthedStockTransfersNewRouteImport } from './routes/_authed/stock/transfers/new'
 
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
@@ -241,6 +244,22 @@ const AuthedStockOpnamesNewRoute = AuthedStockOpnamesNewRouteImport.update({
   path: '/stock/opnames/new',
   getParentRoute: () => AuthedRouteRoute,
 } as any)
+const AuthedStockTransfersIndexRoute =
+  AuthedStockTransfersIndexRouteImport.update({
+    id: '/stock/transfers/',
+    path: '/stock/transfers/',
+    getParentRoute: () => AuthedRouteRoute,
+  } as any)
+const AuthedStockTransfersIdRoute = AuthedStockTransfersIdRouteImport.update({
+  id: '/stock/transfers/$id',
+  path: '/stock/transfers/$id',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedStockTransfersNewRoute = AuthedStockTransfersNewRouteImport.update({
+  id: '/stock/transfers/new',
+  path: '/stock/transfers/new',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -275,10 +294,13 @@ export interface FileRoutesByFullPath {
   '/stock/adjustments/new': typeof AuthedStockAdjustmentsNewRoute
   '/stock/opnames/$id': typeof AuthedStockOpnamesIdRoute
   '/stock/opnames/new': typeof AuthedStockOpnamesNewRoute
+  '/stock/transfers/$id': typeof AuthedStockTransfersIdRoute
+  '/stock/transfers/new': typeof AuthedStockTransfersNewRoute
   '/purchases/receipts/': typeof AuthedPurchasesReceiptsIndexRoute
   '/sales/deliveries/': typeof AuthedSalesDeliveriesIndexRoute
   '/stock/adjustments/': typeof AuthedStockAdjustmentsIndexRoute
   '/stock/opnames/': typeof AuthedStockOpnamesIndexRoute
+  '/stock/transfers/': typeof AuthedStockTransfersIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -311,10 +333,13 @@ export interface FileRoutesByTo {
   '/stock/adjustments/new': typeof AuthedStockAdjustmentsNewRoute
   '/stock/opnames/$id': typeof AuthedStockOpnamesIdRoute
   '/stock/opnames/new': typeof AuthedStockOpnamesNewRoute
+  '/stock/transfers/$id': typeof AuthedStockTransfersIdRoute
+  '/stock/transfers/new': typeof AuthedStockTransfersNewRoute
   '/purchases/receipts': typeof AuthedPurchasesReceiptsIndexRoute
   '/sales/deliveries': typeof AuthedSalesDeliveriesIndexRoute
   '/stock/adjustments': typeof AuthedStockAdjustmentsIndexRoute
   '/stock/opnames': typeof AuthedStockOpnamesIndexRoute
+  '/stock/transfers': typeof AuthedStockTransfersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -351,10 +376,13 @@ export interface FileRoutesById {
   '/_authed/stock/adjustments/new': typeof AuthedStockAdjustmentsNewRoute
   '/_authed/stock/opnames/$id': typeof AuthedStockOpnamesIdRoute
   '/_authed/stock/opnames/new': typeof AuthedStockOpnamesNewRoute
+  '/_authed/stock/transfers/$id': typeof AuthedStockTransfersIdRoute
+  '/_authed/stock/transfers/new': typeof AuthedStockTransfersNewRoute
   '/_authed/purchases/receipts/': typeof AuthedPurchasesReceiptsIndexRoute
   '/_authed/sales/deliveries/': typeof AuthedSalesDeliveriesIndexRoute
   '/_authed/stock/adjustments/': typeof AuthedStockAdjustmentsIndexRoute
   '/_authed/stock/opnames/': typeof AuthedStockOpnamesIndexRoute
+  '/_authed/stock/transfers/': typeof AuthedStockTransfersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -391,10 +419,13 @@ export interface FileRouteTypes {
     | '/stock/adjustments/new'
     | '/stock/opnames/$id'
     | '/stock/opnames/new'
+    | '/stock/transfers/$id'
+    | '/stock/transfers/new'
     | '/purchases/receipts/'
     | '/sales/deliveries/'
     | '/stock/adjustments/'
     | '/stock/opnames/'
+    | '/stock/transfers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -427,10 +458,13 @@ export interface FileRouteTypes {
     | '/stock/adjustments/new'
     | '/stock/opnames/$id'
     | '/stock/opnames/new'
+    | '/stock/transfers/$id'
+    | '/stock/transfers/new'
     | '/purchases/receipts'
     | '/sales/deliveries'
     | '/stock/adjustments'
     | '/stock/opnames'
+    | '/stock/transfers'
   id:
     | '__root__'
     | '/_authed'
@@ -466,10 +500,13 @@ export interface FileRouteTypes {
     | '/_authed/stock/adjustments/new'
     | '/_authed/stock/opnames/$id'
     | '/_authed/stock/opnames/new'
+    | '/_authed/stock/transfers/$id'
+    | '/_authed/stock/transfers/new'
     | '/_authed/purchases/receipts/'
     | '/_authed/sales/deliveries/'
     | '/_authed/stock/adjustments/'
     | '/_authed/stock/opnames/'
+    | '/_authed/stock/transfers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -740,6 +777,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedStockOpnamesNewRouteImport
       parentRoute: typeof AuthedRouteRoute
     }
+    '/_authed/stock/transfers/': {
+      id: '/_authed/stock/transfers/'
+      path: '/stock/transfers'
+      fullPath: '/stock/transfers/'
+      preLoaderRoute: typeof AuthedStockTransfersIndexRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/stock/transfers/$id': {
+      id: '/_authed/stock/transfers/$id'
+      path: '/stock/transfers/$id'
+      fullPath: '/stock/transfers/$id'
+      preLoaderRoute: typeof AuthedStockTransfersIdRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/stock/transfers/new': {
+      id: '/_authed/stock/transfers/new'
+      path: '/stock/transfers/new'
+      fullPath: '/stock/transfers/new'
+      preLoaderRoute: typeof AuthedStockTransfersNewRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
   }
 }
 
@@ -836,10 +894,13 @@ interface AuthedRouteRouteChildren {
   AuthedStockAdjustmentsNewRoute: typeof AuthedStockAdjustmentsNewRoute
   AuthedStockOpnamesIdRoute: typeof AuthedStockOpnamesIdRoute
   AuthedStockOpnamesNewRoute: typeof AuthedStockOpnamesNewRoute
+  AuthedStockTransfersIdRoute: typeof AuthedStockTransfersIdRoute
+  AuthedStockTransfersNewRoute: typeof AuthedStockTransfersNewRoute
   AuthedPurchasesReceiptsIndexRoute: typeof AuthedPurchasesReceiptsIndexRoute
   AuthedSalesDeliveriesIndexRoute: typeof AuthedSalesDeliveriesIndexRoute
   AuthedStockAdjustmentsIndexRoute: typeof AuthedStockAdjustmentsIndexRoute
   AuthedStockOpnamesIndexRoute: typeof AuthedStockOpnamesIndexRoute
+  AuthedStockTransfersIndexRoute: typeof AuthedStockTransfersIndexRoute
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
@@ -861,10 +922,13 @@ const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedStockAdjustmentsNewRoute: AuthedStockAdjustmentsNewRoute,
   AuthedStockOpnamesIdRoute: AuthedStockOpnamesIdRoute,
   AuthedStockOpnamesNewRoute: AuthedStockOpnamesNewRoute,
+  AuthedStockTransfersIdRoute: AuthedStockTransfersIdRoute,
+  AuthedStockTransfersNewRoute: AuthedStockTransfersNewRoute,
   AuthedPurchasesReceiptsIndexRoute: AuthedPurchasesReceiptsIndexRoute,
   AuthedSalesDeliveriesIndexRoute: AuthedSalesDeliveriesIndexRoute,
   AuthedStockAdjustmentsIndexRoute: AuthedStockAdjustmentsIndexRoute,
   AuthedStockOpnamesIndexRoute: AuthedStockOpnamesIndexRoute,
+  AuthedStockTransfersIndexRoute: AuthedStockTransfersIndexRoute,
 }
 
 const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
