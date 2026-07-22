@@ -82,17 +82,33 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	s.loginLimiter.RecordSuccess(limiterKey)
 
+	// Restore the user's last active tenant, but only if the membership still
+	// exists - never guess a default.
+	var activeTenant pgtype.UUID
+	var activeTenantID *uuid.UUID
+	if user.LastActiveTenantID.Valid {
+		lastActive := uuid.UUID(user.LastActiveTenantID.Bytes)
+		if _, err := s.queries.GetMembership(r.Context(), store.GetMembershipParams{
+			UserID:   user.ID,
+			TenantID: lastActive,
+		}); err == nil {
+			activeTenant = user.LastActiveTenantID
+			activeTenantID = &lastActive
+		}
+	}
+
 	expires := time.Now().Add(sessionTTL)
 	session, err := s.queries.CreateSession(r.Context(), store.CreateSessionParams{
-		UserID:    user.ID,
-		ExpiresAt: pgtype.Timestamptz{Time: expires, Valid: true},
+		UserID:         user.ID,
+		ActiveTenantID: activeTenant,
+		ExpiresAt:      pgtype.Timestamptz{Time: expires, Valid: true},
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "could not start session")
 		return
 	}
 
-	info, err := s.sessionInfo(r.Context(), user, nil)
+	info, err := s.sessionInfo(r.Context(), user, activeTenantID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "could not load session")
 		return
@@ -162,6 +178,14 @@ func (s *Server) SwitchTenant(w http.ResponseWriter, r *http.Request) {
 	if err := s.queries.SetSessionActiveTenant(r.Context(), store.SetSessionActiveTenantParams{
 		ID:             session.ID,
 		ActiveTenantID: pgtype.UUID{Bytes: req.TenantId, Valid: true},
+	}); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal", "could not switch tenant")
+		return
+	}
+	// Remember the choice so the next login starts here.
+	if err := s.queries.SetUserLastActiveTenant(r.Context(), store.SetUserLastActiveTenantParams{
+		ID:                 user.ID,
+		LastActiveTenantID: pgtype.UUID{Bytes: req.TenantId, Valid: true},
 	}); err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "could not switch tenant")
 		return

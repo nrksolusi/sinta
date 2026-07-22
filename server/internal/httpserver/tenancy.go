@@ -122,6 +122,12 @@ func (s *Server) CreateTenant(w http.ResponseWriter, r *http.Request) {
 		}); err != nil {
 			return err
 		}
+		if err := q.SetUserLastActiveTenant(r.Context(), store.SetUserLastActiveTenantParams{
+			ID:                 user.ID,
+			LastActiveTenantID: pgUUID(tenant.ID),
+		}); err != nil {
+			return err
+		}
 		return tx.Commit(r.Context())
 	}()
 	if err != nil {
@@ -532,6 +538,12 @@ func (s *Server) AcceptInvite(w http.ResponseWriter, r *http.Request, token stri
 		if err := q.SetSessionActiveTenant(r.Context(), store.SetSessionActiveTenantParams{
 			ID:             session.ID,
 			ActiveTenantID: pgUUID(invite.TenantID),
+		}); err != nil {
+			return err
+		}
+		if err := q.SetUserLastActiveTenant(r.Context(), store.SetUserLastActiveTenantParams{
+			ID:                 user.ID,
+			LastActiveTenantID: pgUUID(invite.TenantID),
 		}); err != nil {
 			return err
 		}

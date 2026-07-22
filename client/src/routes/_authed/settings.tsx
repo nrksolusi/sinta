@@ -15,26 +15,38 @@ export const Route = createFileRoute("/_authed/settings")({
 
 function SettingsPage() {
   const { session } = Route.useRouteContext();
+  const tenantId = session.activeTenantId ?? "";
   const myRole = session.memberships.find(
     (mb) => mb.tenant.id === session.activeTenantId,
   )?.role;
 
+  // key={tenantId} remounts the sections on tenant switch so no local state
+  // or cached data from the previous tenant survives.
   return (
-    <main className="mx-auto w-full max-w-2xl space-y-8 p-4">
+    <main className="mx-auto w-full max-w-2xl space-y-8 p-4" key={tenantId}>
       <h1 className="text-2xl font-semibold">{m.settings_title()}</h1>
-      <TenantProfileSection editable={myRole === "owner"} />
+      <TenantProfileSection editable={myRole === "owner"} tenantId={tenantId} />
       <MembersSection
         canManage={myRole === "owner"}
         myUserId={session.user.id}
+        tenantId={tenantId}
       />
-      {(myRole === "owner" || myRole === "admin") && <InvitesSection />}
+      {(myRole === "owner" || myRole === "admin") && (
+        <InvitesSection tenantId={tenantId} />
+      )}
     </main>
   );
 }
 
-function TenantProfileSection({ editable }: { editable: boolean }) {
+function TenantProfileSection({
+  editable,
+  tenantId,
+}: {
+  editable: boolean;
+  tenantId: string;
+}) {
   const { data: tenant } = useQuery({
-    queryKey: ["tenant"],
+    queryKey: ["tenant", tenantId],
     queryFn: async () => (await api.GET("/tenant")).data ?? null,
   });
   const [name, setName] = useState<string>();
@@ -50,7 +62,7 @@ function TenantProfileSection({ editable }: { editable: boolean }) {
       toast.error(m.error_generic());
       return;
     }
-    queryClient.setQueryData(["tenant"], data);
+    queryClient.setQueryData(["tenant", tenantId], data);
     await queryClient.invalidateQueries({ queryKey: ["session"] });
     toast.success(m.settings_saved());
   };
@@ -92,13 +104,15 @@ function TenantProfileSection({ editable }: { editable: boolean }) {
 function MembersSection({
   canManage,
   myUserId,
+  tenantId,
 }: {
   canManage: boolean;
   myUserId: string;
+  tenantId: string;
 }) {
   const router = useRouter();
   const { data: members, refetch } = useQuery({
-    queryKey: ["members"],
+    queryKey: ["members", tenantId],
     queryFn: async () => (await api.GET("/tenant/members")).data ?? [],
   });
 
@@ -181,9 +195,9 @@ function MembersSection({
   );
 }
 
-function InvitesSection() {
+function InvitesSection({ tenantId }: { tenantId: string }) {
   const { data: invites, refetch } = useQuery({
-    queryKey: ["invites"],
+    queryKey: ["invites", tenantId],
     queryFn: async () => (await api.GET("/tenant/invites")).data ?? [],
   });
   const [role, setRole] = useState<Role>("warehouse");

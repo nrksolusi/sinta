@@ -44,6 +44,10 @@ function AuthedLayout() {
       return;
     }
     queryClient.setQueryData(["session"], data);
+    // Drop every tenant-scoped cache so no page renders the old tenant's data.
+    await queryClient.invalidateQueries({
+      predicate: (query) => query.queryKey[0] !== "session",
+    });
     await router.invalidate();
   };
 
