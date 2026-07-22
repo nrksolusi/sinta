@@ -27,7 +27,7 @@ func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 
 	hash, err := auth.HashPassword(req.Password)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not process password")
+		writeInternal(w, err, "could not process password")
 		return
 	}
 
@@ -42,7 +42,7 @@ func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusConflict, "email_taken", "an account with this email already exists")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, "internal", "could not create account")
+		writeInternal(w, err, "could not create account")
 		return
 	}
 
@@ -104,13 +104,13 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 		ExpiresAt:      pgtype.Timestamptz{Time: expires, Valid: true},
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not start session")
+		writeInternal(w, err, "could not start session")
 		return
 	}
 
 	info, err := s.sessionInfo(r.Context(), user, activeTenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not load session")
+		writeInternal(w, err, "could not load session")
 		return
 	}
 
@@ -125,7 +125,7 @@ func (s *Server) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.queries.DeleteSession(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not end session")
+		writeInternal(w, err, "could not end session")
 		return
 	}
 	clearSessionCookie(w, r)
@@ -147,7 +147,7 @@ func (s *Server) GetSession(w http.ResponseWriter, r *http.Request) {
 
 	info, err := s.sessionInfo(r.Context(), user, activeTenantID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not load session")
+		writeInternal(w, err, "could not load session")
 		return
 	}
 	writeJSON(w, http.StatusOK, info)
@@ -179,7 +179,7 @@ func (s *Server) SwitchTenant(w http.ResponseWriter, r *http.Request) {
 		ID:             session.ID,
 		ActiveTenantID: pgtype.UUID{Bytes: req.TenantId, Valid: true},
 	}); err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not switch tenant")
+		writeInternal(w, err, "could not switch tenant")
 		return
 	}
 	// Remember the choice so the next login starts here.
@@ -187,13 +187,13 @@ func (s *Server) SwitchTenant(w http.ResponseWriter, r *http.Request) {
 		ID:                 user.ID,
 		LastActiveTenantID: pgtype.UUID{Bytes: req.TenantId, Valid: true},
 	}); err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not switch tenant")
+		writeInternal(w, err, "could not switch tenant")
 		return
 	}
 
 	info, err := s.sessionInfo(r.Context(), user, &req.TenantId)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal", "could not load session")
+		writeInternal(w, err, "could not load session")
 		return
 	}
 	writeJSON(w, http.StatusOK, info)

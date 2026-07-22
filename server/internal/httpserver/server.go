@@ -4,6 +4,7 @@ package httpserver
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -47,4 +48,11 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func writeError(w http.ResponseWriter, status int, code, message string) {
 	writeJSON(w, status, api.Error{Code: code, Message: message})
+}
+
+// writeInternal logs the underlying error before answering with an opaque
+// 500 - the client never sees internals, but the server log always does.
+func writeInternal(w http.ResponseWriter, err error, message string) {
+	log.Printf("internal error: %s: %v", message, err)
+	writeError(w, http.StatusInternalServerError, "internal", message)
 }
