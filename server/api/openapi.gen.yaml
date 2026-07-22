@@ -194,6 +194,11 @@ components:
             type: string
         Delivery:
             properties:
+                createdAt:
+                    format: date-time
+                    type: string
+                createdBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 customerId:
                     format: uuid
                     type: string
@@ -212,6 +217,11 @@ components:
                     type: array
                 notes:
                     type: string
+                postedAt:
+                    format: date-time
+                    type: string
+                postedBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 reversedById:
                     format: uuid
                     nullable: true
@@ -237,6 +247,8 @@ components:
                 - docDate
                 - notes
                 - lines
+                - createdAt
+                - createdBy
             type: object
         DeliveryInput:
             properties:
@@ -318,6 +330,17 @@ components:
                 - uom
                 - qty
             type: object
+        DocumentActor:
+            properties:
+                displayName:
+                    type: string
+                id:
+                    format: uuid
+                    type: string
+            required:
+                - id
+                - displayName
+            type: object
         DocumentStatus:
             description: draft is editable; posted is immutable; reversed was cancelled by a reversal
             enum:
@@ -342,6 +365,11 @@ components:
             type: object
         GoodsReceipt:
             properties:
+                createdAt:
+                    format: date-time
+                    type: string
+                createdBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 docDate:
                     format: date
                     type: string
@@ -357,6 +385,11 @@ components:
                     type: array
                 notes:
                     type: string
+                postedAt:
+                    format: date-time
+                    type: string
+                postedBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 purchaseOrderId:
                     format: uuid
                     nullable: true
@@ -385,6 +418,8 @@ components:
                 - docDate
                 - notes
                 - lines
+                - createdAt
+                - createdBy
             type: object
         GoodsReceiptInput:
             properties:
@@ -619,6 +654,11 @@ components:
             type: object
         PurchaseOrder:
             properties:
+                createdAt:
+                    format: date-time
+                    type: string
+                createdBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 docDate:
                     format: date
                     type: string
@@ -634,6 +674,11 @@ components:
                     type: array
                 notes:
                     type: string
+                postedAt:
+                    format: date-time
+                    type: string
+                postedBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 reversedById:
                     format: uuid
                     nullable: true
@@ -658,6 +703,8 @@ components:
                 - docDate
                 - notes
                 - lines
+                - createdAt
+                - createdBy
             type: object
         PurchaseOrderInput:
             properties:
@@ -751,6 +798,11 @@ components:
             type: string
         SalesOrder:
             properties:
+                createdAt:
+                    format: date-time
+                    type: string
+                createdBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 customerId:
                     format: uuid
                     type: string
@@ -769,6 +821,11 @@ components:
                     type: array
                 notes:
                     type: string
+                postedAt:
+                    format: date-time
+                    type: string
+                postedBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 reversedById:
                     format: uuid
                     nullable: true
@@ -790,6 +847,8 @@ components:
                 - docDate
                 - notes
                 - lines
+                - createdAt
+                - createdBy
             type: object
         SalesOrderInput:
             properties:
@@ -874,6 +933,11 @@ components:
             type: object
         StockAdjustment:
             properties:
+                createdAt:
+                    format: date-time
+                    type: string
+                createdBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 docDate:
                     format: date
                     type: string
@@ -889,6 +953,11 @@ components:
                     type: array
                 notes:
                     type: string
+                postedAt:
+                    format: date-time
+                    type: string
+                postedBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 reason:
                     type: string
                 reversedById:
@@ -912,6 +981,8 @@ components:
                 - docDate
                 - notes
                 - lines
+                - createdAt
+                - createdBy
             type: object
         StockAdjustmentInput:
             properties:
@@ -1105,6 +1176,11 @@ components:
             type: object
         StockOpname:
             properties:
+                createdAt:
+                    format: date-time
+                    type: string
+                createdBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 docDate:
                     format: date
                     type: string
@@ -1120,6 +1196,11 @@ components:
                     type: array
                 notes:
                     type: string
+                postedAt:
+                    format: date-time
+                    type: string
+                postedBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 reversedById:
                     format: uuid
                     nullable: true
@@ -1140,6 +1221,8 @@ components:
                 - docDate
                 - notes
                 - lines
+                - createdAt
+                - createdBy
             type: object
         StockOpnameInput:
             properties:
@@ -1177,6 +1260,8 @@ components:
                 productId:
                     format: uuid
                     type: string
+                systemQty:
+                    $ref: '#/components/schemas/DecimalString'
                 uom:
                     type: string
             required:
@@ -1207,6 +1292,11 @@ components:
             type: object
         StockTransfer:
             properties:
+                createdAt:
+                    format: date-time
+                    type: string
+                createdBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 docDate:
                     format: date
                     type: string
@@ -1225,6 +1315,11 @@ components:
                     type: array
                 notes:
                     type: string
+                postedAt:
+                    format: date-time
+                    type: string
+                postedBy:
+                    $ref: '#/components/schemas/DocumentActor'
                 reversedById:
                     format: uuid
                     nullable: true
@@ -1246,6 +1341,8 @@ components:
                 - docDate
                 - notes
                 - lines
+                - createdAt
+                - createdBy
             type: object
         StockTransferInput:
             properties:
@@ -1530,7 +1627,7 @@ components:
             type: apiKey
 info:
     description: |
-        Multi-tenant inventory management for Indonesian SME distributors. Contract-first: this file is the single source of truth for both the Go server (oapi-codegen) and the TypeScript client (openapi-typescript). Conventions: camelCase fields, kebab-case plural paths, /v1 prefix (docs/CONVENTIONS.md).
+        Multi-tenant inventory management for Indonesian SME distributors. Contract-first: this file is the single source of truth for both the Go server (oapi-codegen) and the TypeScript client (openapi-typescript). Conventions: camelCase fields, kebab-case plural paths, /v1 prefix (docs/reference/CONVENTIONS.md).
     title: Sinta API
     version: 0.1.0
 openapi: 3.0.3
@@ -1666,6 +1763,22 @@ paths:
             tags:
                 - documents
     /deliveries/{id}:
+        delete:
+            operationId: deleteDelivery
+            responses:
+                "204":
+                    description: Deleted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Delete a draft delivery (rejected once posted)
+            tags:
+                - documents
         get:
             operationId: getDelivery
             responses:
@@ -1804,6 +1917,22 @@ paths:
             tags:
                 - documents
     /goods-receipts/{id}:
+        delete:
+            operationId: deleteGoodsReceipt
+            responses:
+                "204":
+                    description: Deleted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Delete a draft goods receipt (rejected once posted)
+            tags:
+                - documents
         get:
             operationId: getGoodsReceipt
             responses:
@@ -2328,6 +2457,22 @@ paths:
             tags:
                 - documents
     /purchase-orders/{id}:
+        delete:
+            operationId: deletePurchaseOrder
+            responses:
+                "204":
+                    description: Deleted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Delete a draft purchase order (rejected once posted)
+            tags:
+                - documents
         get:
             operationId: getPurchaseOrder
             responses:
@@ -2533,6 +2678,22 @@ paths:
             tags:
                 - documents
     /sales-orders/{id}:
+        delete:
+            operationId: deleteSalesOrder
+            responses:
+                "204":
+                    description: Deleted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Delete a draft sales order (rejected once posted)
+            tags:
+                - documents
         get:
             operationId: getSalesOrder
             responses:
@@ -2671,6 +2832,22 @@ paths:
             tags:
                 - documents
     /stock-adjustments/{id}:
+        delete:
+            operationId: deleteStockAdjustment
+            responses:
+                "204":
+                    description: Deleted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Delete a draft stock adjustment (rejected once posted)
+            tags:
+                - documents
         get:
             operationId: getStockAdjustment
             responses:
@@ -2809,6 +2986,22 @@ paths:
             tags:
                 - documents
     /stock-opnames/{id}:
+        delete:
+            operationId: deleteStockOpname
+            responses:
+                "204":
+                    description: Deleted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Delete a draft stock opname (rejected once posted)
+            tags:
+                - documents
         get:
             operationId: getStockOpname
             responses:
@@ -2947,6 +3140,22 @@ paths:
             tags:
                 - documents
     /stock-transfers/{id}:
+        delete:
+            operationId: deleteStockTransfer
+            responses:
+                "204":
+                    description: Deleted
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "409":
+                    $ref: '#/components/responses/Conflict'
+            summary: Delete a draft stock transfer (rejected once posted)
+            tags:
+                - documents
         get:
             operationId: getStockTransfer
             responses:

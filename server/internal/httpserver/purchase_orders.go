@@ -16,7 +16,7 @@ import (
 // number and flips status to posted; it writes no journal movements. Reversal
 // posts a cancelling document (also number-only) and marks the original reversed.
 
-func purchaseOrderToAPI(po store.PurchaseOrder, lines []store.PurchaseOrderLine) api.PurchaseOrder {
+func purchaseOrderToAPI(po store.PurchaseOrder, lines []store.PurchaseOrderLine, actors docActors) api.PurchaseOrder {
 	apiLines := make([]api.PurchaseOrderLine, 0, len(lines))
 	for _, l := range lines {
 		apiLines = append(apiLines, api.PurchaseOrderLine{
@@ -38,6 +38,10 @@ func purchaseOrderToAPI(po store.PurchaseOrder, lines []store.PurchaseOrderLine)
 		Notes:        po.Notes,
 		ReversesId:   pgUUIDPtr(po.ReversesID),
 		ReversedById: pgUUIDPtr(po.ReversedByID),
+		CreatedAt:    pgTimestamp(po.CreatedAt),
+		CreatedBy:    actors.createdBy,
+		PostedAt:     pgTimestampPtr(po.PostedAt),
+		PostedBy:     actors.postedBy,
 		Lines:        apiLines,
 	}
 }
@@ -51,7 +55,11 @@ func (s *Server) loadPurchaseOrder(ctx context.Context, q *store.Queries, tenant
 	if err != nil {
 		return api.PurchaseOrder{}, err
 	}
-	return purchaseOrderToAPI(po, lines), nil
+	actors, err := loadDocActors(ctx, q, po.CreatedBy, po.PostedBy)
+	if err != nil {
+		return api.PurchaseOrder{}, err
+	}
+	return purchaseOrderToAPI(po, lines, actors), nil
 }
 
 func (s *Server) ListPurchaseOrders(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +79,11 @@ func (s *Server) ListPurchaseOrders(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, purchaseOrderToAPI(po, lines))
+			actors, err := loadDocActors(r.Context(), q, po.CreatedBy, po.PostedBy)
+			if err != nil {
+				return err
+			}
+			out = append(out, purchaseOrderToAPI(po, lines, actors))
 		}
 		return nil
 	})
@@ -225,6 +237,33 @@ func (s *Server) UpdatePurchaseOrder(w http.ResponseWriter, r *http.Request, id 
 	writeJSON(w, http.StatusOK, out)
 }
 
+func (s *Server) DeletePurchaseOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	tc, ok := s.requireDocumentWriter(w, r)
+	if !ok {
+		return
+	}
+	var notDraft bool
+	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		cur, err := q.GetPurchaseOrder(r.Context(), store.GetPurchaseOrderParams{TenantID: tc.tenantID, ID: id})
+		if err != nil {
+			return err
+		}
+		if cur.Status != statusDraft {
+			notDraft = true
+			return nil
+		}
+		return q.DeletePurchaseOrder(r.Context(), store.DeletePurchaseOrderParams{TenantID: tc.tenantID, ID: id})
+	})
+	if notDraft {
+		writeError(w, http.StatusConflict, "not_draft", "only draft documents can be deleted")
+		return
+	}
+	if handleWriteErr(w, err) {
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) PostPurchaseOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	tc, ok := s.requireDocumentWriter(w, r)
 	if !ok {
@@ -250,6 +289,7 @@ func (s *Server) PostPurchaseOrder(w http.ResponseWriter, r *http.Request, id op
 			TenantID:  tc.tenantID,
 			ID:        id,
 			DocNumber: pgTextOf(number),
+			PostedBy:  toPostedByParam(tc.user.ID),
 		}); err != nil {
 			return err
 		}
@@ -318,7 +358,7 @@ func (s *Server) ReversePurchaseOrder(w http.ResponseWriter, r *http.Request, id
 		if err != nil {
 			return err
 		}
-		if _, err := q.MarkPurchaseOrderPosted(r.Context(), store.MarkPurchaseOrderPostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number)}); err != nil {
+		if _, err := q.MarkPurchaseOrderPosted(r.Context(), store.MarkPurchaseOrderPostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)}); err != nil {
 			return err
 		}
 		if err := q.MarkPurchaseOrderReversed(r.Context(), store.MarkPurchaseOrderReversedParams{TenantID: tc.tenantID, ID: id, ReversedByID: pgUUID(rev.ID)}); err != nil {

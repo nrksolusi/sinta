@@ -16,7 +16,7 @@ import (
 // journal), linking PO lines when present. Reversal posts the opposite issue
 // movements, so the original receipt is undone without editing the journal.
 
-func goodsReceiptToAPI(gr store.GoodsReceipt, lines []store.GoodsReceiptLine) api.GoodsReceipt {
+func goodsReceiptToAPI(gr store.GoodsReceipt, lines []store.GoodsReceiptLine, actors docActors) api.GoodsReceipt {
 	apiLines := make([]api.GoodsReceiptLine, 0, len(lines))
 	for _, l := range lines {
 		apiLines = append(apiLines, api.GoodsReceiptLine{
@@ -41,6 +41,10 @@ func goodsReceiptToAPI(gr store.GoodsReceipt, lines []store.GoodsReceiptLine) ap
 		Notes:           gr.Notes,
 		ReversesId:      pgUUIDPtr(gr.ReversesID),
 		ReversedById:    pgUUIDPtr(gr.ReversedByID),
+		CreatedAt:       pgTimestamp(gr.CreatedAt),
+		CreatedBy:       actors.createdBy,
+		PostedAt:        pgTimestampPtr(gr.PostedAt),
+		PostedBy:        actors.postedBy,
 		Lines:           apiLines,
 	}
 }
@@ -54,7 +58,11 @@ func (s *Server) loadGoodsReceipt(ctx context.Context, q *store.Queries, tenantI
 	if err != nil {
 		return api.GoodsReceipt{}, err
 	}
-	return goodsReceiptToAPI(gr, lines), nil
+	actors, err := loadDocActors(ctx, q, gr.CreatedBy, gr.PostedBy)
+	if err != nil {
+		return api.GoodsReceipt{}, err
+	}
+	return goodsReceiptToAPI(gr, lines, actors), nil
 }
 
 func (s *Server) ListGoodsReceipts(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +82,11 @@ func (s *Server) ListGoodsReceipts(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, goodsReceiptToAPI(gr, lines))
+			actors, err := loadDocActors(r.Context(), q, gr.CreatedBy, gr.PostedBy)
+			if err != nil {
+				return err
+			}
+			out = append(out, goodsReceiptToAPI(gr, lines, actors))
 		}
 		return nil
 	})
@@ -221,6 +233,33 @@ func (s *Server) UpdateGoodsReceipt(w http.ResponseWriter, r *http.Request, id o
 	writeJSON(w, http.StatusOK, out)
 }
 
+func (s *Server) DeleteGoodsReceipt(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	tc, ok := s.requireDocumentWriter(w, r)
+	if !ok {
+		return
+	}
+	var notDraft bool
+	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		cur, err := q.GetGoodsReceipt(r.Context(), store.GetGoodsReceiptParams{TenantID: tc.tenantID, ID: id})
+		if err != nil {
+			return err
+		}
+		if cur.Status != statusDraft {
+			notDraft = true
+			return nil
+		}
+		return q.DeleteGoodsReceipt(r.Context(), store.DeleteGoodsReceiptParams{TenantID: tc.tenantID, ID: id})
+	})
+	if notDraft {
+		writeError(w, http.StatusConflict, "not_draft", "only draft documents can be deleted")
+		return
+	}
+	if handleWriteErr(w, err) {
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) PostGoodsReceipt(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	tc, ok := s.requireDocumentWriter(w, r)
 	if !ok {
@@ -248,7 +287,7 @@ func (s *Server) PostGoodsReceipt(w http.ResponseWriter, r *http.Request, id ope
 			return gr.Status, movements, gr.DocDate.Time.Year(), nil
 		},
 		func(ctx context.Context, q *store.Queries, number string) error {
-			_, err := q.MarkGoodsReceiptPosted(ctx, store.MarkGoodsReceiptPostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number)})
+			_, err := q.MarkGoodsReceiptPosted(ctx, store.MarkGoodsReceiptPostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)})
 			return err
 		},
 		func(ctx context.Context, q *store.Queries) (any, error) {
@@ -309,7 +348,7 @@ func (s *Server) ReverseGoodsReceipt(w http.ResponseWriter, r *http.Request, id 
 				movements:  movements,
 				year:       rev.DocDate.Time.Year(),
 				markPosted: func(ctx context.Context, q *store.Queries, number string) error {
-					_, err := q.MarkGoodsReceiptPosted(ctx, store.MarkGoodsReceiptPostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number)})
+					_, err := q.MarkGoodsReceiptPosted(ctx, store.MarkGoodsReceiptPostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)})
 					return err
 				},
 				markReversed: func(ctx context.Context, q *store.Queries) error {

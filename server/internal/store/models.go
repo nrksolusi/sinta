@@ -33,6 +33,7 @@ type Delivery struct {
 	CreatedBy    uuid.UUID
 	ReversesID   pgtype.UUID
 	ReversedByID pgtype.UUID
+	PostedBy     pgtype.UUID
 }
 
 type DeliveryLine struct {
@@ -69,6 +70,7 @@ type GoodsReceipt struct {
 	CreatedBy       uuid.UUID
 	ReversesID      pgtype.UUID
 	ReversedByID    pgtype.UUID
+	PostedBy        pgtype.UUID
 }
 
 type GoodsReceiptLine struct {
@@ -156,6 +158,7 @@ type PurchaseOrder struct {
 	CreatedBy    uuid.UUID
 	ReversesID   pgtype.UUID
 	ReversedByID pgtype.UUID
+	PostedBy     pgtype.UUID
 }
 
 type PurchaseOrderLine struct {
@@ -183,6 +186,7 @@ type SalesOrder struct {
 	CreatedBy    uuid.UUID
 	ReversesID   pgtype.UUID
 	ReversedByID pgtype.UUID
+	PostedBy     pgtype.UUID
 }
 
 type SalesOrderLine struct {
@@ -218,6 +222,7 @@ type StockAdjustment struct {
 	CreatedBy    uuid.UUID
 	ReversesID   pgtype.UUID
 	ReversedByID pgtype.UUID
+	PostedBy     pgtype.UUID
 }
 
 type StockAdjustmentLine struct {
@@ -275,6 +280,7 @@ type StockOpname struct {
 	CreatedBy    uuid.UUID
 	ReversesID   pgtype.UUID
 	ReversedByID pgtype.UUID
+	PostedBy     pgtype.UUID
 }
 
 type StockOpnameLine struct {
@@ -286,6 +292,7 @@ type StockOpnameLine struct {
 	BatchID       pgtype.UUID
 	Uom           string
 	CountedQty    pgtype.Numeric
+	SystemQty     pgtype.Numeric
 }
 
 type StockTransfer struct {
@@ -302,6 +309,7 @@ type StockTransfer struct {
 	CreatedBy       uuid.UUID
 	ReversesID      pgtype.UUID
 	ReversedByID    pgtype.UUID
+	PostedBy        pgtype.UUID
 }
 
 type StockTransferLine struct {

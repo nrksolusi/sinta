@@ -42,6 +42,8 @@ const po = (overrides: Partial<PurchaseOrder> = {}): PurchaseOrder => ({
   supplierId: "sup-1",
   warehouseId: "wh-1",
   notes: "",
+  createdAt: "2026-07-15T00:00:00Z",
+  createdBy: { id: "u1", displayName: "Test User" },
   lines: [
     {
       id: "pol-1",
@@ -222,6 +224,8 @@ const receipt = (
   warehouseId: "wh-1",
   notes: "",
   purchaseOrderId: "po-1",
+  createdAt: "2026-07-19T00:00:00Z",
+  createdBy: { id: "u1", displayName: "Test User" },
   ...overrides,
 });
 

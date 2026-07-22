@@ -18,7 +18,7 @@ import (
 // suggestion is M2; a manual batch selection per line is accepted here. Reversal
 // posts receipt movements to put the issued stock back.
 
-func deliveryToAPI(d store.Delivery, lines []store.DeliveryLine) api.Delivery {
+func deliveryToAPI(d store.Delivery, lines []store.DeliveryLine, actors docActors) api.Delivery {
 	apiLines := make([]api.DeliveryLine, 0, len(lines))
 	for _, l := range lines {
 		apiLines = append(apiLines, api.DeliveryLine{
@@ -42,6 +42,10 @@ func deliveryToAPI(d store.Delivery, lines []store.DeliveryLine) api.Delivery {
 		Notes:        d.Notes,
 		ReversesId:   pgUUIDPtr(d.ReversesID),
 		ReversedById: pgUUIDPtr(d.ReversedByID),
+		CreatedAt:    pgTimestamp(d.CreatedAt),
+		CreatedBy:    actors.createdBy,
+		PostedAt:     pgTimestampPtr(d.PostedAt),
+		PostedBy:     actors.postedBy,
 		Lines:        apiLines,
 	}
 }
@@ -55,7 +59,11 @@ func (s *Server) loadDelivery(ctx context.Context, q *store.Queries, tenantID, i
 	if err != nil {
 		return api.Delivery{}, err
 	}
-	return deliveryToAPI(d, lines), nil
+	actors, err := loadDocActors(ctx, q, d.CreatedBy, d.PostedBy)
+	if err != nil {
+		return api.Delivery{}, err
+	}
+	return deliveryToAPI(d, lines, actors), nil
 }
 
 func (s *Server) ListDeliveries(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +83,11 @@ func (s *Server) ListDeliveries(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, deliveryToAPI(d, lines))
+			actors, err := loadDocActors(r.Context(), q, d.CreatedBy, d.PostedBy)
+			if err != nil {
+				return err
+			}
+			out = append(out, deliveryToAPI(d, lines, actors))
 		}
 		return nil
 	})
@@ -220,6 +232,33 @@ func (s *Server) UpdateDelivery(w http.ResponseWriter, r *http.Request, id opena
 	writeJSON(w, http.StatusOK, out)
 }
 
+func (s *Server) DeleteDelivery(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	tc, ok := s.requireDocumentWriter(w, r)
+	if !ok {
+		return
+	}
+	var notDraft bool
+	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		cur, err := q.GetDelivery(r.Context(), store.GetDeliveryParams{TenantID: tc.tenantID, ID: id})
+		if err != nil {
+			return err
+		}
+		if cur.Status != statusDraft {
+			notDraft = true
+			return nil
+		}
+		return q.DeleteDelivery(r.Context(), store.DeleteDeliveryParams{TenantID: tc.tenantID, ID: id})
+	})
+	if notDraft {
+		writeError(w, http.StatusConflict, "not_draft", "only draft documents can be deleted")
+		return
+	}
+	if handleWriteErr(w, err) {
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) PostDelivery(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	tc, ok := s.requireDocumentWriter(w, r)
 	if !ok {
@@ -245,7 +284,7 @@ func (s *Server) PostDelivery(w http.ResponseWriter, r *http.Request, id openapi
 			return d.Status, movements, d.DocDate.Time.Year(), nil
 		},
 		func(ctx context.Context, q *store.Queries, number string) error {
-			_, err := q.MarkDeliveryPosted(ctx, store.MarkDeliveryPostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number)})
+			_, err := q.MarkDeliveryPosted(ctx, store.MarkDeliveryPostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)})
 			return err
 		},
 		func(ctx context.Context, q *store.Queries) (any, error) {
@@ -306,7 +345,7 @@ func (s *Server) ReverseDelivery(w http.ResponseWriter, r *http.Request, id open
 				movements:  movements,
 				year:       rev.DocDate.Time.Year(),
 				markPosted: func(ctx context.Context, q *store.Queries, number string) error {
-					_, err := q.MarkDeliveryPosted(ctx, store.MarkDeliveryPostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number)})
+					_, err := q.MarkDeliveryPosted(ctx, store.MarkDeliveryPostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)})
 					return err
 				},
 				markReversed: func(ctx context.Context, q *store.Queries) error {

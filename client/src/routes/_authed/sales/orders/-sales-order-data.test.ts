@@ -64,6 +64,8 @@ const order = (over: Partial<SalesOrder> = {}): SalesOrder => ({
   notes: "",
   status: "draft",
   lines: [],
+  createdAt: "2026-07-20T00:00:00Z",
+  createdBy: { id: "u1", displayName: "Test User" },
   ...over,
 });
 
@@ -77,6 +79,8 @@ const delivery = (over: Partial<Delivery> = {}): Delivery => ({
   status: "posted",
   salesOrderId: "so1",
   lines: [],
+  createdAt: "2026-07-20T00:00:00Z",
+  createdBy: { id: "u1", displayName: "Test User" },
   ...over,
 });
 

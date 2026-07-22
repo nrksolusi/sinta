@@ -17,6 +17,9 @@ const label = {
   delivery: "Pengiriman",
 };
 
+const ACTOR = { id: "u1", displayName: "Test User" };
+const CREATED_AT = "2026-07-15T00:00:00Z";
+
 const sources: EntityDocumentSources = {
   purchaseOrders: [
     {
@@ -28,6 +31,8 @@ const sources: EntityDocumentSources = {
       warehouseId: "w1",
       lines: [],
       notes: "",
+      createdAt: CREATED_AT,
+      createdBy: ACTOR,
     },
   ],
   goodsReceipts: [
@@ -40,6 +45,8 @@ const sources: EntityDocumentSources = {
       warehouseId: "w1",
       lines: [],
       notes: "",
+      createdAt: CREATED_AT,
+      createdBy: ACTOR,
     },
     {
       id: "gr2",
@@ -50,6 +57,8 @@ const sources: EntityDocumentSources = {
       warehouseId: "w2",
       lines: [],
       notes: "",
+      createdAt: CREATED_AT,
+      createdBy: ACTOR,
     },
   ],
   salesOrders: [
@@ -62,6 +71,8 @@ const sources: EntityDocumentSources = {
       warehouseId: "w2",
       lines: [],
       notes: "",
+      createdAt: CREATED_AT,
+      createdBy: ACTOR,
     },
   ],
   deliveries: [
@@ -74,6 +85,8 @@ const sources: EntityDocumentSources = {
       warehouseId: "w1",
       lines: [],
       notes: "",
+      createdAt: CREATED_AT,
+      createdBy: ACTOR,
     },
   ],
 };

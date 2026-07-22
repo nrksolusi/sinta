@@ -16,7 +16,7 @@ const createDelivery = `-- name: CreateDelivery :one
 
 INSERT INTO deliveries (tenant_id, sales_order_id, customer_id, warehouse_id, doc_date, notes, reverses_id, status, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type CreateDeliveryParams struct {
@@ -62,6 +62,7 @@ func (q *Queries) CreateDelivery(ctx context.Context, arg CreateDeliveryParams) 
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -70,7 +71,7 @@ const createGoodsReceipt = `-- name: CreateGoodsReceipt :one
 
 INSERT INTO goods_receipts (tenant_id, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, reverses_id, status, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type CreateGoodsReceiptParams struct {
@@ -116,6 +117,7 @@ func (q *Queries) CreateGoodsReceipt(ctx context.Context, arg CreateGoodsReceipt
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -125,7 +127,7 @@ const createPurchaseOrder = `-- name: CreatePurchaseOrder :one
 
 INSERT INTO purchase_orders (tenant_id, supplier_id, warehouse_id, doc_date, notes, reverses_id, status, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type CreatePurchaseOrderParams struct {
@@ -173,6 +175,7 @@ func (q *Queries) CreatePurchaseOrder(ctx context.Context, arg CreatePurchaseOrd
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -181,7 +184,7 @@ const createSalesOrder = `-- name: CreateSalesOrder :one
 
 INSERT INTO sales_orders (tenant_id, customer_id, warehouse_id, doc_date, notes, reverses_id, status, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type CreateSalesOrderParams struct {
@@ -224,6 +227,7 @@ func (q *Queries) CreateSalesOrder(ctx context.Context, arg CreateSalesOrderPara
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -232,7 +236,7 @@ const createStockAdjustment = `-- name: CreateStockAdjustment :one
 
 INSERT INTO stock_adjustments (tenant_id, warehouse_id, reason, doc_date, notes, reverses_id, status, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type CreateStockAdjustmentParams struct {
@@ -275,6 +279,7 @@ func (q *Queries) CreateStockAdjustment(ctx context.Context, arg CreateStockAdju
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -283,7 +288,7 @@ const createStockOpname = `-- name: CreateStockOpname :one
 
 INSERT INTO stock_opnames (tenant_id, warehouse_id, doc_date, notes, reverses_id, status, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type CreateStockOpnameParams struct {
@@ -323,6 +328,7 @@ func (q *Queries) CreateStockOpname(ctx context.Context, arg CreateStockOpnamePa
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -331,7 +337,7 @@ const createStockTransfer = `-- name: CreateStockTransfer :one
 
 INSERT INTO stock_transfers (tenant_id, from_warehouse_id, to_warehouse_id, doc_date, notes, reverses_id, status, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type CreateStockTransferParams struct {
@@ -374,8 +380,23 @@ func (q *Queries) CreateStockTransfer(ctx context.Context, arg CreateStockTransf
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
+}
+
+const deleteDelivery = `-- name: DeleteDelivery :exec
+DELETE FROM deliveries WHERE tenant_id = $1 AND id = $2
+`
+
+type DeleteDeliveryParams struct {
+	TenantID uuid.UUID
+	ID       uuid.UUID
+}
+
+func (q *Queries) DeleteDelivery(ctx context.Context, arg DeleteDeliveryParams) error {
+	_, err := q.db.Exec(ctx, deleteDelivery, arg.TenantID, arg.ID)
+	return err
 }
 
 const deleteDeliveryLines = `-- name: DeleteDeliveryLines :exec
@@ -389,6 +410,20 @@ type DeleteDeliveryLinesParams struct {
 
 func (q *Queries) DeleteDeliveryLines(ctx context.Context, arg DeleteDeliveryLinesParams) error {
 	_, err := q.db.Exec(ctx, deleteDeliveryLines, arg.TenantID, arg.DeliveryID)
+	return err
+}
+
+const deleteGoodsReceipt = `-- name: DeleteGoodsReceipt :exec
+DELETE FROM goods_receipts WHERE tenant_id = $1 AND id = $2
+`
+
+type DeleteGoodsReceiptParams struct {
+	TenantID uuid.UUID
+	ID       uuid.UUID
+}
+
+func (q *Queries) DeleteGoodsReceipt(ctx context.Context, arg DeleteGoodsReceiptParams) error {
+	_, err := q.db.Exec(ctx, deleteGoodsReceipt, arg.TenantID, arg.ID)
 	return err
 }
 
@@ -406,6 +441,20 @@ func (q *Queries) DeleteGoodsReceiptLines(ctx context.Context, arg DeleteGoodsRe
 	return err
 }
 
+const deletePurchaseOrder = `-- name: DeletePurchaseOrder :exec
+DELETE FROM purchase_orders WHERE tenant_id = $1 AND id = $2
+`
+
+type DeletePurchaseOrderParams struct {
+	TenantID uuid.UUID
+	ID       uuid.UUID
+}
+
+func (q *Queries) DeletePurchaseOrder(ctx context.Context, arg DeletePurchaseOrderParams) error {
+	_, err := q.db.Exec(ctx, deletePurchaseOrder, arg.TenantID, arg.ID)
+	return err
+}
+
 const deletePurchaseOrderLines = `-- name: DeletePurchaseOrderLines :exec
 DELETE FROM purchase_order_lines WHERE tenant_id = $1 AND purchase_order_id = $2
 `
@@ -417,6 +466,20 @@ type DeletePurchaseOrderLinesParams struct {
 
 func (q *Queries) DeletePurchaseOrderLines(ctx context.Context, arg DeletePurchaseOrderLinesParams) error {
 	_, err := q.db.Exec(ctx, deletePurchaseOrderLines, arg.TenantID, arg.PurchaseOrderID)
+	return err
+}
+
+const deleteSalesOrder = `-- name: DeleteSalesOrder :exec
+DELETE FROM sales_orders WHERE tenant_id = $1 AND id = $2
+`
+
+type DeleteSalesOrderParams struct {
+	TenantID uuid.UUID
+	ID       uuid.UUID
+}
+
+func (q *Queries) DeleteSalesOrder(ctx context.Context, arg DeleteSalesOrderParams) error {
+	_, err := q.db.Exec(ctx, deleteSalesOrder, arg.TenantID, arg.ID)
 	return err
 }
 
@@ -434,6 +497,20 @@ func (q *Queries) DeleteSalesOrderLines(ctx context.Context, arg DeleteSalesOrde
 	return err
 }
 
+const deleteStockAdjustment = `-- name: DeleteStockAdjustment :exec
+DELETE FROM stock_adjustments WHERE tenant_id = $1 AND id = $2
+`
+
+type DeleteStockAdjustmentParams struct {
+	TenantID uuid.UUID
+	ID       uuid.UUID
+}
+
+func (q *Queries) DeleteStockAdjustment(ctx context.Context, arg DeleteStockAdjustmentParams) error {
+	_, err := q.db.Exec(ctx, deleteStockAdjustment, arg.TenantID, arg.ID)
+	return err
+}
+
 const deleteStockAdjustmentLines = `-- name: DeleteStockAdjustmentLines :exec
 DELETE FROM stock_adjustment_lines WHERE tenant_id = $1 AND stock_adjustment_id = $2
 `
@@ -448,6 +525,20 @@ func (q *Queries) DeleteStockAdjustmentLines(ctx context.Context, arg DeleteStoc
 	return err
 }
 
+const deleteStockOpname = `-- name: DeleteStockOpname :exec
+DELETE FROM stock_opnames WHERE tenant_id = $1 AND id = $2
+`
+
+type DeleteStockOpnameParams struct {
+	TenantID uuid.UUID
+	ID       uuid.UUID
+}
+
+func (q *Queries) DeleteStockOpname(ctx context.Context, arg DeleteStockOpnameParams) error {
+	_, err := q.db.Exec(ctx, deleteStockOpname, arg.TenantID, arg.ID)
+	return err
+}
+
 const deleteStockOpnameLines = `-- name: DeleteStockOpnameLines :exec
 DELETE FROM stock_opname_lines WHERE tenant_id = $1 AND stock_opname_id = $2
 `
@@ -459,6 +550,20 @@ type DeleteStockOpnameLinesParams struct {
 
 func (q *Queries) DeleteStockOpnameLines(ctx context.Context, arg DeleteStockOpnameLinesParams) error {
 	_, err := q.db.Exec(ctx, deleteStockOpnameLines, arg.TenantID, arg.StockOpnameID)
+	return err
+}
+
+const deleteStockTransfer = `-- name: DeleteStockTransfer :exec
+DELETE FROM stock_transfers WHERE tenant_id = $1 AND id = $2
+`
+
+type DeleteStockTransferParams struct {
+	TenantID uuid.UUID
+	ID       uuid.UUID
+}
+
+func (q *Queries) DeleteStockTransfer(ctx context.Context, arg DeleteStockTransferParams) error {
+	_, err := q.db.Exec(ctx, deleteStockTransfer, arg.TenantID, arg.ID)
 	return err
 }
 
@@ -477,7 +582,7 @@ func (q *Queries) DeleteStockTransferLines(ctx context.Context, arg DeleteStockT
 }
 
 const getDelivery = `-- name: GetDelivery :one
-SELECT id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM deliveries WHERE tenant_id = $1 AND id = $2
+SELECT id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM deliveries WHERE tenant_id = $1 AND id = $2
 `
 
 type GetDeliveryParams struct {
@@ -503,12 +608,13 @@ func (q *Queries) GetDelivery(ctx context.Context, arg GetDeliveryParams) (Deliv
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
 
 const getGoodsReceipt = `-- name: GetGoodsReceipt :one
-SELECT id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM goods_receipts WHERE tenant_id = $1 AND id = $2
+SELECT id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM goods_receipts WHERE tenant_id = $1 AND id = $2
 `
 
 type GetGoodsReceiptParams struct {
@@ -534,12 +640,13 @@ func (q *Queries) GetGoodsReceipt(ctx context.Context, arg GetGoodsReceiptParams
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
 
 const getPurchaseOrder = `-- name: GetPurchaseOrder :one
-SELECT id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM purchase_orders WHERE tenant_id = $1 AND id = $2
+SELECT id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM purchase_orders WHERE tenant_id = $1 AND id = $2
 `
 
 type GetPurchaseOrderParams struct {
@@ -564,12 +671,13 @@ func (q *Queries) GetPurchaseOrder(ctx context.Context, arg GetPurchaseOrderPara
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
 
 const getSalesOrder = `-- name: GetSalesOrder :one
-SELECT id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM sales_orders WHERE tenant_id = $1 AND id = $2
+SELECT id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM sales_orders WHERE tenant_id = $1 AND id = $2
 `
 
 type GetSalesOrderParams struct {
@@ -594,12 +702,13 @@ func (q *Queries) GetSalesOrder(ctx context.Context, arg GetSalesOrderParams) (S
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
 
 const getStockAdjustment = `-- name: GetStockAdjustment :one
-SELECT id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM stock_adjustments WHERE tenant_id = $1 AND id = $2
+SELECT id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_adjustments WHERE tenant_id = $1 AND id = $2
 `
 
 type GetStockAdjustmentParams struct {
@@ -624,6 +733,7 @@ func (q *Queries) GetStockAdjustment(ctx context.Context, arg GetStockAdjustment
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -666,7 +776,7 @@ func (q *Queries) GetStockLevelForDoc(ctx context.Context, arg GetStockLevelForD
 }
 
 const getStockOpname = `-- name: GetStockOpname :one
-SELECT id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM stock_opnames WHERE tenant_id = $1 AND id = $2
+SELECT id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_opnames WHERE tenant_id = $1 AND id = $2
 `
 
 type GetStockOpnameParams struct {
@@ -690,12 +800,13 @@ func (q *Queries) GetStockOpname(ctx context.Context, arg GetStockOpnameParams) 
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
 
 const getStockTransfer = `-- name: GetStockTransfer :one
-SELECT id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM stock_transfers WHERE tenant_id = $1 AND id = $2
+SELECT id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_transfers WHERE tenant_id = $1 AND id = $2
 `
 
 type GetStockTransferParams struct {
@@ -720,6 +831,7 @@ func (q *Queries) GetStockTransfer(ctx context.Context, arg GetStockTransferPara
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -939,7 +1051,7 @@ func (q *Queries) InsertStockAdjustmentLine(ctx context.Context, arg InsertStock
 const insertStockOpnameLine = `-- name: InsertStockOpnameLine :one
 INSERT INTO stock_opname_lines (tenant_id, stock_opname_id, line_no, product_id, batch_id, uom, counted_qty)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, tenant_id, stock_opname_id, line_no, product_id, batch_id, uom, counted_qty
+RETURNING id, tenant_id, stock_opname_id, line_no, product_id, batch_id, uom, counted_qty, system_qty
 `
 
 type InsertStockOpnameLineParams struct {
@@ -972,6 +1084,7 @@ func (q *Queries) InsertStockOpnameLine(ctx context.Context, arg InsertStockOpna
 		&i.BatchID,
 		&i.Uom,
 		&i.CountedQty,
+		&i.SystemQty,
 	)
 	return i, err
 }
@@ -1017,7 +1130,7 @@ func (q *Queries) InsertStockTransferLine(ctx context.Context, arg InsertStockTr
 }
 
 const listDeliveries = `-- name: ListDeliveries :many
-SELECT id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM deliveries WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM deliveries WHERE tenant_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListDeliveries(ctx context.Context, tenantID uuid.UUID) ([]Delivery, error) {
@@ -1044,6 +1157,7 @@ func (q *Queries) ListDeliveries(ctx context.Context, tenantID uuid.UUID) ([]Del
 			&i.CreatedBy,
 			&i.ReversesID,
 			&i.ReversedByID,
+			&i.PostedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1135,7 +1249,7 @@ func (q *Queries) ListGoodsReceiptLines(ctx context.Context, arg ListGoodsReceip
 }
 
 const listGoodsReceipts = `-- name: ListGoodsReceipts :many
-SELECT id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM goods_receipts WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM goods_receipts WHERE tenant_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListGoodsReceipts(ctx context.Context, tenantID uuid.UUID) ([]GoodsReceipt, error) {
@@ -1162,6 +1276,7 @@ func (q *Queries) ListGoodsReceipts(ctx context.Context, tenantID uuid.UUID) ([]
 			&i.CreatedBy,
 			&i.ReversesID,
 			&i.ReversedByID,
+			&i.PostedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1212,7 +1327,7 @@ func (q *Queries) ListPurchaseOrderLines(ctx context.Context, arg ListPurchaseOr
 }
 
 const listPurchaseOrders = `-- name: ListPurchaseOrders :many
-SELECT id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM purchase_orders WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM purchase_orders WHERE tenant_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListPurchaseOrders(ctx context.Context, tenantID uuid.UUID) ([]PurchaseOrder, error) {
@@ -1238,6 +1353,7 @@ func (q *Queries) ListPurchaseOrders(ctx context.Context, tenantID uuid.UUID) ([
 			&i.CreatedBy,
 			&i.ReversesID,
 			&i.ReversedByID,
+			&i.PostedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1288,7 +1404,7 @@ func (q *Queries) ListSalesOrderLines(ctx context.Context, arg ListSalesOrderLin
 }
 
 const listSalesOrders = `-- name: ListSalesOrders :many
-SELECT id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM sales_orders WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM sales_orders WHERE tenant_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListSalesOrders(ctx context.Context, tenantID uuid.UUID) ([]SalesOrder, error) {
@@ -1314,6 +1430,7 @@ func (q *Queries) ListSalesOrders(ctx context.Context, tenantID uuid.UUID) ([]Sa
 			&i.CreatedBy,
 			&i.ReversesID,
 			&i.ReversedByID,
+			&i.PostedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1365,7 +1482,7 @@ func (q *Queries) ListStockAdjustmentLines(ctx context.Context, arg ListStockAdj
 }
 
 const listStockAdjustments = `-- name: ListStockAdjustments :many
-SELECT id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM stock_adjustments WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_adjustments WHERE tenant_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListStockAdjustments(ctx context.Context, tenantID uuid.UUID) ([]StockAdjustment, error) {
@@ -1391,6 +1508,7 @@ func (q *Queries) ListStockAdjustments(ctx context.Context, tenantID uuid.UUID) 
 			&i.CreatedBy,
 			&i.ReversesID,
 			&i.ReversedByID,
+			&i.PostedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1403,7 +1521,7 @@ func (q *Queries) ListStockAdjustments(ctx context.Context, tenantID uuid.UUID) 
 }
 
 const listStockOpnameLines = `-- name: ListStockOpnameLines :many
-SELECT id, tenant_id, stock_opname_id, line_no, product_id, batch_id, uom, counted_qty FROM stock_opname_lines WHERE tenant_id = $1 AND stock_opname_id = $2 ORDER BY line_no
+SELECT id, tenant_id, stock_opname_id, line_no, product_id, batch_id, uom, counted_qty, system_qty FROM stock_opname_lines WHERE tenant_id = $1 AND stock_opname_id = $2 ORDER BY line_no
 `
 
 type ListStockOpnameLinesParams struct {
@@ -1429,6 +1547,7 @@ func (q *Queries) ListStockOpnameLines(ctx context.Context, arg ListStockOpnameL
 			&i.BatchID,
 			&i.Uom,
 			&i.CountedQty,
+			&i.SystemQty,
 		); err != nil {
 			return nil, err
 		}
@@ -1441,7 +1560,7 @@ func (q *Queries) ListStockOpnameLines(ctx context.Context, arg ListStockOpnameL
 }
 
 const listStockOpnames = `-- name: ListStockOpnames :many
-SELECT id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM stock_opnames WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_opnames WHERE tenant_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListStockOpnames(ctx context.Context, tenantID uuid.UUID) ([]StockOpname, error) {
@@ -1466,6 +1585,7 @@ func (q *Queries) ListStockOpnames(ctx context.Context, tenantID uuid.UUID) ([]S
 			&i.CreatedBy,
 			&i.ReversesID,
 			&i.ReversedByID,
+			&i.PostedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1516,7 +1636,7 @@ func (q *Queries) ListStockTransferLines(ctx context.Context, arg ListStockTrans
 }
 
 const listStockTransfers = `-- name: ListStockTransfers :many
-SELECT id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id FROM stock_transfers WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_transfers WHERE tenant_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListStockTransfers(ctx context.Context, tenantID uuid.UUID) ([]StockTransfer, error) {
@@ -1542,6 +1662,7 @@ func (q *Queries) ListStockTransfers(ctx context.Context, tenantID uuid.UUID) ([
 			&i.CreatedBy,
 			&i.ReversesID,
 			&i.ReversedByID,
+			&i.PostedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1555,19 +1676,25 @@ func (q *Queries) ListStockTransfers(ctx context.Context, tenantID uuid.UUID) ([
 
 const markDeliveryPosted = `-- name: MarkDeliveryPosted :one
 UPDATE deliveries
-SET status = 'posted', doc_number = $1, posted_at = now()
-WHERE tenant_id = $2 AND id = $3
-RETURNING id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+SET status = 'posted', doc_number = $1, posted_at = now(), posted_by = $2
+WHERE tenant_id = $3 AND id = $4
+RETURNING id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type MarkDeliveryPostedParams struct {
 	DocNumber pgtype.Text
+	PostedBy  pgtype.UUID
 	TenantID  uuid.UUID
 	ID        uuid.UUID
 }
 
 func (q *Queries) MarkDeliveryPosted(ctx context.Context, arg MarkDeliveryPostedParams) (Delivery, error) {
-	row := q.db.QueryRow(ctx, markDeliveryPosted, arg.DocNumber, arg.TenantID, arg.ID)
+	row := q.db.QueryRow(ctx, markDeliveryPosted,
+		arg.DocNumber,
+		arg.PostedBy,
+		arg.TenantID,
+		arg.ID,
+	)
 	var i Delivery
 	err := row.Scan(
 		&i.ID,
@@ -1584,6 +1711,7 @@ func (q *Queries) MarkDeliveryPosted(ctx context.Context, arg MarkDeliveryPosted
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -1607,19 +1735,25 @@ func (q *Queries) MarkDeliveryReversed(ctx context.Context, arg MarkDeliveryReve
 
 const markGoodsReceiptPosted = `-- name: MarkGoodsReceiptPosted :one
 UPDATE goods_receipts
-SET status = 'posted', doc_number = $1, posted_at = now()
-WHERE tenant_id = $2 AND id = $3
-RETURNING id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+SET status = 'posted', doc_number = $1, posted_at = now(), posted_by = $2
+WHERE tenant_id = $3 AND id = $4
+RETURNING id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type MarkGoodsReceiptPostedParams struct {
 	DocNumber pgtype.Text
+	PostedBy  pgtype.UUID
 	TenantID  uuid.UUID
 	ID        uuid.UUID
 }
 
 func (q *Queries) MarkGoodsReceiptPosted(ctx context.Context, arg MarkGoodsReceiptPostedParams) (GoodsReceipt, error) {
-	row := q.db.QueryRow(ctx, markGoodsReceiptPosted, arg.DocNumber, arg.TenantID, arg.ID)
+	row := q.db.QueryRow(ctx, markGoodsReceiptPosted,
+		arg.DocNumber,
+		arg.PostedBy,
+		arg.TenantID,
+		arg.ID,
+	)
 	var i GoodsReceipt
 	err := row.Scan(
 		&i.ID,
@@ -1636,6 +1770,7 @@ func (q *Queries) MarkGoodsReceiptPosted(ctx context.Context, arg MarkGoodsRecei
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -1659,19 +1794,25 @@ func (q *Queries) MarkGoodsReceiptReversed(ctx context.Context, arg MarkGoodsRec
 
 const markPurchaseOrderPosted = `-- name: MarkPurchaseOrderPosted :one
 UPDATE purchase_orders
-SET status = 'posted', doc_number = $1, posted_at = now()
-WHERE tenant_id = $2 AND id = $3
-RETURNING id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+SET status = 'posted', doc_number = $1, posted_at = now(), posted_by = $2
+WHERE tenant_id = $3 AND id = $4
+RETURNING id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type MarkPurchaseOrderPostedParams struct {
 	DocNumber pgtype.Text
+	PostedBy  pgtype.UUID
 	TenantID  uuid.UUID
 	ID        uuid.UUID
 }
 
 func (q *Queries) MarkPurchaseOrderPosted(ctx context.Context, arg MarkPurchaseOrderPostedParams) (PurchaseOrder, error) {
-	row := q.db.QueryRow(ctx, markPurchaseOrderPosted, arg.DocNumber, arg.TenantID, arg.ID)
+	row := q.db.QueryRow(ctx, markPurchaseOrderPosted,
+		arg.DocNumber,
+		arg.PostedBy,
+		arg.TenantID,
+		arg.ID,
+	)
 	var i PurchaseOrder
 	err := row.Scan(
 		&i.ID,
@@ -1687,6 +1828,7 @@ func (q *Queries) MarkPurchaseOrderPosted(ctx context.Context, arg MarkPurchaseO
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -1710,19 +1852,25 @@ func (q *Queries) MarkPurchaseOrderReversed(ctx context.Context, arg MarkPurchas
 
 const markSalesOrderPosted = `-- name: MarkSalesOrderPosted :one
 UPDATE sales_orders
-SET status = 'posted', doc_number = $1, posted_at = now()
-WHERE tenant_id = $2 AND id = $3
-RETURNING id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+SET status = 'posted', doc_number = $1, posted_at = now(), posted_by = $2
+WHERE tenant_id = $3 AND id = $4
+RETURNING id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type MarkSalesOrderPostedParams struct {
 	DocNumber pgtype.Text
+	PostedBy  pgtype.UUID
 	TenantID  uuid.UUID
 	ID        uuid.UUID
 }
 
 func (q *Queries) MarkSalesOrderPosted(ctx context.Context, arg MarkSalesOrderPostedParams) (SalesOrder, error) {
-	row := q.db.QueryRow(ctx, markSalesOrderPosted, arg.DocNumber, arg.TenantID, arg.ID)
+	row := q.db.QueryRow(ctx, markSalesOrderPosted,
+		arg.DocNumber,
+		arg.PostedBy,
+		arg.TenantID,
+		arg.ID,
+	)
 	var i SalesOrder
 	err := row.Scan(
 		&i.ID,
@@ -1738,6 +1886,7 @@ func (q *Queries) MarkSalesOrderPosted(ctx context.Context, arg MarkSalesOrderPo
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -1761,19 +1910,25 @@ func (q *Queries) MarkSalesOrderReversed(ctx context.Context, arg MarkSalesOrder
 
 const markStockAdjustmentPosted = `-- name: MarkStockAdjustmentPosted :one
 UPDATE stock_adjustments
-SET status = 'posted', doc_number = $1, posted_at = now()
-WHERE tenant_id = $2 AND id = $3
-RETURNING id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+SET status = 'posted', doc_number = $1, posted_at = now(), posted_by = $2
+WHERE tenant_id = $3 AND id = $4
+RETURNING id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type MarkStockAdjustmentPostedParams struct {
 	DocNumber pgtype.Text
+	PostedBy  pgtype.UUID
 	TenantID  uuid.UUID
 	ID        uuid.UUID
 }
 
 func (q *Queries) MarkStockAdjustmentPosted(ctx context.Context, arg MarkStockAdjustmentPostedParams) (StockAdjustment, error) {
-	row := q.db.QueryRow(ctx, markStockAdjustmentPosted, arg.DocNumber, arg.TenantID, arg.ID)
+	row := q.db.QueryRow(ctx, markStockAdjustmentPosted,
+		arg.DocNumber,
+		arg.PostedBy,
+		arg.TenantID,
+		arg.ID,
+	)
 	var i StockAdjustment
 	err := row.Scan(
 		&i.ID,
@@ -1789,6 +1944,7 @@ func (q *Queries) MarkStockAdjustmentPosted(ctx context.Context, arg MarkStockAd
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -1812,19 +1968,25 @@ func (q *Queries) MarkStockAdjustmentReversed(ctx context.Context, arg MarkStock
 
 const markStockOpnamePosted = `-- name: MarkStockOpnamePosted :one
 UPDATE stock_opnames
-SET status = 'posted', doc_number = $1, posted_at = now()
-WHERE tenant_id = $2 AND id = $3
-RETURNING id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+SET status = 'posted', doc_number = $1, posted_at = now(), posted_by = $2
+WHERE tenant_id = $3 AND id = $4
+RETURNING id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type MarkStockOpnamePostedParams struct {
 	DocNumber pgtype.Text
+	PostedBy  pgtype.UUID
 	TenantID  uuid.UUID
 	ID        uuid.UUID
 }
 
 func (q *Queries) MarkStockOpnamePosted(ctx context.Context, arg MarkStockOpnamePostedParams) (StockOpname, error) {
-	row := q.db.QueryRow(ctx, markStockOpnamePosted, arg.DocNumber, arg.TenantID, arg.ID)
+	row := q.db.QueryRow(ctx, markStockOpnamePosted,
+		arg.DocNumber,
+		arg.PostedBy,
+		arg.TenantID,
+		arg.ID,
+	)
 	var i StockOpname
 	err := row.Scan(
 		&i.ID,
@@ -1839,6 +2001,7 @@ func (q *Queries) MarkStockOpnamePosted(ctx context.Context, arg MarkStockOpname
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -1862,19 +2025,25 @@ func (q *Queries) MarkStockOpnameReversed(ctx context.Context, arg MarkStockOpna
 
 const markStockTransferPosted = `-- name: MarkStockTransferPosted :one
 UPDATE stock_transfers
-SET status = 'posted', doc_number = $1, posted_at = now()
-WHERE tenant_id = $2 AND id = $3
-RETURNING id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+SET status = 'posted', doc_number = $1, posted_at = now(), posted_by = $2
+WHERE tenant_id = $3 AND id = $4
+RETURNING id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type MarkStockTransferPostedParams struct {
 	DocNumber pgtype.Text
+	PostedBy  pgtype.UUID
 	TenantID  uuid.UUID
 	ID        uuid.UUID
 }
 
 func (q *Queries) MarkStockTransferPosted(ctx context.Context, arg MarkStockTransferPostedParams) (StockTransfer, error) {
-	row := q.db.QueryRow(ctx, markStockTransferPosted, arg.DocNumber, arg.TenantID, arg.ID)
+	row := q.db.QueryRow(ctx, markStockTransferPosted,
+		arg.DocNumber,
+		arg.PostedBy,
+		arg.TenantID,
+		arg.ID,
+	)
 	var i StockTransfer
 	err := row.Scan(
 		&i.ID,
@@ -1890,6 +2059,7 @@ func (q *Queries) MarkStockTransferPosted(ctx context.Context, arg MarkStockTran
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -1911,11 +2081,28 @@ func (q *Queries) MarkStockTransferReversed(ctx context.Context, arg MarkStockTr
 	return err
 }
 
+const setStockOpnameLineSystemQty = `-- name: SetStockOpnameLineSystemQty :exec
+UPDATE stock_opname_lines
+SET system_qty = $1
+WHERE tenant_id = $2 AND id = $3
+`
+
+type SetStockOpnameLineSystemQtyParams struct {
+	SystemQty pgtype.Numeric
+	TenantID  uuid.UUID
+	ID        uuid.UUID
+}
+
+func (q *Queries) SetStockOpnameLineSystemQty(ctx context.Context, arg SetStockOpnameLineSystemQtyParams) error {
+	_, err := q.db.Exec(ctx, setStockOpnameLineSystemQty, arg.SystemQty, arg.TenantID, arg.ID)
+	return err
+}
+
 const updateDeliveryHeader = `-- name: UpdateDeliveryHeader :one
 UPDATE deliveries
 SET sales_order_id = $1, customer_id = $2, warehouse_id = $3, doc_date = $4, notes = $5
 WHERE tenant_id = $6 AND id = $7
-RETURNING id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type UpdateDeliveryHeaderParams struct {
@@ -1954,6 +2141,7 @@ func (q *Queries) UpdateDeliveryHeader(ctx context.Context, arg UpdateDeliveryHe
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -1962,7 +2150,7 @@ const updateGoodsReceiptHeader = `-- name: UpdateGoodsReceiptHeader :one
 UPDATE goods_receipts
 SET purchase_order_id = $1, supplier_id = $2, warehouse_id = $3, doc_date = $4, notes = $5
 WHERE tenant_id = $6 AND id = $7
-RETURNING id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type UpdateGoodsReceiptHeaderParams struct {
@@ -2001,6 +2189,7 @@ func (q *Queries) UpdateGoodsReceiptHeader(ctx context.Context, arg UpdateGoodsR
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -2009,7 +2198,7 @@ const updatePurchaseOrderHeader = `-- name: UpdatePurchaseOrderHeader :one
 UPDATE purchase_orders
 SET supplier_id = $1, warehouse_id = $2, doc_date = $3, notes = $4
 WHERE tenant_id = $5 AND id = $6
-RETURNING id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type UpdatePurchaseOrderHeaderParams struct {
@@ -2045,6 +2234,7 @@ func (q *Queries) UpdatePurchaseOrderHeader(ctx context.Context, arg UpdatePurch
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -2053,7 +2243,7 @@ const updateSalesOrderHeader = `-- name: UpdateSalesOrderHeader :one
 UPDATE sales_orders
 SET customer_id = $1, warehouse_id = $2, doc_date = $3, notes = $4
 WHERE tenant_id = $5 AND id = $6
-RETURNING id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type UpdateSalesOrderHeaderParams struct {
@@ -2089,6 +2279,7 @@ func (q *Queries) UpdateSalesOrderHeader(ctx context.Context, arg UpdateSalesOrd
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -2097,7 +2288,7 @@ const updateStockAdjustmentHeader = `-- name: UpdateStockAdjustmentHeader :one
 UPDATE stock_adjustments
 SET warehouse_id = $1, reason = $2, doc_date = $3, notes = $4
 WHERE tenant_id = $5 AND id = $6
-RETURNING id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type UpdateStockAdjustmentHeaderParams struct {
@@ -2133,6 +2324,7 @@ func (q *Queries) UpdateStockAdjustmentHeader(ctx context.Context, arg UpdateSto
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -2141,7 +2333,7 @@ const updateStockOpnameHeader = `-- name: UpdateStockOpnameHeader :one
 UPDATE stock_opnames
 SET warehouse_id = $1, doc_date = $2, notes = $3
 WHERE tenant_id = $4 AND id = $5
-RETURNING id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type UpdateStockOpnameHeaderParams struct {
@@ -2174,6 +2366,7 @@ func (q *Queries) UpdateStockOpnameHeader(ctx context.Context, arg UpdateStockOp
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }
@@ -2182,7 +2375,7 @@ const updateStockTransferHeader = `-- name: UpdateStockTransferHeader :one
 UPDATE stock_transfers
 SET from_warehouse_id = $1, to_warehouse_id = $2, doc_date = $3, notes = $4
 WHERE tenant_id = $5 AND id = $6
-RETURNING id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id
+RETURNING id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by
 `
 
 type UpdateStockTransferHeaderParams struct {
@@ -2218,6 +2411,7 @@ func (q *Queries) UpdateStockTransferHeader(ctx context.Context, arg UpdateStock
 		&i.CreatedBy,
 		&i.ReversesID,
 		&i.ReversedByID,
+		&i.PostedBy,
 	)
 	return i, err
 }

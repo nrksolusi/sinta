@@ -79,6 +79,8 @@ test("linesFromAdjustment splits signed qty into abs qty + sign, resolving produ
     reason: "Barang rusak",
     notes: "",
     status: "draft",
+    createdAt: "2026-07-22T00:00:00Z",
+    createdBy: { id: "u1", displayName: "Test User" },
     lines: [
       {
         id: "l1",
@@ -115,6 +117,8 @@ test("linesFromAdjustment falls back to a placeholder product when unknown", () 
     reason: "x",
     notes: "",
     status: "draft",
+    createdAt: "2026-07-22T00:00:00Z",
+    createdBy: { id: "u1", displayName: "Test User" },
     lines: [
       {
         id: "l1",
@@ -187,6 +191,8 @@ test("adjustmentDocRows maps to DocRow with warehouse name, reason, and signed t
       reason: "Barang rusak",
       notes: "",
       status: "posted",
+      createdAt: "2026-07-22T00:00:00Z",
+      createdBy: { id: "u1", displayName: "Test User" },
       lines: [
         {
           id: "l1",
@@ -229,6 +235,8 @@ test("adjustmentDocRows leaves a draft number null and unknown warehouse as its 
       reason: "",
       notes: "",
       status: "draft",
+      createdAt: "2026-07-22T00:00:00Z",
+      createdBy: { id: "u1", displayName: "Test User" },
       lines: [],
     },
   ];

@@ -40,6 +40,8 @@ function transfer(over: Partial<StockTransfer> = {}): StockTransfer {
     toWarehouseId: "wh-2",
     notes: "",
     status: "posted",
+    createdAt: "2026-07-21T00:00:00Z",
+    createdBy: { id: "u1", displayName: "Test User" },
     lines: [
       { id: "l1", lineNo: 1, productId: "prod-a", qty: "24", uom: "dus" },
       { id: "l2", lineNo: 2, productId: "prod-b", qty: "6", uom: "sak" },

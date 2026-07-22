@@ -16,7 +16,7 @@ import (
 // no stock: posting assigns the gapless number and flips status; reversal posts a
 // cancelling number-only document.
 
-func salesOrderToAPI(so store.SalesOrder, lines []store.SalesOrderLine) api.SalesOrder {
+func salesOrderToAPI(so store.SalesOrder, lines []store.SalesOrderLine, actors docActors) api.SalesOrder {
 	apiLines := make([]api.SalesOrderLine, 0, len(lines))
 	for _, l := range lines {
 		apiLines = append(apiLines, api.SalesOrderLine{
@@ -38,6 +38,10 @@ func salesOrderToAPI(so store.SalesOrder, lines []store.SalesOrderLine) api.Sale
 		Notes:        so.Notes,
 		ReversesId:   pgUUIDPtr(so.ReversesID),
 		ReversedById: pgUUIDPtr(so.ReversedByID),
+		CreatedAt:    pgTimestamp(so.CreatedAt),
+		CreatedBy:    actors.createdBy,
+		PostedAt:     pgTimestampPtr(so.PostedAt),
+		PostedBy:     actors.postedBy,
 		Lines:        apiLines,
 	}
 }
@@ -51,7 +55,11 @@ func (s *Server) loadSalesOrder(ctx context.Context, q *store.Queries, tenantID,
 	if err != nil {
 		return api.SalesOrder{}, err
 	}
-	return salesOrderToAPI(so, lines), nil
+	actors, err := loadDocActors(ctx, q, so.CreatedBy, so.PostedBy)
+	if err != nil {
+		return api.SalesOrder{}, err
+	}
+	return salesOrderToAPI(so, lines, actors), nil
 }
 
 func (s *Server) ListSalesOrders(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +79,11 @@ func (s *Server) ListSalesOrders(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, salesOrderToAPI(so, lines))
+			actors, err := loadDocActors(r.Context(), q, so.CreatedBy, so.PostedBy)
+			if err != nil {
+				return err
+			}
+			out = append(out, salesOrderToAPI(so, lines, actors))
 		}
 		return nil
 	})
@@ -213,6 +225,33 @@ func (s *Server) UpdateSalesOrder(w http.ResponseWriter, r *http.Request, id ope
 	writeJSON(w, http.StatusOK, out)
 }
 
+func (s *Server) DeleteSalesOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	tc, ok := s.requireDocumentWriter(w, r)
+	if !ok {
+		return
+	}
+	var notDraft bool
+	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		cur, err := q.GetSalesOrder(r.Context(), store.GetSalesOrderParams{TenantID: tc.tenantID, ID: id})
+		if err != nil {
+			return err
+		}
+		if cur.Status != statusDraft {
+			notDraft = true
+			return nil
+		}
+		return q.DeleteSalesOrder(r.Context(), store.DeleteSalesOrderParams{TenantID: tc.tenantID, ID: id})
+	})
+	if notDraft {
+		writeError(w, http.StatusConflict, "not_draft", "only draft documents can be deleted")
+		return
+	}
+	if handleWriteErr(w, err) {
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) PostSalesOrder(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	tc, ok := s.requireDocumentWriter(w, r)
 	if !ok {
@@ -233,7 +272,7 @@ func (s *Server) PostSalesOrder(w http.ResponseWriter, r *http.Request, id opena
 		if err != nil {
 			return err
 		}
-		if _, err := q.MarkSalesOrderPosted(r.Context(), store.MarkSalesOrderPostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number)}); err != nil {
+		if _, err := q.MarkSalesOrderPosted(r.Context(), store.MarkSalesOrderPostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)}); err != nil {
 			return err
 		}
 		out, err = s.loadSalesOrder(r.Context(), q, tc.tenantID, id)
@@ -294,7 +333,7 @@ func (s *Server) ReverseSalesOrder(w http.ResponseWriter, r *http.Request, id op
 		if err != nil {
 			return err
 		}
-		if _, err := q.MarkSalesOrderPosted(r.Context(), store.MarkSalesOrderPostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number)}); err != nil {
+		if _, err := q.MarkSalesOrderPosted(r.Context(), store.MarkSalesOrderPostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)}); err != nil {
 			return err
 		}
 		if err := q.MarkSalesOrderReversed(r.Context(), store.MarkSalesOrderReversedParams{TenantID: tc.tenantID, ID: id, ReversedByID: pgUUID(rev.ID)}); err != nil {

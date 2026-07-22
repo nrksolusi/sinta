@@ -30,6 +30,9 @@ SELECT * FROM purchase_order_lines WHERE tenant_id = sqlc.arg(tenant_id) AND pur
 -- name: DeletePurchaseOrderLines :exec
 DELETE FROM purchase_order_lines WHERE tenant_id = sqlc.arg(tenant_id) AND purchase_order_id = sqlc.arg(purchase_order_id);
 
+-- name: DeletePurchaseOrder :exec
+DELETE FROM purchase_orders WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
+
 -- name: UpdatePurchaseOrderHeader :one
 UPDATE purchase_orders
 SET supplier_id = sqlc.arg(supplier_id), warehouse_id = sqlc.arg(warehouse_id), doc_date = sqlc.arg(doc_date), notes = sqlc.arg(notes)
@@ -38,7 +41,7 @@ RETURNING *;
 
 -- name: MarkPurchaseOrderPosted :one
 UPDATE purchase_orders
-SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now()
+SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now(), posted_by = sqlc.arg(posted_by)
 WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id)
 RETURNING *;
 
@@ -73,6 +76,9 @@ SELECT * FROM goods_receipt_lines WHERE tenant_id = sqlc.arg(tenant_id) AND good
 -- name: DeleteGoodsReceiptLines :exec
 DELETE FROM goods_receipt_lines WHERE tenant_id = sqlc.arg(tenant_id) AND goods_receipt_id = sqlc.arg(goods_receipt_id);
 
+-- name: DeleteGoodsReceipt :exec
+DELETE FROM goods_receipts WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
+
 -- name: UpdateGoodsReceiptHeader :one
 UPDATE goods_receipts
 SET purchase_order_id = sqlc.narg(purchase_order_id), supplier_id = sqlc.arg(supplier_id), warehouse_id = sqlc.arg(warehouse_id), doc_date = sqlc.arg(doc_date), notes = sqlc.arg(notes)
@@ -81,7 +87,7 @@ RETURNING *;
 
 -- name: MarkGoodsReceiptPosted :one
 UPDATE goods_receipts
-SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now()
+SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now(), posted_by = sqlc.arg(posted_by)
 WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id)
 RETURNING *;
 
@@ -116,6 +122,9 @@ SELECT * FROM sales_order_lines WHERE tenant_id = sqlc.arg(tenant_id) AND sales_
 -- name: DeleteSalesOrderLines :exec
 DELETE FROM sales_order_lines WHERE tenant_id = sqlc.arg(tenant_id) AND sales_order_id = sqlc.arg(sales_order_id);
 
+-- name: DeleteSalesOrder :exec
+DELETE FROM sales_orders WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
+
 -- name: UpdateSalesOrderHeader :one
 UPDATE sales_orders
 SET customer_id = sqlc.arg(customer_id), warehouse_id = sqlc.arg(warehouse_id), doc_date = sqlc.arg(doc_date), notes = sqlc.arg(notes)
@@ -124,7 +133,7 @@ RETURNING *;
 
 -- name: MarkSalesOrderPosted :one
 UPDATE sales_orders
-SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now()
+SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now(), posted_by = sqlc.arg(posted_by)
 WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id)
 RETURNING *;
 
@@ -159,6 +168,9 @@ SELECT * FROM delivery_lines WHERE tenant_id = sqlc.arg(tenant_id) AND delivery_
 -- name: DeleteDeliveryLines :exec
 DELETE FROM delivery_lines WHERE tenant_id = sqlc.arg(tenant_id) AND delivery_id = sqlc.arg(delivery_id);
 
+-- name: DeleteDelivery :exec
+DELETE FROM deliveries WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
+
 -- name: UpdateDeliveryHeader :one
 UPDATE deliveries
 SET sales_order_id = sqlc.narg(sales_order_id), customer_id = sqlc.arg(customer_id), warehouse_id = sqlc.arg(warehouse_id), doc_date = sqlc.arg(doc_date), notes = sqlc.arg(notes)
@@ -167,7 +179,7 @@ RETURNING *;
 
 -- name: MarkDeliveryPosted :one
 UPDATE deliveries
-SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now()
+SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now(), posted_by = sqlc.arg(posted_by)
 WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id)
 RETURNING *;
 
@@ -202,6 +214,9 @@ SELECT * FROM stock_transfer_lines WHERE tenant_id = sqlc.arg(tenant_id) AND sto
 -- name: DeleteStockTransferLines :exec
 DELETE FROM stock_transfer_lines WHERE tenant_id = sqlc.arg(tenant_id) AND stock_transfer_id = sqlc.arg(stock_transfer_id);
 
+-- name: DeleteStockTransfer :exec
+DELETE FROM stock_transfers WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
+
 -- name: UpdateStockTransferHeader :one
 UPDATE stock_transfers
 SET from_warehouse_id = sqlc.arg(from_warehouse_id), to_warehouse_id = sqlc.arg(to_warehouse_id), doc_date = sqlc.arg(doc_date), notes = sqlc.arg(notes)
@@ -210,7 +225,7 @@ RETURNING *;
 
 -- name: MarkStockTransferPosted :one
 UPDATE stock_transfers
-SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now()
+SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now(), posted_by = sqlc.arg(posted_by)
 WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id)
 RETURNING *;
 
@@ -245,6 +260,9 @@ SELECT * FROM stock_adjustment_lines WHERE tenant_id = sqlc.arg(tenant_id) AND s
 -- name: DeleteStockAdjustmentLines :exec
 DELETE FROM stock_adjustment_lines WHERE tenant_id = sqlc.arg(tenant_id) AND stock_adjustment_id = sqlc.arg(stock_adjustment_id);
 
+-- name: DeleteStockAdjustment :exec
+DELETE FROM stock_adjustments WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
+
 -- name: UpdateStockAdjustmentHeader :one
 UPDATE stock_adjustments
 SET warehouse_id = sqlc.arg(warehouse_id), reason = sqlc.arg(reason), doc_date = sqlc.arg(doc_date), notes = sqlc.arg(notes)
@@ -253,7 +271,7 @@ RETURNING *;
 
 -- name: MarkStockAdjustmentPosted :one
 UPDATE stock_adjustments
-SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now()
+SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now(), posted_by = sqlc.arg(posted_by)
 WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id)
 RETURNING *;
 
@@ -276,6 +294,11 @@ INSERT INTO stock_opname_lines (tenant_id, stock_opname_id, line_no, product_id,
 VALUES (sqlc.arg(tenant_id), sqlc.arg(stock_opname_id), sqlc.arg(line_no), sqlc.arg(product_id), sqlc.narg(batch_id), sqlc.arg(uom), sqlc.arg(counted_qty))
 RETURNING *;
 
+-- name: SetStockOpnameLineSystemQty :exec
+UPDATE stock_opname_lines
+SET system_qty = sqlc.arg(system_qty)
+WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
+
 -- name: GetStockOpname :one
 SELECT * FROM stock_opnames WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 
@@ -296,7 +319,7 @@ RETURNING *;
 
 -- name: MarkStockOpnamePosted :one
 UPDATE stock_opnames
-SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now()
+SET status = 'posted', doc_number = sqlc.arg(doc_number), posted_at = now(), posted_by = sqlc.arg(posted_by)
 WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id)
 RETURNING *;
 
@@ -304,6 +327,9 @@ RETURNING *;
 UPDATE stock_opnames
 SET status = 'reversed', reversed_by_id = sqlc.arg(reversed_by_id)
 WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
+
+-- name: DeleteStockOpname :exec
+DELETE FROM stock_opnames WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 
 -- ===========================================================================
 -- Shared: current stock level for opname variance (read the derived cache)

@@ -48,6 +48,8 @@ const delivery = (over: Partial<Delivery> = {}): Delivery => ({
   notes: "",
   status: "draft",
   lines: [],
+  createdAt: "2026-07-20T00:00:00Z",
+  createdBy: { id: "u1", displayName: "Test User" },
   ...over,
 });
 
@@ -140,6 +142,8 @@ test("salesOrderToDraftSeed prefills customer, warehouse and lines from a SO", (
     docNumber: "SO-2026-0001",
     notes: "",
     status: "posted",
+    createdAt: "2026-07-19T00:00:00Z",
+    createdBy: { id: "u1", displayName: "Test User" },
     lines: [
       {
         id: "sl1",

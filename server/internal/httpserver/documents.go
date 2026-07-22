@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"time"
@@ -11,6 +12,7 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/shopspring/decimal"
 
+	"github.com/nrksolusi/sinta/internal/api"
 	"github.com/nrksolusi/sinta/internal/store"
 )
 
@@ -165,6 +167,53 @@ const (
 	statusDraft  = "draft"
 	statusPosted = "posted"
 )
+
+// docActors carries the actor data loaded alongside a document header.
+type docActors struct {
+	createdBy api.DocumentActor
+	postedBy  *api.DocumentActor
+}
+
+// loadDocActors fetches the actors for a document's created_by and optional
+// posted_by UUIDs. Callers use it inside a tenantTx callback.
+func loadDocActors(ctx context.Context, q *store.Queries, createdByID uuid.UUID, postedByPg pgtype.UUID) (docActors, error) {
+	cb, err := q.GetUserByID(ctx, createdByID)
+	if err != nil {
+		return docActors{}, err
+	}
+	a := docActors{createdBy: api.DocumentActor{Id: cb.ID, DisplayName: cb.Name}}
+	if postedByPg.Valid {
+		pb, err := q.GetUserByID(ctx, uuid.UUID(postedByPg.Bytes))
+		if err != nil {
+			return docActors{}, err
+		}
+		actor := api.DocumentActor{Id: pb.ID, DisplayName: pb.Name}
+		a.postedBy = &actor
+	}
+	return a, nil
+}
+
+// pgTimestamp converts a stored timestamptz to a time.Time (zero if not valid).
+func pgTimestamp(t pgtype.Timestamptz) time.Time {
+	if !t.Valid {
+		return time.Time{}
+	}
+	return t.Time
+}
+
+// pgTimestampPtr converts an optional stored timestamptz to a *time.Time.
+func pgTimestampPtr(t pgtype.Timestamptz) *time.Time {
+	if !t.Valid {
+		return nil
+	}
+	v := t.Time
+	return &v
+}
+
+// userID converts a pgtype.UUID to a plain uuid.UUID for the posted_by param.
+func toPostedByParam(userID uuid.UUID) pgtype.UUID {
+	return pgtype.UUID{Bytes: userID, Valid: true}
+}
 
 // effectiveAt builds the movement business date from a document date. Documents
 // carry a day-grained date; movements need a timestamptz, so we anchor at the

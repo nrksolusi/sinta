@@ -121,7 +121,8 @@ export interface paths {
         /** Replace a draft delivery (rejected once posted) */
         put: operations["updateDelivery"];
         post?: never;
-        delete?: never;
+        /** Delete a draft delivery (rejected once posted) */
+        delete: operations["deleteDelivery"];
         options?: never;
         head?: never;
         patch?: never;
@@ -197,7 +198,8 @@ export interface paths {
         /** Replace a draft goods receipt (rejected once posted) */
         put: operations["updateGoodsReceipt"];
         post?: never;
-        delete?: never;
+        /** Delete a draft goods receipt (rejected once posted) */
+        delete: operations["deleteGoodsReceipt"];
         options?: never;
         head?: never;
         patch?: never;
@@ -464,7 +466,8 @@ export interface paths {
         /** Replace a draft purchase order (rejected once posted) */
         put: operations["updatePurchaseOrder"];
         post?: never;
-        delete?: never;
+        /** Delete a draft purchase order (rejected once posted) */
+        delete: operations["deletePurchaseOrder"];
         options?: never;
         head?: never;
         patch?: never;
@@ -600,7 +603,8 @@ export interface paths {
         /** Replace a draft sales order (rejected once posted) */
         put: operations["updateSalesOrder"];
         post?: never;
-        delete?: never;
+        /** Delete a draft sales order (rejected once posted) */
+        delete: operations["deleteSalesOrder"];
         options?: never;
         head?: never;
         patch?: never;
@@ -676,7 +680,8 @@ export interface paths {
         /** Replace a draft stock adjustment (rejected once posted) */
         put: operations["updateStockAdjustment"];
         post?: never;
-        delete?: never;
+        /** Delete a draft stock adjustment (rejected once posted) */
+        delete: operations["deleteStockAdjustment"];
         options?: never;
         head?: never;
         patch?: never;
@@ -752,7 +757,8 @@ export interface paths {
         /** Replace a draft stock opname (rejected once posted) */
         put: operations["updateStockOpname"];
         post?: never;
-        delete?: never;
+        /** Delete a draft stock opname (rejected once posted) */
+        delete: operations["deleteStockOpname"];
         options?: never;
         head?: never;
         patch?: never;
@@ -828,7 +834,8 @@ export interface paths {
         /** Replace a draft stock transfer (rejected once posted) */
         put: operations["updateStockTransfer"];
         post?: never;
-        delete?: never;
+        /** Delete a draft stock transfer (rejected once posted) */
+        delete: operations["deleteStockTransfer"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1084,6 +1091,9 @@ export interface components {
          */
         DecimalString: string;
         Delivery: {
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["DocumentActor"];
             /** Format: uuid */
             customerId: string;
             /** Format: date */
@@ -1093,6 +1103,9 @@ export interface components {
             id: string;
             lines: components["schemas"]["DeliveryLine"][];
             notes: string;
+            /** Format: date-time */
+            postedAt?: string;
+            postedBy?: components["schemas"]["DocumentActor"];
             /** Format: uuid */
             reversedById?: string | null;
             /** Format: uuid */
@@ -1138,6 +1151,11 @@ export interface components {
             salesOrderLineId?: string | null;
             uom: string;
         };
+        DocumentActor: {
+            displayName: string;
+            /** Format: uuid */
+            id: string;
+        };
         /**
          * @description draft is editable; posted is immutable; reversed was cancelled by a reversal
          * @enum {string}
@@ -1152,6 +1170,9 @@ export interface components {
             message: string;
         };
         GoodsReceipt: {
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["DocumentActor"];
             /** Format: date */
             docDate: string;
             docNumber?: string | null;
@@ -1159,6 +1180,9 @@ export interface components {
             id: string;
             lines: components["schemas"]["GoodsReceiptLine"][];
             notes: string;
+            /** Format: date-time */
+            postedAt?: string;
+            postedBy?: components["schemas"]["DocumentActor"];
             /** Format: uuid */
             purchaseOrderId?: string | null;
             /** Format: uuid */
@@ -1274,6 +1298,9 @@ export interface components {
             uom: string;
         };
         PurchaseOrder: {
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["DocumentActor"];
             /** Format: date */
             docDate: string;
             docNumber?: string | null;
@@ -1281,6 +1308,9 @@ export interface components {
             id: string;
             lines: components["schemas"]["PurchaseOrderLine"][];
             notes: string;
+            /** Format: date-time */
+            postedAt?: string;
+            postedBy?: components["schemas"]["DocumentActor"];
             /** Format: uuid */
             reversedById?: string | null;
             /** Format: uuid */
@@ -1328,6 +1358,9 @@ export interface components {
         /** @enum {string} */
         Role: "owner" | "admin" | "warehouse" | "sales" | "viewer";
         SalesOrder: {
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["DocumentActor"];
             /** Format: uuid */
             customerId: string;
             /** Format: date */
@@ -1337,6 +1370,9 @@ export interface components {
             id: string;
             lines: components["schemas"]["SalesOrderLine"][];
             notes: string;
+            /** Format: date-time */
+            postedAt?: string;
+            postedBy?: components["schemas"]["DocumentActor"];
             /** Format: uuid */
             reversedById?: string | null;
             /** Format: uuid */
@@ -1382,6 +1418,9 @@ export interface components {
             user: components["schemas"]["User"];
         };
         StockAdjustment: {
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["DocumentActor"];
             /** Format: date */
             docDate: string;
             docNumber?: string | null;
@@ -1389,6 +1428,9 @@ export interface components {
             id: string;
             lines: components["schemas"]["StockAdjustmentLine"][];
             notes: string;
+            /** Format: date-time */
+            postedAt?: string;
+            postedBy?: components["schemas"]["DocumentActor"];
             reason: string;
             /** Format: uuid */
             reversedById?: string | null;
@@ -1486,6 +1528,9 @@ export interface components {
             warehouseName: string;
         };
         StockOpname: {
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["DocumentActor"];
             /** Format: date */
             docDate: string;
             docNumber?: string | null;
@@ -1493,6 +1538,9 @@ export interface components {
             id: string;
             lines: components["schemas"]["StockOpnameLine"][];
             notes: string;
+            /** Format: date-time */
+            postedAt?: string;
+            postedBy?: components["schemas"]["DocumentActor"];
             /** Format: uuid */
             reversedById?: string | null;
             /** Format: uuid */
@@ -1518,6 +1566,7 @@ export interface components {
             lineNo: number;
             /** Format: uuid */
             productId: string;
+            systemQty?: components["schemas"]["DecimalString"];
             uom: string;
         };
         StockOpnameLineInput: {
@@ -1529,6 +1578,9 @@ export interface components {
             uom: string;
         };
         StockTransfer: {
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["DocumentActor"];
             /** Format: date */
             docDate: string;
             docNumber?: string | null;
@@ -1538,6 +1590,9 @@ export interface components {
             id: string;
             lines: components["schemas"]["StockTransferLine"][];
             notes: string;
+            /** Format: date-time */
+            postedAt?: string;
+            postedBy?: components["schemas"]["DocumentActor"];
             /** Format: uuid */
             reversedById?: string | null;
             /** Format: uuid */
@@ -1964,6 +2019,30 @@ export interface operations {
             422: components["responses"]["ValidationError"];
         };
     };
+    deleteDelivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     postDelivery: {
         parameters: {
             query?: never;
@@ -2119,6 +2198,30 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["ValidationError"];
+        };
+    };
+    deleteGoodsReceipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     postGoodsReceipt: {
@@ -2733,6 +2836,30 @@ export interface operations {
             422: components["responses"]["ValidationError"];
         };
     };
+    deletePurchaseOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     postPurchaseOrder: {
         parameters: {
             query?: never;
@@ -2966,6 +3093,30 @@ export interface operations {
             422: components["responses"]["ValidationError"];
         };
     };
+    deleteSalesOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     postSalesOrder: {
         parameters: {
             query?: never;
@@ -3121,6 +3272,30 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["ValidationError"];
+        };
+    };
+    deleteStockAdjustment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     postStockAdjustment: {
@@ -3280,6 +3455,30 @@ export interface operations {
             422: components["responses"]["ValidationError"];
         };
     };
+    deleteStockOpname: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     postStockOpname: {
         parameters: {
             query?: never;
@@ -3435,6 +3634,30 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["ValidationError"];
+        };
+    };
+    deleteStockTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     postStockTransfer: {

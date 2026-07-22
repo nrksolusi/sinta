@@ -75,6 +75,17 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      operationId: deletePurchaseOrder
+      summary: Delete a draft purchase order (rejected once posted)
+      tags: [documents]
+      responses:
+        "204":
+          description: Deleted
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /purchase-orders/{id}/post:
     parameters: [{ $ref: "#/components/parameters/DocumentId" }]
     post:
@@ -176,6 +187,17 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      operationId: deleteGoodsReceipt
+      summary: Delete a draft goods receipt (rejected once posted)
+      tags: [documents]
+      responses:
+        "204":
+          description: Deleted
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /goods-receipts/{id}/post:
     parameters: [{ $ref: "#/components/parameters/DocumentId" }]
     post:
@@ -277,6 +299,17 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      operationId: deleteSalesOrder
+      summary: Delete a draft sales order (rejected once posted)
+      tags: [documents]
+      responses:
+        "204":
+          description: Deleted
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /sales-orders/{id}/post:
     parameters: [{ $ref: "#/components/parameters/DocumentId" }]
     post:
@@ -378,6 +411,17 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      operationId: deleteDelivery
+      summary: Delete a draft delivery (rejected once posted)
+      tags: [documents]
+      responses:
+        "204":
+          description: Deleted
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /deliveries/{id}/post:
     parameters: [{ $ref: "#/components/parameters/DocumentId" }]
     post:
@@ -479,6 +523,17 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      operationId: deleteStockTransfer
+      summary: Delete a draft stock transfer (rejected once posted)
+      tags: [documents]
+      responses:
+        "204":
+          description: Deleted
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /stock-transfers/{id}/post:
     parameters: [{ $ref: "#/components/parameters/DocumentId" }]
     post:
@@ -580,6 +635,17 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      operationId: deleteStockAdjustment
+      summary: Delete a draft stock adjustment (rejected once posted)
+      tags: [documents]
+      responses:
+        "204":
+          description: Deleted
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /stock-adjustments/{id}/post:
     parameters: [{ $ref: "#/components/parameters/DocumentId" }]
     post:
@@ -681,6 +747,17 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      operationId: deleteStockOpname
+      summary: Delete a draft stock opname (rejected once posted)
+      tags: [documents]
+      responses:
+        "204":
+          description: Deleted
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /stock-opnames/{id}/post:
     parameters: [{ $ref: "#/components/parameters/DocumentId" }]
     post:
@@ -737,6 +814,13 @@ components:
       enum: [draft, posted, reversed]
       description: draft is editable; posted is immutable; reversed was cancelled by a reversal
 
+    DocumentActor:
+      type: object
+      required: [id, displayName]
+      properties:
+        id: { type: string, format: uuid }
+        displayName: { type: string }
+
     DecimalString:
       type: string
       description: A decimal quantity or money value, string-encoded to avoid float loss
@@ -774,7 +858,7 @@ components:
           items: { $ref: "#/components/schemas/PurchaseOrderLineInput" }
     PurchaseOrder:
       type: object
-      required: [id, status, supplierId, warehouseId, docDate, notes, lines]
+      required: [id, status, supplierId, warehouseId, docDate, notes, lines, createdAt, createdBy]
       properties:
         id: { type: string, format: uuid }
         docNumber: { type: string, nullable: true }
@@ -785,6 +869,10 @@ components:
         notes: { type: string }
         reversesId: { type: string, format: uuid, nullable: true }
         reversedById: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+        createdBy: { $ref: "#/components/schemas/DocumentActor" }
+        postedAt: { type: string, format: date-time }
+        postedBy: { $ref: "#/components/schemas/DocumentActor" }
         lines:
           type: array
           items: { $ref: "#/components/schemas/PurchaseOrderLine" }
@@ -826,7 +914,7 @@ components:
           items: { $ref: "#/components/schemas/GoodsReceiptLineInput" }
     GoodsReceipt:
       type: object
-      required: [id, status, supplierId, warehouseId, docDate, notes, lines]
+      required: [id, status, supplierId, warehouseId, docDate, notes, lines, createdAt, createdBy]
       properties:
         id: { type: string, format: uuid }
         docNumber: { type: string, nullable: true }
@@ -838,6 +926,10 @@ components:
         notes: { type: string }
         reversesId: { type: string, format: uuid, nullable: true }
         reversedById: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+        createdBy: { $ref: "#/components/schemas/DocumentActor" }
+        postedAt: { type: string, format: date-time }
+        postedBy: { $ref: "#/components/schemas/DocumentActor" }
         lines:
           type: array
           items: { $ref: "#/components/schemas/GoodsReceiptLine" }
@@ -874,7 +966,7 @@ components:
           items: { $ref: "#/components/schemas/SalesOrderLineInput" }
     SalesOrder:
       type: object
-      required: [id, status, customerId, warehouseId, docDate, notes, lines]
+      required: [id, status, customerId, warehouseId, docDate, notes, lines, createdAt, createdBy]
       properties:
         id: { type: string, format: uuid }
         docNumber: { type: string, nullable: true }
@@ -885,6 +977,10 @@ components:
         notes: { type: string }
         reversesId: { type: string, format: uuid, nullable: true }
         reversedById: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+        createdBy: { $ref: "#/components/schemas/DocumentActor" }
+        postedAt: { type: string, format: date-time }
+        postedBy: { $ref: "#/components/schemas/DocumentActor" }
         lines:
           type: array
           items: { $ref: "#/components/schemas/SalesOrderLine" }
@@ -924,7 +1020,7 @@ components:
           items: { $ref: "#/components/schemas/DeliveryLineInput" }
     Delivery:
       type: object
-      required: [id, status, customerId, warehouseId, docDate, notes, lines]
+      required: [id, status, customerId, warehouseId, docDate, notes, lines, createdAt, createdBy]
       properties:
         id: { type: string, format: uuid }
         docNumber: { type: string, nullable: true }
@@ -936,6 +1032,10 @@ components:
         notes: { type: string }
         reversesId: { type: string, format: uuid, nullable: true }
         reversedById: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+        createdBy: { $ref: "#/components/schemas/DocumentActor" }
+        postedAt: { type: string, format: date-time }
+        postedBy: { $ref: "#/components/schemas/DocumentActor" }
         lines:
           type: array
           items: { $ref: "#/components/schemas/DeliveryLine" }
@@ -972,7 +1072,7 @@ components:
           items: { $ref: "#/components/schemas/StockTransferLineInput" }
     StockTransfer:
       type: object
-      required: [id, status, fromWarehouseId, toWarehouseId, docDate, notes, lines]
+      required: [id, status, fromWarehouseId, toWarehouseId, docDate, notes, lines, createdAt, createdBy]
       properties:
         id: { type: string, format: uuid }
         docNumber: { type: string, nullable: true }
@@ -983,6 +1083,10 @@ components:
         notes: { type: string }
         reversesId: { type: string, format: uuid, nullable: true }
         reversedById: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+        createdBy: { $ref: "#/components/schemas/DocumentActor" }
+        postedAt: { type: string, format: date-time }
+        postedBy: { $ref: "#/components/schemas/DocumentActor" }
         lines:
           type: array
           items: { $ref: "#/components/schemas/StockTransferLine" }
@@ -1023,7 +1127,7 @@ components:
           items: { $ref: "#/components/schemas/StockAdjustmentLineInput" }
     StockAdjustment:
       type: object
-      required: [id, status, warehouseId, reason, docDate, notes, lines]
+      required: [id, status, warehouseId, reason, docDate, notes, lines, createdAt, createdBy]
       properties:
         id: { type: string, format: uuid }
         docNumber: { type: string, nullable: true }
@@ -1034,6 +1138,10 @@ components:
         notes: { type: string }
         reversesId: { type: string, format: uuid, nullable: true }
         reversedById: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+        createdBy: { $ref: "#/components/schemas/DocumentActor" }
+        postedAt: { type: string, format: date-time }
+        postedBy: { $ref: "#/components/schemas/DocumentActor" }
         lines:
           type: array
           items: { $ref: "#/components/schemas/StockAdjustmentLine" }
@@ -1056,6 +1164,7 @@ components:
         batchId: { type: string, format: uuid, nullable: true }
         uom: { type: string }
         countedQty: { $ref: "#/components/schemas/DecimalString" }
+        systemQty: { $ref: "#/components/schemas/DecimalString" }
     StockOpnameInput:
       type: object
       required: [warehouseId, docDate, lines]
@@ -1069,7 +1178,7 @@ components:
           items: { $ref: "#/components/schemas/StockOpnameLineInput" }
     StockOpname:
       type: object
-      required: [id, status, warehouseId, docDate, notes, lines]
+      required: [id, status, warehouseId, docDate, notes, lines, createdAt, createdBy]
       properties:
         id: { type: string, format: uuid }
         docNumber: { type: string, nullable: true }
@@ -1079,6 +1188,10 @@ components:
         notes: { type: string }
         reversesId: { type: string, format: uuid, nullable: true }
         reversedById: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+        createdBy: { $ref: "#/components/schemas/DocumentActor" }
+        postedAt: { type: string, format: date-time }
+        postedBy: { $ref: "#/components/schemas/DocumentActor" }
         lines:
           type: array
           items: { $ref: "#/components/schemas/StockOpnameLine" }

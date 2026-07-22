@@ -43,6 +43,8 @@ test("receiptToDocRow maps a posted receipt to a DocRow with supplier + warehous
     warehouseId: "wh-1",
     notes: "",
     lines: [],
+    createdAt: "2026-07-10T00:00:00Z",
+    createdBy: { id: "u1", displayName: "Test User" },
   };
   const row = receiptToDocRow(gr, {
     supplierName: () => "PT Maju",
@@ -68,6 +70,8 @@ test("receiptToDocRow leaves number null for a draft", () => {
     warehouseId: "wh-1",
     notes: "",
     lines: [],
+    createdAt: "2026-07-11T00:00:00Z",
+    createdBy: { id: "u1", displayName: "Test User" },
   };
   const row = receiptToDocRow(gr, {
     supplierName: () => "PT Maju",
@@ -89,6 +93,8 @@ test("sortReceipts filters by status, warehouse and date, drafts first then newe
       warehouseId: "wh-1",
       notes: "",
       lines: [],
+      createdAt: "2026-07-10T00:00:00Z",
+      createdBy: { id: "u1", displayName: "Test User" },
     },
     {
       id: "b",
@@ -98,6 +104,8 @@ test("sortReceipts filters by status, warehouse and date, drafts first then newe
       warehouseId: "wh-1",
       notes: "",
       lines: [],
+      createdAt: "2026-07-05T00:00:00Z",
+      createdBy: { id: "u1", displayName: "Test User" },
     },
     {
       id: "c",
@@ -108,6 +116,8 @@ test("sortReceipts filters by status, warehouse and date, drafts first then newe
       warehouseId: "wh-2",
       notes: "",
       lines: [],
+      createdAt: "2026-07-12T00:00:00Z",
+      createdBy: { id: "u1", displayName: "Test User" },
     },
   ];
 
@@ -141,6 +151,8 @@ test("poToDraftLines prefills grid lines from PO lines with purchaseOrderLineId 
     supplierId: "sup-1",
     warehouseId: "wh-1",
     notes: "",
+    createdAt: "2026-07-01T00:00:00Z",
+    createdBy: { id: "u1", displayName: "Test User" },
     lines: [
       {
         id: "pol-1",
@@ -187,6 +199,8 @@ test("poToDraftLines skips lines whose product is unknown", () => {
     supplierId: "sup-1",
     warehouseId: "wh-1",
     notes: "",
+    createdAt: "2026-07-01T00:00:00Z",
+    createdBy: { id: "u1", displayName: "Test User" },
     lines: [
       {
         id: "pol-x",

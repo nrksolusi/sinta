@@ -346,6 +346,232 @@ func TestAdjustmentPostAndReverse(t *testing.T) {
 	}
 }
 
+// TestDraftDeleteStockOpname covers INC-1: a draft opname can be deleted (204),
+// a posted opname cannot (409), and the deleted doc is gone (404).
+func TestDraftDeleteStockOpname(t *testing.T) {
+	f := seedDocFixture(t)
+
+	// Seed on-hand so we can post an opname later.
+	recv := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-01-01",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	_, gr := f.do(t, http.MethodPost, "/v1/goods-receipts", recv)
+	f.do(t, http.MethodPost, "/v1/goods-receipts/"+gr["id"].(string)+"/post", "")
+
+	// Create a draft opname.
+	body := fmt.Sprintf(`{"warehouseId":%q,"docDate":"2026-01-02",
+	  "lines":[{"productId":%q,"uom":"pcs","countedQty":"5"}]}`, f.whA, f.product)
+	status, o := f.do(t, http.MethodPost, "/v1/stock-opnames", body)
+	if status != http.StatusCreated {
+		t.Fatalf("create opname status = %d", status)
+	}
+	id := o["id"].(string)
+
+	// Delete the draft -> 204, no body.
+	status, _ = f.do(t, http.MethodDelete, "/v1/stock-opnames/"+id, "")
+	if status != http.StatusNoContent {
+		t.Fatalf("delete draft status = %d, want 204", status)
+	}
+
+	// GET now returns 404.
+	if status, _ = f.do(t, http.MethodGet, "/v1/stock-opnames/"+id, ""); status != http.StatusNotFound {
+		t.Fatalf("get deleted status = %d, want 404", status)
+	}
+
+	// Post a second opname, then try to delete it -> 409.
+	_, o2 := f.do(t, http.MethodPost, "/v1/stock-opnames", body)
+	id2 := o2["id"].(string)
+	f.do(t, http.MethodPost, "/v1/stock-opnames/"+id2+"/post", "")
+
+	if status, _ = f.do(t, http.MethodDelete, "/v1/stock-opnames/"+id2, ""); status != http.StatusConflict {
+		t.Fatalf("delete posted status = %d, want 409", status)
+	}
+}
+
+// TestOpnameSystemQty covers INC-3: after posting an opname, every line carries
+// the system (on-hand) qty that was read at post time, including zero-variance
+// lines and the no-variance fast path (no movements).
+func TestOpnameSystemQty(t *testing.T) {
+	f := seedDocFixture(t)
+
+	// Put 10 on hand.
+	recv := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-01-01",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"10","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	_, gr := f.do(t, http.MethodPost, "/v1/goods-receipts", recv)
+	f.do(t, http.MethodPost, "/v1/goods-receipts/"+gr["id"].(string)+"/post", "")
+
+	// Count 7 -> variance -3 (nonzero).
+	body := fmt.Sprintf(`{"warehouseId":%q,"docDate":"2026-01-02",
+	  "lines":[{"productId":%q,"uom":"pcs","countedQty":"7"}]}`, f.whA, f.product)
+	_, o := f.do(t, http.MethodPost, "/v1/stock-opnames", body)
+	id := o["id"].(string)
+	_, posted := f.do(t, http.MethodPost, "/v1/stock-opnames/"+id+"/post", "")
+	if posted["status"] != "posted" {
+		t.Fatalf("post status = %v", posted["status"])
+	}
+
+	lines, _ := posted["lines"].([]any)
+	if len(lines) == 0 {
+		t.Fatalf("no lines in posted opname response")
+	}
+	line := lines[0].(map[string]any)
+	if line["systemQty"] == nil {
+		t.Fatalf("line missing systemQty after variance post, got %v", line)
+	}
+	if line["systemQty"] != "10" {
+		t.Fatalf("line systemQty = %v, want 10", line["systemQty"])
+	}
+
+	// No-variance opname (count = on-hand after first post = 7).
+	body2 := fmt.Sprintf(`{"warehouseId":%q,"docDate":"2026-01-03",
+	  "lines":[{"productId":%q,"uom":"pcs","countedQty":"7"}]}`, f.whA, f.product)
+	_, o2 := f.do(t, http.MethodPost, "/v1/stock-opnames", body2)
+	id2 := o2["id"].(string)
+	_, posted2 := f.do(t, http.MethodPost, "/v1/stock-opnames/"+id2+"/post", "")
+	lines2, _ := posted2["lines"].([]any)
+	if len(lines2) == 0 {
+		t.Fatalf("no lines in no-variance opname response")
+	}
+	line2 := lines2[0].(map[string]any)
+	if line2["systemQty"] == nil {
+		t.Fatalf("no-variance line missing systemQty, got %v", line2)
+	}
+	if line2["systemQty"] != "7" {
+		t.Fatalf("no-variance line systemQty = %v, want 7", line2["systemQty"])
+	}
+}
+
+// TestLifecycleTimestampsAndActor covers INC-2: posted documents expose createdAt,
+// createdBy, postedAt, and postedBy with the actor's id and displayName.
+func TestLifecycleTimestampsAndActor(t *testing.T) {
+	f := seedDocFixture(t)
+
+	body := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-03-01",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	_, gr := f.do(t, http.MethodPost, "/v1/goods-receipts", body)
+	id := gr["id"].(string)
+
+	// createdAt/createdBy must already appear on the draft.
+	if gr["createdAt"] == nil {
+		t.Fatalf("draft missing createdAt, got %v", gr)
+	}
+	createdBy, _ := gr["createdBy"].(map[string]any)
+	if createdBy == nil || createdBy["id"] == nil {
+		t.Fatalf("draft missing createdBy.id, got %v", gr["createdBy"])
+	}
+
+	// Post it.
+	_, posted := f.do(t, http.MethodPost, "/v1/goods-receipts/"+id+"/post", "")
+	if posted["postedAt"] == nil {
+		t.Fatalf("posted missing postedAt, got %v", posted)
+	}
+	postedBy, _ := posted["postedBy"].(map[string]any)
+	if postedBy == nil || postedBy["id"] == nil {
+		t.Fatalf("posted missing postedBy.id, got %v", posted["postedBy"])
+	}
+	if postedBy["id"] != createdBy["id"] {
+		t.Fatalf("postedBy.id = %v, want same user as createdBy.id = %v", postedBy["id"], createdBy["id"])
+	}
+
+	// GET also returns the same fields.
+	_, got := f.do(t, http.MethodGet, "/v1/goods-receipts/"+id, "")
+	if got["postedAt"] == nil {
+		t.Fatalf("GET missing postedAt, got %v", got)
+	}
+	gotPostedBy, _ := got["postedBy"].(map[string]any)
+	if gotPostedBy == nil || gotPostedBy["displayName"] == nil {
+		t.Fatalf("GET missing postedBy.displayName, got %v", got["postedBy"])
+	}
+}
+
+// TestDraftDeleteAllDocumentTypes covers INC-1 for the remaining 6 document
+// types: draft deletes succeed (204) and posted deletes are rejected (409).
+func TestDraftDeleteAllDocumentTypes(t *testing.T) {
+	f := seedDocFixture(t)
+
+	// Seed stock for delivery and transfer tests.
+	recv := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-01-01",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"20","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	_, gr0 := f.do(t, http.MethodPost, "/v1/goods-receipts", recv)
+	f.do(t, http.MethodPost, "/v1/goods-receipts/"+gr0["id"].(string)+"/post", "")
+
+	cases := []struct {
+		path       string
+		createBody func() string
+		postPath   func(id string) string
+	}{
+		{
+			path: "/v1/goods-receipts",
+			createBody: func() string {
+				return fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-01-02",
+				  "lines":[{"productId":%q,"uom":"pcs","qty":"1","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+			},
+			postPath: func(id string) string { return "/v1/goods-receipts/" + id + "/post" },
+		},
+		{
+			path: "/v1/purchase-orders",
+			createBody: func() string {
+				return fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-01-02",
+				  "lines":[{"productId":%q,"uom":"pcs","qty":"1","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+			},
+			postPath: func(id string) string { return "/v1/purchase-orders/" + id + "/post" },
+		},
+		{
+			path: "/v1/sales-orders",
+			createBody: func() string {
+				return fmt.Sprintf(`{"customerId":%q,"warehouseId":%q,"docDate":"2026-01-02",
+				  "lines":[{"productId":%q,"uom":"pcs","qty":"1","unitPrice":"100"}]}`, f.customer, f.whA, f.product)
+			},
+			postPath: func(id string) string { return "/v1/sales-orders/" + id + "/post" },
+		},
+		{
+			path: "/v1/deliveries",
+			createBody: func() string {
+				return fmt.Sprintf(`{"customerId":%q,"warehouseId":%q,"docDate":"2026-01-02",
+				  "lines":[{"productId":%q,"uom":"pcs","qty":"1"}]}`, f.customer, f.whA, f.product)
+			},
+			postPath: func(id string) string { return "/v1/deliveries/" + id + "/post" },
+		},
+		{
+			path: "/v1/stock-transfers",
+			createBody: func() string {
+				return fmt.Sprintf(`{"fromWarehouseId":%q,"toWarehouseId":%q,"docDate":"2026-01-02",
+				  "lines":[{"productId":%q,"uom":"pcs","qty":"1"}]}`, f.whA, f.whB, f.product)
+			},
+			postPath: func(id string) string { return "/v1/stock-transfers/" + id + "/post" },
+		},
+		{
+			path: "/v1/stock-adjustments",
+			createBody: func() string {
+				return fmt.Sprintf(`{"warehouseId":%q,"reason":"damage","docDate":"2026-01-02",
+				  "lines":[{"productId":%q,"uom":"pcs","qty":"-1","unitCost":"100"}]}`, f.whA, f.product)
+			},
+			postPath: func(id string) string { return "/v1/stock-adjustments/" + id + "/post" },
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.path, func(t *testing.T) {
+			// Delete a draft -> 204.
+			status, doc := f.do(t, http.MethodPost, tc.path, tc.createBody())
+			if status != http.StatusCreated {
+				t.Fatalf("create status = %d, body %v", status, doc)
+			}
+			id := doc["id"].(string)
+			if status, _ = f.do(t, http.MethodDelete, tc.path+"/"+id, ""); status != http.StatusNoContent {
+				t.Fatalf("delete draft status = %d, want 204", status)
+			}
+
+			// Create another, post it, then try to delete -> 409.
+			_, doc2 := f.do(t, http.MethodPost, tc.path, tc.createBody())
+			id2 := doc2["id"].(string)
+			f.do(t, http.MethodPost, tc.postPath(id2), "")
+			if status, _ = f.do(t, http.MethodDelete, tc.path+"/"+id2, ""); status != http.StatusConflict {
+				t.Fatalf("delete posted status = %d, want 409", status)
+			}
+		})
+	}
+}
+
 // TestDeliveryPostAndReverse covers the issue path (stock out) and its reversal.
 func TestDeliveryPostAndReverse(t *testing.T) {
 	f := seedDocFixture(t)

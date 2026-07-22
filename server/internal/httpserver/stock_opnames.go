@@ -23,17 +23,22 @@ import (
 // so an all-matching opname cannot be posted through the Poster (which rejects an
 // empty request); those are numbered directly. Reversal negates every variance.
 
-func stockOpnameToAPI(o store.StockOpname, lines []store.StockOpnameLine) api.StockOpname {
+func stockOpnameToAPI(o store.StockOpname, lines []store.StockOpnameLine, actors docActors) api.StockOpname {
 	apiLines := make([]api.StockOpnameLine, 0, len(lines))
 	for _, l := range lines {
-		apiLines = append(apiLines, api.StockOpnameLine{
+		line := api.StockOpnameLine{
 			Id:         l.ID,
 			LineNo:     int(l.LineNo),
 			ProductId:  l.ProductID,
 			BatchId:    pgUUIDPtr(l.BatchID),
 			Uom:        l.Uom,
 			CountedQty: numericToString(l.CountedQty),
-		})
+		}
+		if l.SystemQty.Valid {
+			s := numericToString(l.SystemQty)
+			line.SystemQty = &s
+		}
+		apiLines = append(apiLines, line)
 	}
 	return api.StockOpname{
 		Id:           o.ID,
@@ -44,6 +49,10 @@ func stockOpnameToAPI(o store.StockOpname, lines []store.StockOpnameLine) api.St
 		Notes:        o.Notes,
 		ReversesId:   pgUUIDPtr(o.ReversesID),
 		ReversedById: pgUUIDPtr(o.ReversedByID),
+		CreatedAt:    pgTimestamp(o.CreatedAt),
+		CreatedBy:    actors.createdBy,
+		PostedAt:     pgTimestampPtr(o.PostedAt),
+		PostedBy:     actors.postedBy,
 		Lines:        apiLines,
 	}
 }
@@ -57,7 +66,11 @@ func (s *Server) loadStockOpname(ctx context.Context, q *store.Queries, tenantID
 	if err != nil {
 		return api.StockOpname{}, err
 	}
-	return stockOpnameToAPI(o, lines), nil
+	actors, err := loadDocActors(ctx, q, o.CreatedBy, o.PostedBy)
+	if err != nil {
+		return api.StockOpname{}, err
+	}
+	return stockOpnameToAPI(o, lines, actors), nil
 }
 
 func (s *Server) ListStockOpnames(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +90,11 @@ func (s *Server) ListStockOpnames(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, stockOpnameToAPI(o, lines))
+			actors, err := loadDocActors(r.Context(), q, o.CreatedBy, o.PostedBy)
+			if err != nil {
+				return err
+			}
+			out = append(out, stockOpnameToAPI(o, lines, actors))
 		}
 		return nil
 	})
@@ -217,6 +234,33 @@ func (s *Server) UpdateStockOpname(w http.ResponseWriter, r *http.Request, id op
 	writeJSON(w, http.StatusOK, out)
 }
 
+func (s *Server) DeleteStockOpname(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	tc, ok := s.requireDocumentWriter(w, r)
+	if !ok {
+		return
+	}
+	var notDraft bool
+	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		cur, err := q.GetStockOpname(r.Context(), store.GetStockOpnameParams{TenantID: tc.tenantID, ID: id})
+		if err != nil {
+			return err
+		}
+		if cur.Status != statusDraft {
+			notDraft = true
+			return nil
+		}
+		return q.DeleteStockOpname(r.Context(), store.DeleteStockOpnameParams{TenantID: tc.tenantID, ID: id})
+	})
+	if notDraft {
+		writeError(w, http.StatusConflict, "not_draft", "only draft documents can be deleted")
+		return
+	}
+	if handleWriteErr(w, err) {
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // PostStockOpname posts the count: it reads the current on-hand for each line,
 // builds an adjustment movement for the nonzero variance, and posts them. When
 // every line matches (no variance) there are no movements, so it numbers the
@@ -264,7 +308,7 @@ func (s *Server) PostStockOpname(w http.ResponseWriter, r *http.Request, id open
 			if err != nil {
 				return err
 			}
-			if _, err := q.MarkStockOpnamePosted(ctx, store.MarkStockOpnamePostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number)}); err != nil {
+			if _, err := q.MarkStockOpnamePosted(ctx, store.MarkStockOpnamePostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)}); err != nil {
 				return err
 			}
 			out, err = s.loadStockOpname(ctx, q, tc.tenantID, id)
@@ -290,7 +334,7 @@ func (s *Server) PostStockOpname(w http.ResponseWriter, r *http.Request, id open
 			return o.Status, movements, year, nil
 		},
 		func(ctx context.Context, q *store.Queries, number string) error {
-			_, err := q.MarkStockOpnamePosted(ctx, store.MarkStockOpnamePostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number)})
+			_, err := q.MarkStockOpnamePosted(ctx, store.MarkStockOpnamePostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)})
 			return err
 		},
 		func(ctx context.Context, q *store.Queries) (any, error) {
@@ -359,7 +403,7 @@ func (s *Server) ReverseStockOpname(w http.ResponseWriter, r *http.Request, id o
 			movements:  movements,
 			year:       year,
 			markPosted: func(ctx context.Context, q *store.Queries, number string) error {
-				_, err := q.MarkStockOpnamePosted(ctx, store.MarkStockOpnamePostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number)})
+				_, err := q.MarkStockOpnamePosted(ctx, store.MarkStockOpnamePostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)})
 				return err
 			},
 			markReversed: func(ctx context.Context, q *store.Queries) error {
@@ -426,6 +470,19 @@ func (s *Server) opnameMovements(ctx context.Context, q *store.Queries, tc tenan
 			cost, _ = store.Decimal(lvl.AvgCost)
 		} else if !errors.Is(lvlErr, pgx.ErrNoRows) {
 			return nil, lvlErr
+		}
+		// Snapshot on-hand at post time for the berita acara (INC-3). Only on the
+		// original post (not negation/reversal) to avoid overwriting the snapshot.
+		if !negate {
+			sysQtyNum, err := store.Numeric(onHand)
+			if err != nil {
+				return nil, err
+			}
+			if err := q.SetStockOpnameLineSystemQty(ctx, store.SetStockOpnameLineSystemQtyParams{
+				TenantID: tc.tenantID, ID: l.ID, SystemQty: sysQtyNum,
+			}); err != nil {
+				return nil, err
+			}
 		}
 		variance := counted.Sub(onHand)
 		if variance.IsZero() {

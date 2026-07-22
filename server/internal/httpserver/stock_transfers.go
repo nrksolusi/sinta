@@ -23,7 +23,7 @@ func decimalZeroValue() decimal.Decimal { return decimal.Zero }
 // the engine; the in leg carries that same cost so value is conserved. Reversal
 // swaps the pair (out becomes in and vice versa).
 
-func stockTransferToAPI(tr store.StockTransfer, lines []store.StockTransferLine) api.StockTransfer {
+func stockTransferToAPI(tr store.StockTransfer, lines []store.StockTransferLine, actors docActors) api.StockTransfer {
 	apiLines := make([]api.StockTransferLine, 0, len(lines))
 	for _, l := range lines {
 		apiLines = append(apiLines, api.StockTransferLine{
@@ -45,6 +45,10 @@ func stockTransferToAPI(tr store.StockTransfer, lines []store.StockTransferLine)
 		Notes:           tr.Notes,
 		ReversesId:      pgUUIDPtr(tr.ReversesID),
 		ReversedById:    pgUUIDPtr(tr.ReversedByID),
+		CreatedAt:       pgTimestamp(tr.CreatedAt),
+		CreatedBy:       actors.createdBy,
+		PostedAt:        pgTimestampPtr(tr.PostedAt),
+		PostedBy:        actors.postedBy,
 		Lines:           apiLines,
 	}
 }
@@ -58,7 +62,11 @@ func (s *Server) loadStockTransfer(ctx context.Context, q *store.Queries, tenant
 	if err != nil {
 		return api.StockTransfer{}, err
 	}
-	return stockTransferToAPI(tr, lines), nil
+	actors, err := loadDocActors(ctx, q, tr.CreatedBy, tr.PostedBy)
+	if err != nil {
+		return api.StockTransfer{}, err
+	}
+	return stockTransferToAPI(tr, lines, actors), nil
 }
 
 func (s *Server) ListStockTransfers(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +86,11 @@ func (s *Server) ListStockTransfers(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, stockTransferToAPI(tr, lines))
+			actors, err := loadDocActors(r.Context(), q, tr.CreatedBy, tr.PostedBy)
+			if err != nil {
+				return err
+			}
+			out = append(out, stockTransferToAPI(tr, lines, actors))
 		}
 		return nil
 	})
@@ -228,6 +240,33 @@ func (s *Server) UpdateStockTransfer(w http.ResponseWriter, r *http.Request, id 
 	writeJSON(w, http.StatusOK, out)
 }
 
+func (s *Server) DeleteStockTransfer(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	tc, ok := s.requireDocumentWriter(w, r)
+	if !ok {
+		return
+	}
+	var notDraft bool
+	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		cur, err := q.GetStockTransfer(r.Context(), store.GetStockTransferParams{TenantID: tc.tenantID, ID: id})
+		if err != nil {
+			return err
+		}
+		if cur.Status != statusDraft {
+			notDraft = true
+			return nil
+		}
+		return q.DeleteStockTransfer(r.Context(), store.DeleteStockTransferParams{TenantID: tc.tenantID, ID: id})
+	})
+	if notDraft {
+		writeError(w, http.StatusConflict, "not_draft", "only draft documents can be deleted")
+		return
+	}
+	if handleWriteErr(w, err) {
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) PostStockTransfer(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	tc, ok := s.requireDocumentWriter(w, r)
 	if !ok {
@@ -253,7 +292,7 @@ func (s *Server) PostStockTransfer(w http.ResponseWriter, r *http.Request, id op
 			return tr.Status, movements, tr.DocDate.Time.Year(), nil
 		},
 		func(ctx context.Context, q *store.Queries, number string) error {
-			_, err := q.MarkStockTransferPosted(ctx, store.MarkStockTransferPostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number)})
+			_, err := q.MarkStockTransferPosted(ctx, store.MarkStockTransferPostedParams{TenantID: tc.tenantID, ID: id, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)})
 			return err
 		},
 		func(ctx context.Context, q *store.Queries) (any, error) {
@@ -312,7 +351,7 @@ func (s *Server) ReverseStockTransfer(w http.ResponseWriter, r *http.Request, id
 				movements:  movements,
 				year:       rev.DocDate.Time.Year(),
 				markPosted: func(ctx context.Context, q *store.Queries, number string) error {
-					_, err := q.MarkStockTransferPosted(ctx, store.MarkStockTransferPostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number)})
+					_, err := q.MarkStockTransferPosted(ctx, store.MarkStockTransferPostedParams{TenantID: tc.tenantID, ID: rev.ID, DocNumber: pgTextOf(number), PostedBy: toPostedByParam(tc.user.ID)})
 					return err
 				},
 				markReversed: func(ctx context.Context, q *store.Queries) error {

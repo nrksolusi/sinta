@@ -278,6 +278,8 @@ describe("resumeSheet", () => {
     notes: "",
     status: "draft",
     warehouseId: wid,
+    createdAt: "2026-07-22T00:00:00Z",
+    createdBy: { id: "u1", displayName: "Test User" },
     lines: [
       { id: "l1", lineNo: 1, productId: "p1", uom: "dus", countedQty: "38" },
       { id: "l2", lineNo: 2, productId: "p9", uom: "renceng", countedQty: "4" },

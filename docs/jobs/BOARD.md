@@ -17,4 +17,5 @@ Every job, current state, sorted by id. Generated from `wo/` — do not edit her
 | 2026-07-23 | [SN-0009](wo/SN-0009.md) | FEAT | P1 | blocked | SN-0001 | Line-heavy form wizard | — |
 | 2026-07-23 | [SN-0010](wo/SN-0010.md) | FEAT | P2 | blocked | SN-0001 | Dashboard + sidebar polish | — |
 | 2026-07-23 | [SN-0011](wo/SN-0011.md) | FEAT | P2 | blocked | SN-0004 | Linked-document peek + progressive disclosure | — |
+| 2026-07-23 | [SN-0012](wo/SN-0012.md) | FEAT | P1 | done | - | fix-3 Slice 1: draft delete, lifecycle actors, opname systemQty | feat/fix-3-slice-1 |
 

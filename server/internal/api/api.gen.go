@@ -243,12 +243,16 @@ type DecimalString = string
 
 // Delivery defines model for Delivery.
 type Delivery struct {
+	CreatedAt    time.Time           `json:"createdAt"`
+	CreatedBy    DocumentActor       `json:"createdBy"`
 	CustomerId   openapi_types.UUID  `json:"customerId"`
 	DocDate      openapi_types.Date  `json:"docDate"`
 	DocNumber    *string             `json:"docNumber,omitempty"`
 	Id           openapi_types.UUID  `json:"id"`
 	Lines        []DeliveryLine      `json:"lines"`
 	Notes        string              `json:"notes"`
+	PostedAt     *time.Time          `json:"postedAt,omitempty"`
+	PostedBy     *DocumentActor      `json:"postedBy,omitempty"`
 	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
 	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
 	SalesOrderId *openapi_types.UUID `json:"salesOrderId,omitempty"`
@@ -296,6 +300,12 @@ type DeliveryLineInput struct {
 	Uom              string              `json:"uom"`
 }
 
+// DocumentActor defines model for DocumentActor.
+type DocumentActor struct {
+	DisplayName string             `json:"displayName"`
+	Id          openapi_types.UUID `json:"id"`
+}
+
 // DocumentStatus draft is editable; posted is immutable; reversed was cancelled by a reversal
 type DocumentStatus string
 
@@ -310,11 +320,15 @@ type Error struct {
 
 // GoodsReceipt defines model for GoodsReceipt.
 type GoodsReceipt struct {
+	CreatedAt       time.Time           `json:"createdAt"`
+	CreatedBy       DocumentActor       `json:"createdBy"`
 	DocDate         openapi_types.Date  `json:"docDate"`
 	DocNumber       *string             `json:"docNumber,omitempty"`
 	Id              openapi_types.UUID  `json:"id"`
 	Lines           []GoodsReceiptLine  `json:"lines"`
 	Notes           string              `json:"notes"`
+	PostedAt        *time.Time          `json:"postedAt,omitempty"`
+	PostedBy        *DocumentActor      `json:"postedBy,omitempty"`
 	PurchaseOrderId *openapi_types.UUID `json:"purchaseOrderId,omitempty"`
 	ReversedById    *openapi_types.UUID `json:"reversedById,omitempty"`
 	ReversesId      *openapi_types.UUID `json:"reversesId,omitempty"`
@@ -451,11 +465,15 @@ type ProductUom struct {
 
 // PurchaseOrder defines model for PurchaseOrder.
 type PurchaseOrder struct {
+	CreatedAt    time.Time           `json:"createdAt"`
+	CreatedBy    DocumentActor       `json:"createdBy"`
 	DocDate      openapi_types.Date  `json:"docDate"`
 	DocNumber    *string             `json:"docNumber,omitempty"`
 	Id           openapi_types.UUID  `json:"id"`
 	Lines        []PurchaseOrderLine `json:"lines"`
 	Notes        string              `json:"notes"`
+	PostedAt     *time.Time          `json:"postedAt,omitempty"`
+	PostedBy     *DocumentActor      `json:"postedBy,omitempty"`
 	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
 	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
 
@@ -520,12 +538,16 @@ type Role string
 
 // SalesOrder defines model for SalesOrder.
 type SalesOrder struct {
+	CreatedAt    time.Time           `json:"createdAt"`
+	CreatedBy    DocumentActor       `json:"createdBy"`
 	CustomerId   openapi_types.UUID  `json:"customerId"`
 	DocDate      openapi_types.Date  `json:"docDate"`
 	DocNumber    *string             `json:"docNumber,omitempty"`
 	Id           openapi_types.UUID  `json:"id"`
 	Lines        []SalesOrderLine    `json:"lines"`
 	Notes        string              `json:"notes"`
+	PostedAt     *time.Time          `json:"postedAt,omitempty"`
+	PostedBy     *DocumentActor      `json:"postedBy,omitempty"`
 	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
 	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
 
@@ -587,11 +609,15 @@ type SessionInfo struct {
 
 // StockAdjustment defines model for StockAdjustment.
 type StockAdjustment struct {
+	CreatedAt    time.Time             `json:"createdAt"`
+	CreatedBy    DocumentActor         `json:"createdBy"`
 	DocDate      openapi_types.Date    `json:"docDate"`
 	DocNumber    *string               `json:"docNumber,omitempty"`
 	Id           openapi_types.UUID    `json:"id"`
 	Lines        []StockAdjustmentLine `json:"lines"`
 	Notes        string                `json:"notes"`
+	PostedAt     *time.Time            `json:"postedAt,omitempty"`
+	PostedBy     *DocumentActor        `json:"postedBy,omitempty"`
 	Reason       string                `json:"reason"`
 	ReversedById *openapi_types.UUID   `json:"reversedById,omitempty"`
 	ReversesId   *openapi_types.UUID   `json:"reversesId,omitempty"`
@@ -704,11 +730,15 @@ type StockOnHandRow struct {
 
 // StockOpname defines model for StockOpname.
 type StockOpname struct {
+	CreatedAt    time.Time           `json:"createdAt"`
+	CreatedBy    DocumentActor       `json:"createdBy"`
 	DocDate      openapi_types.Date  `json:"docDate"`
 	DocNumber    *string             `json:"docNumber,omitempty"`
 	Id           openapi_types.UUID  `json:"id"`
 	Lines        []StockOpnameLine   `json:"lines"`
 	Notes        string              `json:"notes"`
+	PostedAt     *time.Time          `json:"postedAt,omitempty"`
+	PostedBy     *DocumentActor      `json:"postedBy,omitempty"`
 	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
 	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
 
@@ -736,7 +766,12 @@ type StockOpnameLine struct {
 	Id         openapi_types.UUID `json:"id"`
 	LineNo     int                `json:"lineNo"`
 	ProductId  openapi_types.UUID `json:"productId"`
-	Uom        string             `json:"uom"`
+
+	// SystemQty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	SystemQty *DecimalString `json:"systemQty,omitempty"`
+	Uom       string         `json:"uom"`
 }
 
 // StockOpnameLineInput defines model for StockOpnameLineInput.
@@ -753,12 +788,16 @@ type StockOpnameLineInput struct {
 
 // StockTransfer defines model for StockTransfer.
 type StockTransfer struct {
+	CreatedAt       time.Time           `json:"createdAt"`
+	CreatedBy       DocumentActor       `json:"createdBy"`
 	DocDate         openapi_types.Date  `json:"docDate"`
 	DocNumber       *string             `json:"docNumber,omitempty"`
 	FromWarehouseId openapi_types.UUID  `json:"fromWarehouseId"`
 	Id              openapi_types.UUID  `json:"id"`
 	Lines           []StockTransferLine `json:"lines"`
 	Notes           string              `json:"notes"`
+	PostedAt        *time.Time          `json:"postedAt,omitempty"`
+	PostedBy        *DocumentActor      `json:"postedBy,omitempty"`
 	ReversedById    *openapi_types.UUID `json:"reversedById,omitempty"`
 	ReversesId      *openapi_types.UUID `json:"reversesId,omitempty"`
 
@@ -1090,6 +1129,9 @@ type ServerInterface interface {
 	// CreateDelivery Create a draft delivery
 	// (POST /deliveries)
 	CreateDelivery(w http.ResponseWriter, r *http.Request)
+	// DeleteDelivery Delete a draft delivery (rejected once posted)
+	// (DELETE /deliveries/{id})
+	DeleteDelivery(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// GetDelivery Get a delivery
 	// (GET /deliveries/{id})
 	GetDelivery(w http.ResponseWriter, r *http.Request, id DocumentId)
@@ -1108,6 +1150,9 @@ type ServerInterface interface {
 	// CreateGoodsReceipt Create a draft goods receipt
 	// (POST /goods-receipts)
 	CreateGoodsReceipt(w http.ResponseWriter, r *http.Request)
+	// DeleteGoodsReceipt Delete a draft goods receipt (rejected once posted)
+	// (DELETE /goods-receipts/{id})
+	DeleteGoodsReceipt(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// GetGoodsReceipt Get a goods receipt
 	// (GET /goods-receipts/{id})
 	GetGoodsReceipt(w http.ResponseWriter, r *http.Request, id DocumentId)
@@ -1174,6 +1219,9 @@ type ServerInterface interface {
 	// CreatePurchaseOrder Create a draft purchase order
 	// (POST /purchase-orders)
 	CreatePurchaseOrder(w http.ResponseWriter, r *http.Request)
+	// DeletePurchaseOrder Delete a draft purchase order (rejected once posted)
+	// (DELETE /purchase-orders/{id})
+	DeletePurchaseOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// GetPurchaseOrder Get a purchase order
 	// (GET /purchase-orders/{id})
 	GetPurchaseOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
@@ -1201,6 +1249,9 @@ type ServerInterface interface {
 	// CreateSalesOrder Create a draft sales order
 	// (POST /sales-orders)
 	CreateSalesOrder(w http.ResponseWriter, r *http.Request)
+	// DeleteSalesOrder Delete a draft sales order (rejected once posted)
+	// (DELETE /sales-orders/{id})
+	DeleteSalesOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// GetSalesOrder Get a sales order
 	// (GET /sales-orders/{id})
 	GetSalesOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
@@ -1219,6 +1270,9 @@ type ServerInterface interface {
 	// CreateStockAdjustment Create a draft stock adjustment
 	// (POST /stock-adjustments)
 	CreateStockAdjustment(w http.ResponseWriter, r *http.Request)
+	// DeleteStockAdjustment Delete a draft stock adjustment (rejected once posted)
+	// (DELETE /stock-adjustments/{id})
+	DeleteStockAdjustment(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// GetStockAdjustment Get a stock adjustment
 	// (GET /stock-adjustments/{id})
 	GetStockAdjustment(w http.ResponseWriter, r *http.Request, id DocumentId)
@@ -1237,6 +1291,9 @@ type ServerInterface interface {
 	// CreateStockOpname Create a draft stock opname
 	// (POST /stock-opnames)
 	CreateStockOpname(w http.ResponseWriter, r *http.Request)
+	// DeleteStockOpname Delete a draft stock opname (rejected once posted)
+	// (DELETE /stock-opnames/{id})
+	DeleteStockOpname(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// GetStockOpname Get a stock opname
 	// (GET /stock-opnames/{id})
 	GetStockOpname(w http.ResponseWriter, r *http.Request, id DocumentId)
@@ -1255,6 +1312,9 @@ type ServerInterface interface {
 	// CreateStockTransfer Create a draft stock transfer
 	// (POST /stock-transfers)
 	CreateStockTransfer(w http.ResponseWriter, r *http.Request)
+	// DeleteStockTransfer Delete a draft stock transfer (rejected once posted)
+	// (DELETE /stock-transfers/{id})
+	DeleteStockTransfer(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// GetStockTransfer Get a stock transfer
 	// (GET /stock-transfers/{id})
 	GetStockTransfer(w http.ResponseWriter, r *http.Request, id DocumentId)
@@ -1412,6 +1472,32 @@ func (siw *ServerInterfaceWrapper) CreateDelivery(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteDelivery operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDelivery(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetDelivery operation middleware
 func (siw *ServerInterfaceWrapper) GetDelivery(w http.ResponseWriter, r *http.Request) {
 
@@ -1535,6 +1621,32 @@ func (siw *ServerInterfaceWrapper) CreateGoodsReceipt(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateGoodsReceipt(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGoodsReceipt operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGoodsReceipt(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGoodsReceipt(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2092,6 +2204,32 @@ func (siw *ServerInterfaceWrapper) CreatePurchaseOrder(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// DeletePurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) DeletePurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePurchaseOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetPurchaseOrder operation middleware
 func (siw *ServerInterfaceWrapper) GetPurchaseOrder(w http.ResponseWriter, r *http.Request) {
 
@@ -2362,6 +2500,32 @@ func (siw *ServerInterfaceWrapper) CreateSalesOrder(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteSalesOrder operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSalesOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSalesOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetSalesOrder operation middleware
 func (siw *ServerInterfaceWrapper) GetSalesOrder(w http.ResponseWriter, r *http.Request) {
 
@@ -2485,6 +2649,32 @@ func (siw *ServerInterfaceWrapper) CreateStockAdjustment(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateStockAdjustment(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteStockAdjustment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteStockAdjustment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteStockAdjustment(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2626,6 +2816,32 @@ func (siw *ServerInterfaceWrapper) CreateStockOpname(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteStockOpname operation middleware
+func (siw *ServerInterfaceWrapper) DeleteStockOpname(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteStockOpname(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetStockOpname operation middleware
 func (siw *ServerInterfaceWrapper) GetStockOpname(w http.ResponseWriter, r *http.Request) {
 
@@ -2749,6 +2965,32 @@ func (siw *ServerInterfaceWrapper) CreateStockTransfer(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateStockTransfer(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteStockTransfer operation middleware
+func (siw *ServerInterfaceWrapper) DeleteStockTransfer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteStockTransfer(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3205,12 +3447,14 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/switch-tenant", wrapper.SwitchTenant)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/deliveries", wrapper.ListDeliveries)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deliveries", wrapper.CreateDelivery)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/deliveries/{id}", wrapper.DeleteDelivery)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/deliveries/{id}", wrapper.GetDelivery)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/deliveries/{id}", wrapper.UpdateDelivery)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deliveries/{id}/post", wrapper.PostDelivery)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deliveries/{id}/reverse", wrapper.ReverseDelivery)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/goods-receipts", wrapper.ListGoodsReceipts)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/goods-receipts", wrapper.CreateGoodsReceipt)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/goods-receipts/{id}", wrapper.DeleteGoodsReceipt)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/goods-receipts/{id}", wrapper.GetGoodsReceipt)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/goods-receipts/{id}", wrapper.UpdateGoodsReceipt)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/goods-receipts/{id}/post", wrapper.PostGoodsReceipt)
@@ -3233,6 +3477,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/products/{productId}/uoms/{uomId}", wrapper.DeleteProductUom)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/purchase-orders", wrapper.ListPurchaseOrders)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/purchase-orders", wrapper.CreatePurchaseOrder)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/purchase-orders/{id}", wrapper.DeletePurchaseOrder)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/purchase-orders/{id}", wrapper.GetPurchaseOrder)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/purchase-orders/{id}", wrapper.UpdatePurchaseOrder)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/purchase-orders/{id}/post", wrapper.PostPurchaseOrder)
@@ -3242,24 +3487,28 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports/stock-valuation", wrapper.ReportStockValuation)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/sales-orders", wrapper.ListSalesOrders)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/sales-orders", wrapper.CreateSalesOrder)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/sales-orders/{id}", wrapper.DeleteSalesOrder)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/sales-orders/{id}", wrapper.GetSalesOrder)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/sales-orders/{id}", wrapper.UpdateSalesOrder)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/sales-orders/{id}/post", wrapper.PostSalesOrder)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/sales-orders/{id}/reverse", wrapper.ReverseSalesOrder)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-adjustments", wrapper.ListStockAdjustments)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-adjustments", wrapper.CreateStockAdjustment)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/stock-adjustments/{id}", wrapper.DeleteStockAdjustment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-adjustments/{id}", wrapper.GetStockAdjustment)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/stock-adjustments/{id}", wrapper.UpdateStockAdjustment)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-adjustments/{id}/post", wrapper.PostStockAdjustment)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-adjustments/{id}/reverse", wrapper.ReverseStockAdjustment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-opnames", wrapper.ListStockOpnames)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-opnames", wrapper.CreateStockOpname)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/stock-opnames/{id}", wrapper.DeleteStockOpname)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-opnames/{id}", wrapper.GetStockOpname)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/stock-opnames/{id}", wrapper.UpdateStockOpname)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-opnames/{id}/post", wrapper.PostStockOpname)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-opnames/{id}/reverse", wrapper.ReverseStockOpname)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-transfers", wrapper.ListStockTransfers)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-transfers", wrapper.CreateStockTransfer)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/stock-transfers/{id}", wrapper.DeleteStockTransfer)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-transfers/{id}", wrapper.GetStockTransfer)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/stock-transfers/{id}", wrapper.UpdateStockTransfer)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/stock-transfers/{id}/post", wrapper.PostStockTransfer)
@@ -3285,117 +3534,120 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
