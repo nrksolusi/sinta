@@ -7,17 +7,23 @@ Every job, current state, sorted by id. Generated from `wo/` — do not edit her
 | Updated | ID | Type | Pri | Status | Blocked by | Title | Branch |
 |---|---|---|---|---|---|---|---|
 | 2026-07-23 | [SN-0001](wo/SN-0001.md) | CHORE | P0 | done | - | Contract & schema freeze | feat/fix-4-slice-1 |
-| 2026-07-23 | [SN-0002](wo/SN-0002.md) | FEAT | P0 | blocked | SN-0001 | Read-query + entity search (server) | — |
-| 2026-07-23 | [SN-0003](wo/SN-0003.md) | FEAT | P1 | blocked | SN-0002 | Read-query + search (client) | — |
-| 2026-07-23 | [SN-0004](wo/SN-0004.md) | FEAT | P0 | blocked | SN-0001 | Order fulfillment rollup + receiving rules (server) | — |
+| 2026-07-23 | [SN-0002](wo/SN-0002.md) | FEAT | P0 | done | SN-0001 | Read-query + entity search (server) | feat/sn-0002-read-query |
+| 2026-07-23 | [SN-0003](wo/SN-0003.md) | FEAT | P1 | ready | SN-0002 | Read-query + search (client) | — |
+| 2026-07-23 | [SN-0004](wo/SN-0004.md) | FEAT | P0 | ready | SN-0001 | Order fulfillment rollup + receiving rules (server) | — |
 | 2026-07-23 | [SN-0005](wo/SN-0005.md) | FEAT | P1 | blocked | SN-0004 | Fulfillment display + receipt cost (client) | — |
 | 2026-07-23 | [SN-0006](wo/SN-0006.md) | FEAT | P1 | blocked | SN-0004 | Order cancellation (server) | — |
 | 2026-07-23 | [SN-0007](wo/SN-0007.md) | FEAT | P2 | blocked | SN-0006 | Order cancellation (client) | — |
 | 2026-07-23 | [SN-0008](wo/SN-0008.md) | FEAT | P1 | blocked | SN-0003 | List tabs + filter bar | — |
-| 2026-07-23 | [SN-0009](wo/SN-0009.md) | FEAT | P1 | blocked | SN-0001 | Line-heavy form wizard | — |
-| 2026-07-23 | [SN-0010](wo/SN-0010.md) | FEAT | P2 | blocked | SN-0001 | Dashboard + sidebar polish | — |
+| 2026-07-23 | [SN-0009](wo/SN-0009.md) | FEAT | P1 | ready | SN-0001 | Line-heavy form wizard | — |
+| 2026-07-23 | [SN-0010](wo/SN-0010.md) | FEAT | P2 | ready | SN-0001 | Dashboard + sidebar polish | — |
 | 2026-07-23 | [SN-0011](wo/SN-0011.md) | FEAT | P2 | blocked | SN-0004 | Linked-document peek + progressive disclosure | — |
 | 2026-07-23 | [SN-0012](wo/SN-0012.md) | FEAT | P1 | done | - | fix-3 Slice 1: draft delete, lifecycle actors, opname systemQty | feat/fix-3-slice-1 |
 | 2026-07-23 | [SN-0013](wo/SN-0013.md) | FEAT | P2 | backlog | - | Tenant default warehouse + stock-by-warehouse view | — |
-| 2026-07-23 | [SN-0014](wo/SN-0014.md) | FEAT | high | done | SN-0013 | fix-4 Slice 2: server fulfillment rollup and over-receipt guard | feat/sn-0014-fulfillment-rollup |
+| 2026-07-23 | [SN-0014](wo/SN-0014.md) | FEAT | high | done | SN-0001 | fix-4 Slice 2: server fulfillment rollup and over-receipt guard | feat/sn-0014-fulfillment-rollup |
+
+## Consistency
+
+Blocking rule: a job is workable only when every `blocked_by` is `done`.
+
+_All jobs consistent with the blocking rule._
 

@@ -21,6 +21,8 @@ Start here: the live board is **[BOARD.md](BOARD.md)**.
   ```bash
   python3 docs/jobs/_jobs.py new --type FEAT --title "Add X"   # in the main tree
   python3 docs/jobs/_jobs.py gen                               # after editing a job
+  python3 docs/jobs/_jobs.py done SN-0007                      # finish + cascade-unblock
+  python3 docs/jobs/_jobs.py check                             # report blocking-rule drift
   ```
 
 ## Layout
@@ -33,7 +35,7 @@ docs/jobs/
   JOURNAL.md  (gen)  every log entry, newest first
   _job.md            job template
   _incident.md       incident template
-  _jobs.py           the only script: new | gen | guard
+  _jobs.py           the only script: new | gen | done | check | reconcile | guard | onread
   wo/                SN-####.md   ← the jobs (source of truth)
   incidents/         SN-####.md
 ```
@@ -72,6 +74,26 @@ Acceptance gate, Log.
 
 **Status:** `backlog → ready → in-progress → in-review → done`, plus `blocked`
 (unmet `blocked_by`) and `cancelled`.
+
+## The blocking rule (enforced)
+
+`blocked_by` is not just a label - it gates work. `_jobs.py` is the authority:
+
+- **A job is workable only when `ready`** - i.e. every id in `blocked_by` is
+  `done`. A job with an unmet blocker belongs in `blocked` and **must not be
+  started**. The `onread` hook refuses it: reading a `blocked` job (on main or in
+  a worktree) surfaces a stop message.
+- **Finishing cascades.** Mark a job done with
+  `python3 docs/jobs/_jobs.py done SN-#### [--note "..."]`. It sets `done`, then
+  promotes every dependent whose blockers are now all `done` from `blocked →
+  ready` (logging an `unblocked` entry on each). This is the "mark done → unblock
+  what it was blocking" step - don't hand-edit statuses for it.
+- **`check`** reports drift and exits non-zero (for a pre-commit / CI gate):
+  active-but-unmet (should be `blocked`), stale-`blocked` (should be `ready`), and
+  done-while-a-blocker-isn't. **`reconcile`** auto-heals the one safe case
+  (`blocked → ready` when all blockers are done); the rest need a human decision.
+- `done` refuses if the job itself still has an unmet blocker - you can't complete
+  what couldn't have been started.
 
 ## The gates (what keeps an agent from straying)
 

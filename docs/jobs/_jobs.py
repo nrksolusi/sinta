@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
-"""Jobs tooling. One script, three jobs. See README.md.
+"""Jobs tooling. One script. See README.md.
 
   python3 docs/jobs/_jobs.py gen                          regenerate BOARD/INCIDENTS/JOURNAL
   python3 docs/jobs/_jobs.py new --type FEAT --title ".."   mint a job (main tree only)
   python3 docs/jobs/_jobs.py new --type INC  --title ".."   mint an incident
+  python3 docs/jobs/_jobs.py done SN-0014 [--note ".."]     mark done + cascade-unblock dependents
+  python3 docs/jobs/_jobs.py check                        report blocking-rule violations (exit 1 if any)
+  python3 docs/jobs/_jobs.py reconcile                    auto-promote blocked->ready when blockers are all done
   python3 docs/jobs/_jobs.py guard                        PreToolUse hook (internal)
+  python3 docs/jobs/_jobs.py onread                       PostToolUse hook (internal)
 
 Stdlib only. IDs are one global SN-#### sequence shared by jobs + incidents.
+
+Blocking rule (single source of truth here): a job is workable only when its
+status is `ready`/`in-progress` — i.e. every id in `blocked_by` is `done`. A job
+with an unmet blocker belongs in `blocked`; when the last blocker is marked
+`done`, its dependents cascade `blocked → ready`. `check` reports drift; `onread`
+refuses to let a blocked job be worked.
 """
 import os
 import re
@@ -57,6 +67,98 @@ def list_dir(d):
     return [parse_doc(os.path.join(d, f)) for f in sorted(os.listdir(d)) if SN_RE.match(f)]
 
 
+STATUS_ACTIVE = ("ready", "in-progress", "in-review")  # a job being (or ready to be) worked
+
+
+def normalize_id(s):
+    """Accept 'SN-0014', 'sn-14', '14', '0014' -> 'SN-0014'."""
+    m = re.match(r"^(?:SN-?)?0*(\d+)$", (s or "").strip(), re.I)
+    return f"SN-{int(m.group(1)):04d}" if m else (s or "").strip()
+
+
+def blocker_ids(fm):
+    raw = (fm.get("blocked_by") or "").strip()
+    if raw in ("", "-", "—"):
+        return []
+    return [normalize_id(b) for b in re.split(r"[,\s]+", raw) if b.strip()]
+
+
+def job_index(jobs):
+    return {t["fm"].get("id", ""): t for t in jobs}
+
+
+def unmet_blockers(fm, index):
+    """Blockers that are missing or not yet done — the reasons a job isn't workable."""
+    out = []
+    for b in blocker_ids(fm):
+        t = index.get(b)
+        if t is None:
+            out.append((b, "missing"))
+        elif t["fm"].get("status") != "done":
+            out.append((b, t["fm"].get("status", "?")))
+    return out
+
+
+def violations(jobs):
+    """Drift between stored status and the blocking rule."""
+    index = job_index(jobs)
+    vs = []
+    for t in jobs:
+        fm = t["fm"]
+        st = fm.get("status")
+        um = unmet_blockers(fm, index)
+        if st in STATUS_ACTIVE and um:
+            detail = ", ".join(f"{b}({s})" for b, s in um)
+            vs.append((fm.get("id", "?"), st, f"unmet blocker(s) {detail} — must be 'blocked'"))
+        elif st == "blocked" and not um:
+            vs.append((fm.get("id", "?"), st, "all blockers done — must be 'ready'"))
+        elif st == "done" and um:
+            detail = ", ".join(f"{b}({s})" for b, s in um)
+            vs.append((fm.get("id", "?"), st, f"marked done while blocker(s) {detail} not done"))
+    return vs
+
+
+def reconcile():
+    """Heal drift the rules can auto-resolve: promote any 'blocked' job whose
+    blockers are all done to 'ready'. Leaves human-driven states (active-with-
+    unmet, done-with-unmet) for `check` to report — those need a decision."""
+    d = date.today().isoformat()
+    healed = []
+    for t in list_dir(WO):
+        fm = t["fm"]
+        if fm.get("status") == "blocked" and not unmet_blockers(fm, job_index(list_dir(WO))):
+            set_fm(t["path"], "status", "ready")
+            set_fm(t["path"], "updated", d)
+            append_log(t["path"], "unblocked", "All blockers done; promoted to ready (reconcile).")
+            healed.append(fm.get("id", "?"))
+    gen()
+    print(f"reconcile: promoted {len(healed)} job(s) to ready" + (f": {', '.join(healed)}." if healed else "."))
+    remaining = violations(list_dir(WO))
+    if remaining:
+        print(f"  {len(remaining)} violation(s) still need a human decision — run `check`.")
+
+
+def set_fm(path, key, val):
+    raw = open(path, encoding="utf-8").read()
+    m = re.match(r"^(---\r?\n)(.*?)(\r?\n---\r?\n?)(.*)$", raw, re.S)
+    if not m:
+        return
+    block = m.group(2)
+    if re.search(rf"(?m)^{re.escape(key)}:.*$", block):
+        block = re.sub(rf"(?m)^{re.escape(key)}:.*$", f"{key}: {val}", block)
+    else:
+        block += f"\n{key}: {val}"
+    open(path, "w", encoding="utf-8").write(m.group(1) + block + m.group(3) + m.group(4))
+
+
+def append_log(path, kind, text):
+    raw = open(path, encoding="utf-8").read()
+    if not raw.endswith("\n"):
+        raw += "\n"
+    raw += f"\n### {date.today().isoformat()} · {kind}\n{text}\n"
+    open(path, "w", encoding="utf-8").write(raw)
+
+
 def in_worktree():
     g = subprocess.check_output(["git", "rev-parse", "--absolute-git-dir"], text=True).strip()
     c = subprocess.check_output(
@@ -89,6 +191,13 @@ def gen():
         )
     if not jobs:
         board += "| | | | | | | _no jobs yet_ | |\n"
+    vs = violations(jobs)
+    board += "\n## Consistency\n\nBlocking rule: a job is workable only when every `blocked_by` is `done`.\n\n"
+    if vs:
+        for jid, st, msg in vs:
+            board += f"- **{jid}** (`{st}`): {msg}\n"
+    else:
+        board += "_All jobs consistent with the blocking rule._\n"
     write("BOARD.md", board + "\n")
 
     incidents_sorted = sorted(
@@ -128,6 +237,8 @@ def gen():
     write("JOURNAL.md", jrn + "\n")
 
     print(f"gen: {len(jobs)} job(s), {len(incidents)} incident(s), {len(alle)} entr(ies).")
+    if vs:
+        print(f"  warning: {len(vs)} blocking-rule violation(s) — see BOARD.md ## Consistency or run `check`.")
 
 
 def next_id():
@@ -198,6 +309,53 @@ def new():
     print(f"created {path}")
 
 
+def check():
+    vs = violations(list_dir(WO))
+    if not vs:
+        print("check: all jobs consistent with the blocking rule.")
+        sys.exit(0)
+    sys.stderr.write(f"check: {len(vs)} blocking-rule violation(s):\n")
+    for jid, st, msg in vs:
+        sys.stderr.write(f"  {jid} ({st}): {msg}\n")
+    sys.exit(1)
+
+
+def done():
+    a = parse_args(sys.argv[2:])
+    ident = next((x for x in sys.argv[2:] if not x.startswith("--")), a.get("id"))
+    if not ident:
+        sys.exit('usage: done <SN-id> [--note "..."]')
+    sid = normalize_id(ident)
+    path = os.path.join(WO, f"{sid}.md")
+    if not os.path.exists(path):
+        sys.exit(f"error: {path} not found.")
+    fm = parse_doc(path)["fm"]
+    um = unmet_blockers(fm, job_index(list_dir(WO)))
+    if um:
+        detail = ", ".join(f"{b}({s})" for b, s in um)
+        sys.exit(f"error: {sid} has unmet blocker(s) {detail}; it could not have been worked. Resolve those first.")
+    d = date.today().isoformat()
+    already = fm.get("status") == "done"
+    if already:
+        print(f"note: {sid} is already done; re-running the cascade only.")
+    else:
+        set_fm(path, "status", "done")
+        set_fm(path, "updated", d)
+        append_log(path, "done", a.get("note", "Acceptance gate met; lane gate green."))
+    # Cascade: any job blocked solely by sid becomes ready now that sid is done.
+    freed = []
+    for t in list_dir(WO):  # re-read so sid reads as done
+        f2 = t["fm"]
+        if f2.get("status") == "blocked" and sid in blocker_ids(f2):
+            if not unmet_blockers(f2, job_index(list_dir(WO))):
+                set_fm(t["path"], "status", "ready")
+                set_fm(t["path"], "updated", d)
+                append_log(t["path"], "unblocked", f"{sid} done; all blockers cleared.")
+                freed.append(f2.get("id", "?"))
+    gen()
+    print(f"{sid} -> done." + (f" Unblocked: {', '.join(freed)}." if freed else " No dependents to unblock."))
+
+
 def guard():
     try:
         payload = sys.stdin.read()
@@ -223,9 +381,8 @@ def guard():
 
 
 def onread():
-    """PostToolUse(Read) hook: enforce the work-in-a-worktree rule.
-    When a ready/in-progress job is read from the MAIN checkout (not a worktree),
-    remind that job execution belongs in a worktree. Silent otherwise."""
+    """PostToolUse(Read) hook: enforce (1) blocked jobs can't be worked and
+    (2) work happens in a worktree. Silent for jobs that aren't being worked."""
     try:
         file = (json.loads(sys.stdin.read()).get("tool_input") or {}).get("file_path", "")
     except Exception:
@@ -236,14 +393,32 @@ def onread():
         fm = parse_doc(file)["fm"]
     except Exception:
         sys.exit(0)
-    if fm.get("status") not in ("ready", "in-progress"):
+    st = fm.get("status")
+    jid = fm.get("id", "this job")
+    # (1) Blocking rule: a blocked job — or one whose status drifted 'active' while a
+    # blocker is unmet — must not be started. Fires everywhere, not just on main.
+    try:
+        um = unmet_blockers(fm, job_index(list_dir(WO)))
+    except Exception:
+        um = []
+    if st == "blocked" or (st in STATUS_ACTIVE and um):
+        detail = ", ".join(f"{b} ({s})" for b, s in um) or "an unmet blocker"
+        sys.stderr.write(
+            f"Blocking rule: {jid} is not workable — blocked by {detail}.\n"
+            "A WO may be worked only when its status is 'ready' (every blocked_by is done).\n"
+            "Do not start it. Finish the blocker, then run:\n"
+            "  python3 docs/jobs/_jobs.py done <blocker-id>\n"
+            "which cascades this job to 'ready'.\n"
+        )
+        sys.exit(2)
+    # (2) Worktree rule for jobs that ARE workable.
+    if st not in ("ready", "in-progress"):
         sys.exit(0)  # only nudge for jobs being (or about to be) worked
     try:
         if in_worktree():
             sys.exit(0)  # already following the rule
     except Exception:
         sys.exit(0)
-    jid = fm.get("id", "this job")
     sys.stderr.write(
         f"Worktree rule: {jid} is '{fm.get('status')}' and you are on the MAIN checkout.\n"
         "Implement jobs in a worktree, not on main - mint ids on main, do the work in a\n"
@@ -259,9 +434,15 @@ if cmd == "gen":
     gen()
 elif cmd == "new":
     new()
+elif cmd == "done":
+    done()
+elif cmd == "check":
+    check()
+elif cmd == "reconcile":
+    reconcile()
 elif cmd == "guard":
     guard()
 elif cmd == "onread":
     onread()
 else:
-    sys.exit("usage: python3 docs/jobs/_jobs.py <gen|new|guard|onread>")
+    sys.exit("usage: python3 docs/jobs/_jobs.py <gen|new|done|check|reconcile|guard|onread>")
