@@ -632,6 +632,187 @@ func TestCancelSalesOrderStub(t *testing.T) {
 	}
 }
 
+// --- SN-0014: fulfillment rollup (ADR-0016) ---
+
+// TestReceivingRollupOnPOLine: posting a GR linked to a PO line causes the PO's
+// GET response to show receivedQty and fulfillmentState=partial on that line.
+func TestReceivingRollupOnPOLine(t *testing.T) {
+	f := seedDocFixture(t)
+
+	// Create and post PO with 5 pcs.
+	pob := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-08-01",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	_, po := f.do(t, http.MethodPost, "/v1/purchase-orders", pob)
+	poID := po["id"].(string)
+	poLines := po["lines"].([]any)
+	poLineID := poLines[0].(map[string]any)["id"].(string)
+
+	f.do(t, http.MethodPost, "/v1/purchase-orders/"+poID+"/post", "")
+
+	// Create and post GR for 3 pcs linked to the PO line.
+	grb := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"purchaseOrderId":%q,"docDate":"2026-08-02",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"3","unitCost":"100","purchaseOrderLineId":%q}]}`,
+		f.supplier, f.whA, poID, f.product, poLineID)
+	_, gr := f.do(t, http.MethodPost, "/v1/goods-receipts", grb)
+	grID := gr["id"].(string)
+	if st, out := f.do(t, http.MethodPost, "/v1/goods-receipts/"+grID+"/post", ""); st != http.StatusOK {
+		t.Fatalf("post GR status = %d, body %v", st, out)
+	}
+
+	// GET PO and inspect the line rollup.
+	st, got := f.do(t, http.MethodGet, "/v1/purchase-orders/"+poID, "")
+	if st != http.StatusOK {
+		t.Fatalf("GET PO status = %d", st)
+	}
+	lines := got["lines"].([]any)
+	line := lines[0].(map[string]any)
+	if line["receivedQty"] != "3" {
+		t.Fatalf("receivedQty = %v, want 3", line["receivedQty"])
+	}
+	if line["fulfillmentState"] != "partial" {
+		t.Fatalf("fulfillmentState = %v, want partial", line["fulfillmentState"])
+	}
+}
+
+// TestFulfillmentStateClosed: receiving exactly the ordered quantity closes the line.
+func TestFulfillmentStateClosed(t *testing.T) {
+	f := seedDocFixture(t)
+
+	pob := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-08-05",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	_, po := f.do(t, http.MethodPost, "/v1/purchase-orders", pob)
+	poID := po["id"].(string)
+	poLines := po["lines"].([]any)
+	poLineID := poLines[0].(map[string]any)["id"].(string)
+	f.do(t, http.MethodPost, "/v1/purchase-orders/"+poID+"/post", "")
+
+	// Receive exactly 5 pcs.
+	grb := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"purchaseOrderId":%q,"docDate":"2026-08-06",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitCost":"100","purchaseOrderLineId":%q}]}`,
+		f.supplier, f.whA, poID, f.product, poLineID)
+	_, gr := f.do(t, http.MethodPost, "/v1/goods-receipts", grb)
+	f.do(t, http.MethodPost, "/v1/goods-receipts/"+gr["id"].(string)+"/post", "")
+
+	st, got := f.do(t, http.MethodGet, "/v1/purchase-orders/"+poID, "")
+	if st != http.StatusOK {
+		t.Fatalf("GET PO status = %d", st)
+	}
+	line := got["lines"].([]any)[0].(map[string]any)
+	if line["fulfillmentState"] != "closed" {
+		t.Fatalf("fulfillmentState = %v, want closed", line["fulfillmentState"])
+	}
+}
+
+// TestOverReceiptGuard: posting a GR that would exceed the ordered qty is rejected
+// with 422 (tenant tolerance defaults to 0).
+func TestOverReceiptGuard(t *testing.T) {
+	f := seedDocFixture(t)
+
+	pob := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-08-10",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	_, po := f.do(t, http.MethodPost, "/v1/purchase-orders", pob)
+	poID := po["id"].(string)
+	poLines := po["lines"].([]any)
+	poLineID := poLines[0].(map[string]any)["id"].(string)
+	f.do(t, http.MethodPost, "/v1/purchase-orders/"+poID+"/post", "")
+
+	// Try to receive 6 pcs against a 5-pcs line (over by 1, tolerance=0).
+	grb := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"purchaseOrderId":%q,"docDate":"2026-08-11",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"6","unitCost":"100","purchaseOrderLineId":%q}]}`,
+		f.supplier, f.whA, poID, f.product, poLineID)
+	_, gr := f.do(t, http.MethodPost, "/v1/goods-receipts", grb)
+	grID := gr["id"].(string)
+
+	st, out := f.do(t, http.MethodPost, "/v1/goods-receipts/"+grID+"/post", "")
+	if st != http.StatusUnprocessableEntity {
+		t.Fatalf("over-receipt post status = %d, want 422; body %v", st, out)
+	}
+	if out["code"] != "over_receipt" {
+		t.Fatalf("error code = %v, want over_receipt", out["code"])
+	}
+}
+
+// TestOverDeliveryGuard: posting a Delivery that would exceed the SO ordered qty
+// is rejected with 422.
+func TestOverDeliveryGuard(t *testing.T) {
+	f := seedDocFixture(t)
+
+	// Stock up.
+	grb := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-08-12",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"20","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	_, gr := f.do(t, http.MethodPost, "/v1/goods-receipts", grb)
+	f.do(t, http.MethodPost, "/v1/goods-receipts/"+gr["id"].(string)+"/post", "")
+
+	// Create SO for 5 pcs.
+	sob := fmt.Sprintf(`{"customerId":%q,"warehouseId":%q,"docDate":"2026-08-13",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitPrice":"150"}]}`, f.customer, f.whA, f.product)
+	_, so := f.do(t, http.MethodPost, "/v1/sales-orders", sob)
+	soID := so["id"].(string)
+	soLines := so["lines"].([]any)
+	soLineID := soLines[0].(map[string]any)["id"].(string)
+	f.do(t, http.MethodPost, "/v1/sales-orders/"+soID+"/post", "")
+
+	// Try to deliver 6 pcs against a 5-pcs line.
+	db := fmt.Sprintf(`{"customerId":%q,"warehouseId":%q,"salesOrderId":%q,"docDate":"2026-08-14",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"6","salesOrderLineId":%q}]}`,
+		f.customer, f.whA, soID, f.product, soLineID)
+	_, d := f.do(t, http.MethodPost, "/v1/deliveries", db)
+	dID := d["id"].(string)
+
+	st, out := f.do(t, http.MethodPost, "/v1/deliveries/"+dID+"/post", "")
+	if st != http.StatusUnprocessableEntity {
+		t.Fatalf("over-delivery post status = %d, want 422; body %v", st, out)
+	}
+	if out["code"] != "over_delivery" {
+		t.Fatalf("error code = %v, want over_delivery", out["code"])
+	}
+}
+
+// TestDeliveryRollupOnSOLine: posting a Delivery linked to an SO line causes the
+// SO's GET response to show deliveredQty and fulfillmentState=partial.
+func TestDeliveryRollupOnSOLine(t *testing.T) {
+	f := seedDocFixture(t)
+
+	// Stock up first so the delivery can post.
+	grb := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-08-15",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"10","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	_, gr := f.do(t, http.MethodPost, "/v1/goods-receipts", grb)
+	f.do(t, http.MethodPost, "/v1/goods-receipts/"+gr["id"].(string)+"/post", "")
+
+	// Create and post SO with 5 pcs.
+	sob := fmt.Sprintf(`{"customerId":%q,"warehouseId":%q,"docDate":"2026-08-16",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitPrice":"150"}]}`, f.customer, f.whA, f.product)
+	_, so := f.do(t, http.MethodPost, "/v1/sales-orders", sob)
+	soID := so["id"].(string)
+	soLines := so["lines"].([]any)
+	soLineID := soLines[0].(map[string]any)["id"].(string)
+	f.do(t, http.MethodPost, "/v1/sales-orders/"+soID+"/post", "")
+
+	// Deliver 3 pcs linked to the SO line.
+	db := fmt.Sprintf(`{"customerId":%q,"warehouseId":%q,"salesOrderId":%q,"docDate":"2026-08-17",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"3","salesOrderLineId":%q}]}`,
+		f.customer, f.whA, soID, f.product, soLineID)
+	_, d := f.do(t, http.MethodPost, "/v1/deliveries", db)
+	dID := d["id"].(string)
+	if st, out := f.do(t, http.MethodPost, "/v1/deliveries/"+dID+"/post", ""); st != http.StatusOK {
+		t.Fatalf("post delivery status = %d, body %v", st, out)
+	}
+
+	// GET SO and inspect the line rollup.
+	st, got := f.do(t, http.MethodGet, "/v1/sales-orders/"+soID, "")
+	if st != http.StatusOK {
+		t.Fatalf("GET SO status = %d", st)
+	}
+	lines := got["lines"].([]any)
+	line := lines[0].(map[string]any)
+	if line["deliveredQty"] != "3" {
+		t.Fatalf("deliveredQty = %v, want 3", line["deliveredQty"])
+	}
+	if line["fulfillmentState"] != "partial" {
+		t.Fatalf("fulfillmentState = %v, want partial", line["fulfillmentState"])
+	}
+}
+
 // TestDeliveryPostAndReverse covers the issue path (stock out) and its reversal.
 func TestDeliveryPostAndReverse(t *testing.T) {
 	f := seedDocFixture(t)

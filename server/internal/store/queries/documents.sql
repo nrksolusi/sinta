@@ -342,3 +342,91 @@ WHERE tenant_id = sqlc.arg(tenant_id)
   AND product_id = sqlc.arg(product_id)
   AND warehouse_id = sqlc.arg(warehouse_id)
   AND batch_id IS NOT DISTINCT FROM sqlc.narg(batch_id);
+
+-- ===========================================================================
+-- Fulfillment rollup (ADR-0016): server-computed received/delivered qty
+-- ===========================================================================
+
+-- name: GetPOLineRollups :many
+-- Sum of received qty per PO line from posted non-reversal goods receipts.
+-- Returns (id, received_qty) ordered by line_no.
+SELECT pol.id,
+       COALESCE(SUM(grl.qty), '0'::numeric) AS received_qty
+FROM purchase_order_lines pol
+LEFT JOIN goods_receipt_lines grl
+    ON grl.purchase_order_line_id = pol.id
+    AND grl.tenant_id = pol.tenant_id
+LEFT JOIN goods_receipts gr
+    ON gr.id = grl.goods_receipt_id
+    AND gr.tenant_id = pol.tenant_id
+    AND gr.status = 'posted'
+    AND gr.reverses_id IS NULL
+WHERE pol.tenant_id = sqlc.arg(tenant_id)
+  AND pol.purchase_order_id = sqlc.arg(purchase_order_id)
+GROUP BY pol.id, pol.line_no
+ORDER BY pol.line_no;
+
+-- name: GetSOLineRollups :many
+-- Sum of delivered qty per SO line from posted non-reversal deliveries.
+SELECT sol.id,
+       COALESCE(SUM(dl.qty), '0'::numeric) AS delivered_qty
+FROM sales_order_lines sol
+LEFT JOIN delivery_lines dl
+    ON dl.sales_order_line_id = sol.id
+    AND dl.tenant_id = sol.tenant_id
+LEFT JOIN deliveries d
+    ON d.id = dl.delivery_id
+    AND d.tenant_id = sol.tenant_id
+    AND d.status = 'posted'
+    AND d.reverses_id IS NULL
+WHERE sol.tenant_id = sqlc.arg(tenant_id)
+  AND sol.sales_order_id = sqlc.arg(sales_order_id)
+GROUP BY sol.id, sol.line_no
+ORDER BY sol.line_no;
+
+-- name: GetTenantToleranceOverReceipt :one
+-- Tenant over-receipt tolerance (default 0 when no settings row exists).
+SELECT COALESCE(
+    (SELECT tolerance_over_receipt FROM tenant_settings WHERE tenant_id = sqlc.arg(tenant_id)),
+    '0'::numeric
+) AS tolerance;
+
+-- name: LockPOLineForReceipt :exec
+-- Advisory lock on a PO line (transaction-scoped) to serialize concurrent receipts.
+SELECT pg_advisory_xact_lock(
+    ('x' || right(replace(sqlc.arg(purchase_order_line_id)::text, '-', ''), 16))::bit(64)::bigint
+);
+
+-- name: SumReceivedForPOLine :one
+-- Already-received qty for a PO line, excluding the current goods receipt being posted.
+SELECT COALESCE(SUM(grl.qty), '0'::numeric) AS received_qty
+FROM goods_receipt_lines grl
+JOIN goods_receipts gr ON gr.id = grl.goods_receipt_id
+WHERE grl.tenant_id = sqlc.arg(tenant_id)
+  AND grl.purchase_order_line_id = sqlc.arg(purchase_order_line_id)
+  AND grl.goods_receipt_id != sqlc.arg(exclude_goods_receipt_id)
+  AND gr.status = 'posted'
+  AND gr.reverses_id IS NULL;
+
+-- name: LockSOLineForDelivery :exec
+-- Advisory lock on an SO line (transaction-scoped) to serialize concurrent deliveries.
+SELECT pg_advisory_xact_lock(
+    ('x' || right(replace(sqlc.arg(sales_order_line_id)::text, '-', ''), 16))::bit(64)::bigint
+);
+
+-- name: SumDeliveredForSOLine :one
+-- Already-delivered qty for an SO line, excluding the current delivery being posted.
+SELECT COALESCE(SUM(dl.qty), '0'::numeric) AS delivered_qty
+FROM delivery_lines dl
+JOIN deliveries d ON d.id = dl.delivery_id
+WHERE dl.tenant_id = sqlc.arg(tenant_id)
+  AND dl.sales_order_line_id = sqlc.arg(sales_order_line_id)
+  AND dl.delivery_id != sqlc.arg(exclude_delivery_id)
+  AND d.status = 'posted'
+  AND d.reverses_id IS NULL;
+
+-- name: GetPurchaseOrderLineByID :one
+SELECT * FROM purchase_order_lines WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
+
+-- name: GetSalesOrderLineByID :one
+SELECT * FROM sales_order_lines WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);

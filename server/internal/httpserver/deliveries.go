@@ -5,7 +5,9 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/shopspring/decimal"
 
 	"github.com/nrksolusi/sinta/internal/api"
 	"github.com/nrksolusi/sinta/internal/domain/stock"
@@ -277,6 +279,9 @@ func (s *Server) PostDelivery(w http.ResponseWriter, r *http.Request, id openapi
 			if err != nil {
 				return "", nil, 0, err
 			}
+			if err := s.checkOverDelivery(ctx, q, tc.tenantID, id, lines); err != nil {
+				return "", nil, 0, err
+			}
 			movements, err := deliveryMovements(tc, d, lines, false)
 			if err != nil {
 				return "", nil, 0, err
@@ -357,6 +362,64 @@ func (s *Server) ReverseDelivery(w http.ResponseWriter, r *http.Request, id open
 			}, nil
 		},
 	)
+}
+
+// checkOverDelivery enforces ADR-0016 for the sales side: per linked SO line, the
+// sum of already-delivered qty plus the new delivery qty must not exceed ordered
+// qty * (1 + tolerance). Lines without an SO link are unconstrained.
+func (s *Server) checkOverDelivery(ctx context.Context, q *store.Queries, tenantID, dID uuid.UUID, lines []store.DeliveryLine) error {
+	toleranceRaw, err := q.GetTenantToleranceOverReceipt(ctx, tenantID)
+	if err != nil {
+		return err
+	}
+	tolerance, err := numericFromAny(toleranceRaw)
+	if err != nil {
+		return err
+	}
+
+	for _, l := range lines {
+		if !l.SalesOrderLineID.Valid {
+			continue
+		}
+		soLineID := uuid.UUID(l.SalesOrderLineID.Bytes)
+
+		if err := q.LockSOLineForDelivery(ctx, soLineID.String()); err != nil {
+			return err
+		}
+
+		sol, err := q.GetSalesOrderLineByID(ctx, store.GetSalesOrderLineByIDParams{TenantID: tenantID, ID: soLineID})
+		if err != nil {
+			return err
+		}
+		ordered, err := store.Decimal(sol.Qty)
+		if err != nil {
+			return err
+		}
+
+		alreadyRaw, err := q.SumDeliveredForSOLine(ctx, store.SumDeliveredForSOLineParams{
+			TenantID:          tenantID,
+			SalesOrderLineID:  pgtype.UUID{Bytes: soLineID, Valid: true},
+			ExcludeDeliveryID: dID,
+		})
+		if err != nil {
+			return err
+		}
+		already, err := numericFromAny(alreadyRaw)
+		if err != nil {
+			return err
+		}
+
+		newQty, err := store.Decimal(l.Qty)
+		if err != nil {
+			return err
+		}
+
+		ceiling := ordered.Mul(decimal.NewFromInt(1).Add(tolerance))
+		if already.Add(newQty).GreaterThan(ceiling) {
+			return errOverDelivery{msg: "delivery qty would exceed ordered qty beyond tolerance"}
+		}
+	}
+	return nil
 }
 
 // deliveryMovements builds one issue movement per line (stock out, qty negative).

@@ -5,7 +5,9 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/shopspring/decimal"
 
 	"github.com/nrksolusi/sinta/internal/api"
 	"github.com/nrksolusi/sinta/internal/domain/stock"
@@ -280,6 +282,9 @@ func (s *Server) PostGoodsReceipt(w http.ResponseWriter, r *http.Request, id ope
 			if err != nil {
 				return "", nil, 0, err
 			}
+			if err := s.checkOverReceipt(ctx, q, tc.tenantID, id, lines); err != nil {
+				return "", nil, 0, err
+			}
 			movements, err := receiptMovements(tc, gr, lines, false)
 			if err != nil {
 				return "", nil, 0, err
@@ -360,6 +365,66 @@ func (s *Server) ReverseGoodsReceipt(w http.ResponseWriter, r *http.Request, id 
 			}, nil
 		},
 	)
+}
+
+// checkOverReceipt enforces ADR-0016: per linked PO line, the sum of already-
+// received qty plus the new GR qty must not exceed ordered qty * (1 + tolerance).
+// Lines without a PO link are unconstrained. Locks each PO line advisory-ly to
+// prevent two concurrent receipts from both passing the check.
+func (s *Server) checkOverReceipt(ctx context.Context, q *store.Queries, tenantID, grID uuid.UUID, lines []store.GoodsReceiptLine) error {
+	toleranceRaw, err := q.GetTenantToleranceOverReceipt(ctx, tenantID)
+	if err != nil {
+		return err
+	}
+	tolerance, err := numericFromAny(toleranceRaw)
+	if err != nil {
+		return err
+	}
+
+	for _, l := range lines {
+		if !l.PurchaseOrderLineID.Valid {
+			continue
+		}
+		poLineID := uuid.UUID(l.PurchaseOrderLineID.Bytes)
+
+		if err := q.LockPOLineForReceipt(ctx, poLineID.String()); err != nil {
+			return err
+		}
+
+		pol, err := q.GetPurchaseOrderLineByID(ctx, store.GetPurchaseOrderLineByIDParams{TenantID: tenantID, ID: poLineID})
+		if err != nil {
+			return err
+		}
+		ordered, err := store.Decimal(pol.Qty)
+		if err != nil {
+			return err
+		}
+
+		alreadyRaw, err := q.SumReceivedForPOLine(ctx, store.SumReceivedForPOLineParams{
+			TenantID:              tenantID,
+			PurchaseOrderLineID:   pgtype.UUID{Bytes: poLineID, Valid: true},
+			ExcludeGoodsReceiptID: grID,
+		})
+		if err != nil {
+			return err
+		}
+		already, err := numericFromAny(alreadyRaw)
+		if err != nil {
+			return err
+		}
+
+		newQty, err := store.Decimal(l.Qty)
+		if err != nil {
+			return err
+		}
+
+		// Allowed ceiling: ordered * (1 + tolerance)
+		ceiling := ordered.Mul(decimal.NewFromInt(1).Add(tolerance))
+		if already.Add(newQty).GreaterThan(ceiling) {
+			return errOverReceipt{msg: "receipt qty would exceed ordered qty beyond tolerance"}
+		}
+	}
+	return nil
 }
 
 // receiptMovements builds one receipt movement per line (stock in at the line's

@@ -645,6 +645,60 @@ func (q *Queries) GetGoodsReceipt(ctx context.Context, arg GetGoodsReceiptParams
 	return i, err
 }
 
+const getPOLineRollups = `-- name: GetPOLineRollups :many
+
+SELECT pol.id,
+       COALESCE(SUM(grl.qty), '0'::numeric) AS received_qty
+FROM purchase_order_lines pol
+LEFT JOIN goods_receipt_lines grl
+    ON grl.purchase_order_line_id = pol.id
+    AND grl.tenant_id = pol.tenant_id
+LEFT JOIN goods_receipts gr
+    ON gr.id = grl.goods_receipt_id
+    AND gr.tenant_id = pol.tenant_id
+    AND gr.status = 'posted'
+    AND gr.reverses_id IS NULL
+WHERE pol.tenant_id = $1
+  AND pol.purchase_order_id = $2
+GROUP BY pol.id, pol.line_no
+ORDER BY pol.line_no
+`
+
+type GetPOLineRollupsParams struct {
+	TenantID        uuid.UUID
+	PurchaseOrderID uuid.UUID
+}
+
+type GetPOLineRollupsRow struct {
+	ID          uuid.UUID
+	ReceivedQty interface{}
+}
+
+// ===========================================================================
+// Fulfillment rollup (ADR-0016): server-computed received/delivered qty
+// ===========================================================================
+// Sum of received qty per PO line from posted non-reversal goods receipts.
+// Returns (id, received_qty) ordered by line_no.
+func (q *Queries) GetPOLineRollups(ctx context.Context, arg GetPOLineRollupsParams) ([]GetPOLineRollupsRow, error) {
+	rows, err := q.db.Query(ctx, getPOLineRollups, arg.TenantID, arg.PurchaseOrderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPOLineRollupsRow
+	for rows.Next() {
+		var i GetPOLineRollupsRow
+		if err := rows.Scan(&i.ID, &i.ReceivedQty); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPurchaseOrder = `-- name: GetPurchaseOrder :one
 SELECT id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM purchase_orders WHERE tenant_id = $1 AND id = $2
 `
@@ -676,6 +730,80 @@ func (q *Queries) GetPurchaseOrder(ctx context.Context, arg GetPurchaseOrderPara
 	return i, err
 }
 
+const getPurchaseOrderLineByID = `-- name: GetPurchaseOrderLineByID :one
+SELECT id, tenant_id, purchase_order_id, line_no, product_id, uom, qty, unit_cost FROM purchase_order_lines WHERE tenant_id = $1 AND id = $2
+`
+
+type GetPurchaseOrderLineByIDParams struct {
+	TenantID uuid.UUID
+	ID       uuid.UUID
+}
+
+func (q *Queries) GetPurchaseOrderLineByID(ctx context.Context, arg GetPurchaseOrderLineByIDParams) (PurchaseOrderLine, error) {
+	row := q.db.QueryRow(ctx, getPurchaseOrderLineByID, arg.TenantID, arg.ID)
+	var i PurchaseOrderLine
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.PurchaseOrderID,
+		&i.LineNo,
+		&i.ProductID,
+		&i.Uom,
+		&i.Qty,
+		&i.UnitCost,
+	)
+	return i, err
+}
+
+const getSOLineRollups = `-- name: GetSOLineRollups :many
+SELECT sol.id,
+       COALESCE(SUM(dl.qty), '0'::numeric) AS delivered_qty
+FROM sales_order_lines sol
+LEFT JOIN delivery_lines dl
+    ON dl.sales_order_line_id = sol.id
+    AND dl.tenant_id = sol.tenant_id
+LEFT JOIN deliveries d
+    ON d.id = dl.delivery_id
+    AND d.tenant_id = sol.tenant_id
+    AND d.status = 'posted'
+    AND d.reverses_id IS NULL
+WHERE sol.tenant_id = $1
+  AND sol.sales_order_id = $2
+GROUP BY sol.id, sol.line_no
+ORDER BY sol.line_no
+`
+
+type GetSOLineRollupsParams struct {
+	TenantID     uuid.UUID
+	SalesOrderID uuid.UUID
+}
+
+type GetSOLineRollupsRow struct {
+	ID           uuid.UUID
+	DeliveredQty interface{}
+}
+
+// Sum of delivered qty per SO line from posted non-reversal deliveries.
+func (q *Queries) GetSOLineRollups(ctx context.Context, arg GetSOLineRollupsParams) ([]GetSOLineRollupsRow, error) {
+	rows, err := q.db.Query(ctx, getSOLineRollups, arg.TenantID, arg.SalesOrderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSOLineRollupsRow
+	for rows.Next() {
+		var i GetSOLineRollupsRow
+		if err := rows.Scan(&i.ID, &i.DeliveredQty); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSalesOrder = `-- name: GetSalesOrder :one
 SELECT id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM sales_orders WHERE tenant_id = $1 AND id = $2
 `
@@ -703,6 +831,31 @@ func (q *Queries) GetSalesOrder(ctx context.Context, arg GetSalesOrderParams) (S
 		&i.ReversesID,
 		&i.ReversedByID,
 		&i.PostedBy,
+	)
+	return i, err
+}
+
+const getSalesOrderLineByID = `-- name: GetSalesOrderLineByID :one
+SELECT id, tenant_id, sales_order_id, line_no, product_id, uom, qty, unit_price FROM sales_order_lines WHERE tenant_id = $1 AND id = $2
+`
+
+type GetSalesOrderLineByIDParams struct {
+	TenantID uuid.UUID
+	ID       uuid.UUID
+}
+
+func (q *Queries) GetSalesOrderLineByID(ctx context.Context, arg GetSalesOrderLineByIDParams) (SalesOrderLine, error) {
+	row := q.db.QueryRow(ctx, getSalesOrderLineByID, arg.TenantID, arg.ID)
+	var i SalesOrderLine
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.SalesOrderID,
+		&i.LineNo,
+		&i.ProductID,
+		&i.Uom,
+		&i.Qty,
+		&i.UnitPrice,
 	)
 	return i, err
 }
@@ -834,6 +987,21 @@ func (q *Queries) GetStockTransfer(ctx context.Context, arg GetStockTransferPara
 		&i.PostedBy,
 	)
 	return i, err
+}
+
+const getTenantToleranceOverReceipt = `-- name: GetTenantToleranceOverReceipt :one
+SELECT COALESCE(
+    (SELECT tolerance_over_receipt FROM tenant_settings WHERE tenant_id = $1),
+    '0'::numeric
+) AS tolerance
+`
+
+// Tenant over-receipt tolerance (default 0 when no settings row exists).
+func (q *Queries) GetTenantToleranceOverReceipt(ctx context.Context, tenantID uuid.UUID) (interface{}, error) {
+	row := q.db.QueryRow(ctx, getTenantToleranceOverReceipt, tenantID)
+	var tolerance interface{}
+	err := row.Scan(&tolerance)
+	return tolerance, err
 }
 
 const insertDeliveryLine = `-- name: InsertDeliveryLine :one
@@ -1674,6 +1842,30 @@ func (q *Queries) ListStockTransfers(ctx context.Context, tenantID uuid.UUID) ([
 	return items, nil
 }
 
+const lockPOLineForReceipt = `-- name: LockPOLineForReceipt :exec
+SELECT pg_advisory_xact_lock(
+    ('x' || right(replace($1::text, '-', ''), 16))::bit(64)::bigint
+)
+`
+
+// Advisory lock on a PO line (transaction-scoped) to serialize concurrent receipts.
+func (q *Queries) LockPOLineForReceipt(ctx context.Context, purchaseOrderLineID string) error {
+	_, err := q.db.Exec(ctx, lockPOLineForReceipt, purchaseOrderLineID)
+	return err
+}
+
+const lockSOLineForDelivery = `-- name: LockSOLineForDelivery :exec
+SELECT pg_advisory_xact_lock(
+    ('x' || right(replace($1::text, '-', ''), 16))::bit(64)::bigint
+)
+`
+
+// Advisory lock on an SO line (transaction-scoped) to serialize concurrent deliveries.
+func (q *Queries) LockSOLineForDelivery(ctx context.Context, salesOrderLineID string) error {
+	_, err := q.db.Exec(ctx, lockSOLineForDelivery, salesOrderLineID)
+	return err
+}
+
 const markDeliveryPosted = `-- name: MarkDeliveryPosted :one
 UPDATE deliveries
 SET status = 'posted', doc_number = $1, posted_at = now(), posted_by = $2
@@ -2096,6 +2288,56 @@ type SetStockOpnameLineSystemQtyParams struct {
 func (q *Queries) SetStockOpnameLineSystemQty(ctx context.Context, arg SetStockOpnameLineSystemQtyParams) error {
 	_, err := q.db.Exec(ctx, setStockOpnameLineSystemQty, arg.SystemQty, arg.TenantID, arg.ID)
 	return err
+}
+
+const sumDeliveredForSOLine = `-- name: SumDeliveredForSOLine :one
+SELECT COALESCE(SUM(dl.qty), '0'::numeric) AS delivered_qty
+FROM delivery_lines dl
+JOIN deliveries d ON d.id = dl.delivery_id
+WHERE dl.tenant_id = $1
+  AND dl.sales_order_line_id = $2
+  AND dl.delivery_id != $3
+  AND d.status = 'posted'
+  AND d.reverses_id IS NULL
+`
+
+type SumDeliveredForSOLineParams struct {
+	TenantID          uuid.UUID
+	SalesOrderLineID  pgtype.UUID
+	ExcludeDeliveryID uuid.UUID
+}
+
+// Already-delivered qty for an SO line, excluding the current delivery being posted.
+func (q *Queries) SumDeliveredForSOLine(ctx context.Context, arg SumDeliveredForSOLineParams) (interface{}, error) {
+	row := q.db.QueryRow(ctx, sumDeliveredForSOLine, arg.TenantID, arg.SalesOrderLineID, arg.ExcludeDeliveryID)
+	var delivered_qty interface{}
+	err := row.Scan(&delivered_qty)
+	return delivered_qty, err
+}
+
+const sumReceivedForPOLine = `-- name: SumReceivedForPOLine :one
+SELECT COALESCE(SUM(grl.qty), '0'::numeric) AS received_qty
+FROM goods_receipt_lines grl
+JOIN goods_receipts gr ON gr.id = grl.goods_receipt_id
+WHERE grl.tenant_id = $1
+  AND grl.purchase_order_line_id = $2
+  AND grl.goods_receipt_id != $3
+  AND gr.status = 'posted'
+  AND gr.reverses_id IS NULL
+`
+
+type SumReceivedForPOLineParams struct {
+	TenantID              uuid.UUID
+	PurchaseOrderLineID   pgtype.UUID
+	ExcludeGoodsReceiptID uuid.UUID
+}
+
+// Already-received qty for a PO line, excluding the current goods receipt being posted.
+func (q *Queries) SumReceivedForPOLine(ctx context.Context, arg SumReceivedForPOLineParams) (interface{}, error) {
+	row := q.db.QueryRow(ctx, sumReceivedForPOLine, arg.TenantID, arg.PurchaseOrderLineID, arg.ExcludeGoodsReceiptID)
+	var received_qty interface{}
+	err := row.Scan(&received_qty)
+	return received_qty, err
 }
 
 const updateDeliveryHeader = `-- name: UpdateDeliveryHeader :one

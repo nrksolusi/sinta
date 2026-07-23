@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/shopspring/decimal"
 
 	"github.com/nrksolusi/sinta/internal/api"
 	"github.com/nrksolusi/sinta/internal/store"
@@ -16,17 +17,25 @@ import (
 // number and flips status to posted; it writes no journal movements. Reversal
 // posts a cancelling document (also number-only) and marks the original reversed.
 
-func purchaseOrderToAPI(po store.PurchaseOrder, lines []store.PurchaseOrderLine, actors docActors) api.PurchaseOrder {
+func purchaseOrderToAPI(po store.PurchaseOrder, lines []store.PurchaseOrderLine, actors docActors, rollup map[uuid.UUID]string) api.PurchaseOrder {
 	apiLines := make([]api.PurchaseOrderLine, 0, len(lines))
 	for _, l := range lines {
-		apiLines = append(apiLines, api.PurchaseOrderLine{
+		line := api.PurchaseOrderLine{
 			Id:        l.ID,
 			LineNo:    int(l.LineNo),
 			ProductId: l.ProductID,
 			Uom:       l.Uom,
 			Qty:       numericToString(l.Qty),
 			UnitCost:  numericToString(l.UnitCost),
-		})
+		}
+		if rollup != nil {
+			if recvd, ok := rollup[l.ID]; ok {
+				line.ReceivedQty = &recvd
+				state := fulfillmentState(numericToString(l.Qty), recvd)
+				line.FulfillmentState = &state
+			}
+		}
+		apiLines = append(apiLines, line)
 	}
 	return api.PurchaseOrder{
 		Id:           po.ID,
@@ -46,6 +55,19 @@ func purchaseOrderToAPI(po store.PurchaseOrder, lines []store.PurchaseOrderLine,
 	}
 }
 
+// fulfillmentState computes open/partial/closed from ordered and fulfilled string quantities.
+func fulfillmentState(orderedStr, fulfilledStr string) api.FulfillmentState {
+	ordered, _ := decimal.NewFromString(orderedStr)
+	fulfilled, _ := decimal.NewFromString(fulfilledStr)
+	if fulfilled.IsZero() || ordered.IsZero() {
+		return api.Open
+	}
+	if fulfilled.GreaterThanOrEqual(ordered) {
+		return api.Closed
+	}
+	return api.Partial
+}
+
 func (s *Server) loadPurchaseOrder(ctx context.Context, q *store.Queries, tenantID, id uuid.UUID) (api.PurchaseOrder, error) {
 	po, err := q.GetPurchaseOrder(ctx, store.GetPurchaseOrderParams{TenantID: tenantID, ID: id})
 	if err != nil {
@@ -59,7 +81,29 @@ func (s *Server) loadPurchaseOrder(ctx context.Context, q *store.Queries, tenant
 	if err != nil {
 		return api.PurchaseOrder{}, err
 	}
-	return purchaseOrderToAPI(po, lines, actors), nil
+	rollup, err := poLineRollup(ctx, q, tenantID, id)
+	if err != nil {
+		return api.PurchaseOrder{}, err
+	}
+	return purchaseOrderToAPI(po, lines, actors, rollup), nil
+}
+
+// poLineRollup returns a map of PO line ID -> received qty string for all
+// posted non-reversal goods receipts linked to the given PO.
+func poLineRollup(ctx context.Context, q *store.Queries, tenantID, poID uuid.UUID) (map[uuid.UUID]string, error) {
+	rows, err := q.GetPOLineRollups(ctx, store.GetPOLineRollupsParams{TenantID: tenantID, PurchaseOrderID: poID})
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[uuid.UUID]string, len(rows))
+	for _, r := range rows {
+		qty, err := numericFromAny(r.ReceivedQty)
+		if err != nil {
+			return nil, err
+		}
+		m[r.ID] = qty.String()
+	}
+	return m, nil
 }
 
 func (s *Server) ListPurchaseOrders(w http.ResponseWriter, r *http.Request, _ api.ListPurchaseOrdersParams) {
@@ -83,7 +127,7 @@ func (s *Server) ListPurchaseOrders(w http.ResponseWriter, r *http.Request, _ ap
 			if err != nil {
 				return err
 			}
-			items = append(items, purchaseOrderToAPI(po, lines, actors))
+			items = append(items, purchaseOrderToAPI(po, lines, actors, nil))
 		}
 		return nil
 	})

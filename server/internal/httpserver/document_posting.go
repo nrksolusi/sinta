@@ -182,5 +182,15 @@ func writeTransitionErr(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusUnprocessableEntity, "invalid_line", ve.msg)
 		return
 	}
+	var or errOverReceipt
+	if errors.As(err, &or) {
+		writeError(w, http.StatusUnprocessableEntity, "over_receipt", or.msg)
+		return
+	}
+	var od errOverDelivery
+	if errors.As(err, &od) {
+		writeError(w, http.StatusUnprocessableEntity, "over_delivery", od.msg)
+		return
+	}
 	writeStoreError(w, err)
 }

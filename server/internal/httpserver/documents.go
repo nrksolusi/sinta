@@ -52,6 +52,16 @@ func handleWriteErr(w http.ResponseWriter, err error) bool {
 		writeError(w, http.StatusUnprocessableEntity, "invalid_line", ve.msg)
 		return true
 	}
+	var or errOverReceipt
+	if errors.As(err, &or) {
+		writeError(w, http.StatusUnprocessableEntity, "over_receipt", or.msg)
+		return true
+	}
+	var od errOverDelivery
+	if errors.As(err, &od) {
+		writeError(w, http.StatusUnprocessableEntity, "over_delivery", od.msg)
+		return true
+	}
 	return writeStoreError(w, err)
 }
 
@@ -221,6 +231,31 @@ func toPostedByParam(userID uuid.UUID) pgtype.UUID {
 func effectiveAt(d pgtype.Date) time.Time {
 	return time.Date(d.Time.Year(), d.Time.Month(), d.Time.Day(), 0, 0, 0, 0, time.UTC)
 }
+
+// numericFromAny decodes the interface{} that sqlc returns for aggregate
+// expressions (COALESCE, SUM) where sqlc cannot infer the return type. pgx v5
+// scans numeric columns into pgtype.Numeric; nil means SQL NULL (decoded as 0).
+func numericFromAny(v interface{}) (decimal.Decimal, error) {
+	if v == nil {
+		return decimal.Zero, nil
+	}
+	n, ok := v.(pgtype.Numeric)
+	if !ok {
+		return decimal.Zero, nil
+	}
+	return store.Decimal(n)
+}
+
+// errOverReceipt is returned by the over-receipt guard when a goods receipt
+// would exceed the ordered qty beyond the tenant tolerance (ADR-0016).
+type errOverReceipt struct{ msg string }
+
+func (e errOverReceipt) Error() string { return e.msg }
+
+// errOverDelivery is the equivalent guard for sales order deliveries.
+type errOverDelivery struct{ msg string }
+
+func (e errOverDelivery) Error() string { return e.msg }
 
 // writeStoreError maps common store errors to HTTP responses. Returns true when
 // it wrote a response.

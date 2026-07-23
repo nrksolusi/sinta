@@ -16,17 +16,25 @@ import (
 // no stock: posting assigns the gapless number and flips status; reversal posts a
 // cancelling number-only document.
 
-func salesOrderToAPI(so store.SalesOrder, lines []store.SalesOrderLine, actors docActors) api.SalesOrder {
+func salesOrderToAPI(so store.SalesOrder, lines []store.SalesOrderLine, actors docActors, rollup map[uuid.UUID]string) api.SalesOrder {
 	apiLines := make([]api.SalesOrderLine, 0, len(lines))
 	for _, l := range lines {
-		apiLines = append(apiLines, api.SalesOrderLine{
+		line := api.SalesOrderLine{
 			Id:        l.ID,
 			LineNo:    int(l.LineNo),
 			ProductId: l.ProductID,
 			Uom:       l.Uom,
 			Qty:       numericToString(l.Qty),
 			UnitPrice: numericToString(l.UnitPrice),
-		})
+		}
+		if rollup != nil {
+			if dlvd, ok := rollup[l.ID]; ok {
+				line.DeliveredQty = &dlvd
+				state := fulfillmentState(numericToString(l.Qty), dlvd)
+				line.FulfillmentState = &state
+			}
+		}
+		apiLines = append(apiLines, line)
 	}
 	return api.SalesOrder{
 		Id:           so.ID,
@@ -59,7 +67,29 @@ func (s *Server) loadSalesOrder(ctx context.Context, q *store.Queries, tenantID,
 	if err != nil {
 		return api.SalesOrder{}, err
 	}
-	return salesOrderToAPI(so, lines, actors), nil
+	rollup, err := soLineRollup(ctx, q, tenantID, id)
+	if err != nil {
+		return api.SalesOrder{}, err
+	}
+	return salesOrderToAPI(so, lines, actors, rollup), nil
+}
+
+// soLineRollup returns a map of SO line ID -> delivered qty string for all
+// posted non-reversal deliveries linked to the given SO.
+func soLineRollup(ctx context.Context, q *store.Queries, tenantID, soID uuid.UUID) (map[uuid.UUID]string, error) {
+	rows, err := q.GetSOLineRollups(ctx, store.GetSOLineRollupsParams{TenantID: tenantID, SalesOrderID: soID})
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[uuid.UUID]string, len(rows))
+	for _, r := range rows {
+		qty, err := numericFromAny(r.DeliveredQty)
+		if err != nil {
+			return nil, err
+		}
+		m[r.ID] = qty.String()
+	}
+	return m, nil
 }
 
 func (s *Server) ListSalesOrders(w http.ResponseWriter, r *http.Request, _ api.ListSalesOrdersParams) {
@@ -83,7 +113,7 @@ func (s *Server) ListSalesOrders(w http.ResponseWriter, r *http.Request, _ api.L
 			if err != nil {
 				return err
 			}
-			items = append(items, salesOrderToAPI(so, lines, actors))
+			items = append(items, salesOrderToAPI(so, lines, actors, nil))
 		}
 		return nil
 	})
