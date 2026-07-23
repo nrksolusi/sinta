@@ -335,6 +335,12 @@ type Tenant struct {
 	CreatedBy            pgtype.UUID
 }
 
+type TenantSetting struct {
+	ID                   uuid.UUID
+	TenantID             uuid.UUID
+	ToleranceOverReceipt pgtype.Numeric
+}
+
 type User struct {
 	ID                 uuid.UUID
 	Email              string

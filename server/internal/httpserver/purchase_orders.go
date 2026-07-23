@@ -62,18 +62,18 @@ func (s *Server) loadPurchaseOrder(ctx context.Context, q *store.Queries, tenant
 	return purchaseOrderToAPI(po, lines, actors), nil
 }
 
-func (s *Server) ListPurchaseOrders(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ListPurchaseOrders(w http.ResponseWriter, r *http.Request, _ api.ListPurchaseOrdersParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
-	var out []api.PurchaseOrder
+	var items []api.PurchaseOrder
 	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
 		rows, err := q.ListPurchaseOrders(r.Context(), tc.tenantID)
 		if err != nil {
 			return err
 		}
-		out = make([]api.PurchaseOrder, 0, len(rows))
+		items = make([]api.PurchaseOrder, 0, len(rows))
 		for _, po := range rows {
 			lines, err := q.ListPurchaseOrderLines(r.Context(), store.ListPurchaseOrderLinesParams{TenantID: tc.tenantID, PurchaseOrderID: po.ID})
 			if err != nil {
@@ -83,14 +83,14 @@ func (s *Server) ListPurchaseOrders(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, purchaseOrderToAPI(po, lines, actors))
+			items = append(items, purchaseOrderToAPI(po, lines, actors))
 		}
 		return nil
 	})
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, out)
+	writeJSON(w, http.StatusOK, api.PurchaseOrderList{Items: items})
 }
 
 func (s *Server) CreatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
@@ -375,4 +375,8 @@ func (s *Server) ReversePurchaseOrder(w http.ResponseWriter, r *http.Request, id
 		return
 	}
 	writeJSON(w, http.StatusCreated, out)
+}
+
+func (s *Server) CancelPurchaseOrder(w http.ResponseWriter, r *http.Request, _ api.DocumentId) {
+	writeError(w, http.StatusConflict, "not_implemented", "cancel not yet implemented")
 }

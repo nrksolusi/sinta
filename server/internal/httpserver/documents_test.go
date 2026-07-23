@@ -572,6 +572,66 @@ func TestDraftDeleteAllDocumentTypes(t *testing.T) {
 	}
 }
 
+// TestListEnvelopeShape verifies every document list returns the paginated
+// envelope {items, nextCursor} required by ADR-0019 (SN-0001 contract freeze).
+func TestListEnvelopeShape(t *testing.T) {
+	f := seedDocFixture(t)
+
+	// seed one PO so items is non-empty
+	body := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-07-01",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	if st, _ := f.do(t, http.MethodPost, "/v1/purchase-orders", body); st != http.StatusCreated {
+		t.Fatalf("create PO: status %d", st)
+	}
+
+	st, list := f.do(t, http.MethodGet, "/v1/purchase-orders", "")
+	if st != http.StatusOK {
+		t.Fatalf("list status = %d", st)
+	}
+	if _, ok := list["items"]; !ok {
+		t.Fatalf("list response missing 'items': %v", list)
+	}
+	if _, ok := list["nextCursor"]; !ok {
+		t.Fatalf("list response missing 'nextCursor': %v", list)
+	}
+	items, ok := list["items"].([]any)
+	if !ok {
+		t.Fatalf("'items' is not an array: %T", list["items"])
+	}
+	if len(items) == 0 {
+		t.Fatal("'items' is empty, expected at least one PO")
+	}
+}
+
+// TestCancelPurchaseOrderStub verifies the cancel route exists (SN-0001 contract
+// freeze). Full behaviour lands in SN-0003; the stub returns 409 for now.
+func TestCancelPurchaseOrderStub(t *testing.T) {
+	f := seedDocFixture(t)
+	body := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-07-01",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitCost":"100"}]}`, f.supplier, f.whA, f.product)
+	_, po := f.do(t, http.MethodPost, "/v1/purchase-orders", body)
+	id := po["id"].(string)
+
+	st, _ := f.do(t, http.MethodPost, "/v1/purchase-orders/"+id+"/cancel", `{"reason":"too expensive"}`)
+	if st != http.StatusConflict {
+		t.Fatalf("cancel stub status = %d, want 409", st)
+	}
+}
+
+// TestCancelSalesOrderStub mirrors TestCancelPurchaseOrderStub for SO.
+func TestCancelSalesOrderStub(t *testing.T) {
+	f := seedDocFixture(t)
+	body := fmt.Sprintf(`{"customerId":%q,"warehouseId":%q,"docDate":"2026-07-01",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitPrice":"100"}]}`, f.customer, f.whA, f.product)
+	_, so := f.do(t, http.MethodPost, "/v1/sales-orders", body)
+	id := so["id"].(string)
+
+	st, _ := f.do(t, http.MethodPost, "/v1/sales-orders/"+id+"/cancel", `{"reason":"customer changed mind"}`)
+	if st != http.StatusConflict {
+		t.Fatalf("cancel SO stub status = %d, want 409", st)
+	}
+}
+
 // TestDeliveryPostAndReverse covers the issue path (stock out) and its reversal.
 func TestDeliveryPostAndReverse(t *testing.T) {
 	f := seedDocFixture(t)

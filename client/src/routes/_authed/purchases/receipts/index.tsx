@@ -35,7 +35,7 @@ function ReceiptListPage() {
     queryKey: ["goods-receipts"],
     queryFn: async () => {
       const { data } = await api.GET("/goods-receipts");
-      return data ?? [];
+      return data?.items ?? [];
     },
   });
   const { data: suppliers = [] } = useQuery(

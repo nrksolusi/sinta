@@ -109,6 +109,33 @@ pilot polish) | `M2` (deferred by plan) | `scale` (only matters as data grows).
   ProductCombobox's `onSearch`.
 - **Severity:** scale.
 
+## INC-7 - No approval gate before posting (fix-3 Slice 2)
+
+- **Type:** missing-endpoint
+- **Endpoints:** `POST /{document}/{id}/submit`, `POST /{document}/{id}/approve`,
+  `POST /{document}/{id}/reject`; `GET /settings/approval`, `PUT /settings/approval`.
+- **Surfaced by:** fix-3 plan (ADR-0015); approval toggle deferred from M1 design.
+- **Impact:** The client's dormant `pending` StatusBadge variant ("Menunggu
+  Persetujuan") and `settings/route.tsx` approval toggle are unwired. Tenants
+  that require sign-off before posting (e.g. warehouse admin must approve a
+  purchase order before the warehouse clerk can post it) have no server-enforced
+  gate. Today all posted documents bypass approval.
+- **Workaround:** approval role is bypassed; every document-writer can post
+  directly (status goes draft -> posted).
+- **Proposed (ADR-0015):**
+  - Migration: extend all 7 header `status` CHECK with `pending_approval` and
+    `approved`; add `approval_settings (tenant_id, doc_type, requires_approval)`
+    with RLS; add `submitted_at/by`, `approved_at/by`, `rejected_at/by`,
+    `reject_reason` columns to gated headers.
+  - Server: `submit` / `approve` / `reject` transitions per document type; posting
+    precondition checks `requires_approval` and enforces `status == approved` if
+    set, else `status == draft`. Approve/reject require owner/admin.
+  - Client: `approved` StatusBadge variant + message key; wire `pending` variant;
+    submit/approve/reject actions on draft/pending detail views; approval settings
+    screen.
+- **Severity:** M1 (tenant config; blocks full order workflow for SMEs that need
+  sign-off).
+
 ---
 
 ## Triage summary
@@ -121,16 +148,16 @@ pilot polish) | `M2` (deferred by plan) | `scale` (only matters as data grows).
 | INC-4 | PO/SO per-line fulfillment rollup | schema-revamp | scale |
 | INC-5 | list filter + pagination params | schema-revamp | scale |
 | INC-6 | product search endpoint | missing-endpoint | scale |
+| INC-7 | approval gate (submit/approve/reject + settings) | missing-endpoint | M1 |
 
 M1 candidates (INC-1, INC-2, INC-3) are small, additive server changes that
 directly unlock specified UI (delete-draft, timeline actor/time, berita acara
 variance). INC-4/5/6 are deferrable until data volume warrants them.
 
-**Status:** INC-1/2/3 are now specced for build in
-[fix-3-lifecycle-and-slice-a.md](../plans/fix-3-lifecycle-and-slice-a.md), with
-the hard-to-reverse choices recorded in ADR-0013 (draft delete) and ADR-0014
-(opname `systemQty` snapshot). INC-4/5/6 are **no longer deferred** - the fix-4
-UI/UX revamp ([fix-4-ui-ux-revamp.md](../plans/fix-4-ui-ux-revamp.md)) depends on
-them and pulls them forward: INC-4 fulfillment rollup becomes a server-enforced
-guard (ADR-0016), and INC-5 list query + INC-6 search become the locked
-read-query contract (ADR-0019).
+**Status:** INC-1/2/3 built in SN-0012 (fix-3 Slice 1). INC-4/5/6 are **no
+longer deferred** - the fix-4 UI/UX revamp
+([fix-4-ui-ux-revamp.md](../plans/fix-4-ui-ux-revamp.md)) depends on them and
+pulls them forward: INC-4 fulfillment rollup becomes a server-enforced guard
+(ADR-0016), INC-5 list query + INC-6 search become the locked read-query contract
+(ADR-0019), both in SN-0001. INC-7 (approval gate) is fix-3 Slice 2 per ADR-0015;
+not yet scheduled.

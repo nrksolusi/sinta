@@ -1,7 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { m } from "@/paraglide/messages";
 
-export type DocumentStatus = "draft" | "posted" | "reversed" | "pending";
+export type DocumentStatus =
+  | "draft"
+  | "posted"
+  | "reversed"
+  | "cancelled"
+  | "pending";
 
 // Single source of truth: document status -> id label + palette (design brief
 // section B). Callers may not override the color; that keeps status colour
@@ -21,6 +26,10 @@ const STATUS: Record<
   reversed: {
     label: () => m.status_reversed(),
     className: "bg-muted text-muted-foreground line-through",
+  },
+  cancelled: {
+    label: () => m.status_cancelled(),
+    className: "bg-destructive/12 text-destructive",
   },
   pending: {
     label: () => m.status_pending(),

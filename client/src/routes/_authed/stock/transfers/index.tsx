@@ -37,7 +37,7 @@ const transfersQueryOptions = {
   queryKey: ["stock-transfers"] as const,
   queryFn: async (): Promise<StockTransfer[]> => {
     const { data } = await api.GET("/stock-transfers");
-    return data ?? [];
+    return data?.items ?? [];
   },
 };
 

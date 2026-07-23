@@ -37,37 +37,37 @@ const DOC_LISTS: {
   {
     kind: "goodsReceipt",
     key: "goods-receipts",
-    fetch: async () => (await api.GET("/goods-receipts")).data ?? [],
+    fetch: async () => (await api.GET("/goods-receipts")).data?.items ?? [],
   },
   {
     kind: "delivery",
     key: "deliveries",
-    fetch: async () => (await api.GET("/deliveries")).data ?? [],
+    fetch: async () => (await api.GET("/deliveries")).data?.items ?? [],
   },
   {
     kind: "purchaseOrder",
     key: "purchase-orders",
-    fetch: async () => (await api.GET("/purchase-orders")).data ?? [],
+    fetch: async () => (await api.GET("/purchase-orders")).data?.items ?? [],
   },
   {
     kind: "salesOrder",
     key: "sales-orders",
-    fetch: async () => (await api.GET("/sales-orders")).data ?? [],
+    fetch: async () => (await api.GET("/sales-orders")).data?.items ?? [],
   },
   {
     kind: "stockTransfer",
     key: "stock-transfers",
-    fetch: async () => (await api.GET("/stock-transfers")).data ?? [],
+    fetch: async () => (await api.GET("/stock-transfers")).data?.items ?? [],
   },
   {
     kind: "stockAdjustment",
     key: "stock-adjustments",
-    fetch: async () => (await api.GET("/stock-adjustments")).data ?? [],
+    fetch: async () => (await api.GET("/stock-adjustments")).data?.items ?? [],
   },
   {
     kind: "stockOpname",
     key: "stock-opnames",
-    fetch: async () => (await api.GET("/stock-opnames")).data ?? [],
+    fetch: async () => (await api.GET("/stock-opnames")).data?.items ?? [],
   },
 ];
 

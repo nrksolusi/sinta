@@ -47,7 +47,7 @@ function OrderListPage() {
     queryKey: ["purchase-orders"],
     queryFn: async () => {
       const { data } = await api.GET("/purchase-orders");
-      return data ?? [];
+      return data?.items ?? [];
     },
   });
   // Linked receipts drive the client-side received-progress column.
@@ -55,7 +55,7 @@ function OrderListPage() {
     queryKey: ["goods-receipts"],
     queryFn: async () => {
       const { data } = await api.GET("/goods-receipts");
-      return data ?? [];
+      return data?.items ?? [];
     },
   });
   const { data: suppliers = [] } = useQuery(

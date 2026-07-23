@@ -248,6 +248,7 @@
   "status_draft": "Draft",
   "status_posted": "Posted",
   "status_reversed": "Reversed",
+  "status_cancelled": "Cancelled",
   "status_pending": "Awaiting approval",
   "empty_first_use_default_title": "Nothing here yet",
   "empty_filtered_default_title": "No matching results",

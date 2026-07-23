@@ -89,7 +89,7 @@ function AdjustmentListPage() {
   const { data: adjustments = [], isPending } = useQuery({
     queryKey: ["stock-adjustments"],
     queryFn: async (): Promise<StockAdjustment[]> =>
-      (await api.GET("/stock-adjustments")).data ?? [],
+      (await api.GET("/stock-adjustments")).data?.items ?? [],
   });
   const { data: warehouses = [] } = useQuery(pickerWarehousesQueryOptions);
 

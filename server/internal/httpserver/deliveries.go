@@ -66,18 +66,18 @@ func (s *Server) loadDelivery(ctx context.Context, q *store.Queries, tenantID, i
 	return deliveryToAPI(d, lines, actors), nil
 }
 
-func (s *Server) ListDeliveries(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ListDeliveries(w http.ResponseWriter, r *http.Request, _ api.ListDeliveriesParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
-	var out []api.Delivery
+	var items []api.Delivery
 	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
 		rows, err := q.ListDeliveries(r.Context(), tc.tenantID)
 		if err != nil {
 			return err
 		}
-		out = make([]api.Delivery, 0, len(rows))
+		items = make([]api.Delivery, 0, len(rows))
 		for _, d := range rows {
 			lines, err := q.ListDeliveryLines(r.Context(), store.ListDeliveryLinesParams{TenantID: tc.tenantID, DeliveryID: d.ID})
 			if err != nil {
@@ -87,14 +87,14 @@ func (s *Server) ListDeliveries(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, deliveryToAPI(d, lines, actors))
+			items = append(items, deliveryToAPI(d, lines, actors))
 		}
 		return nil
 	})
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, out)
+	writeJSON(w, http.StatusOK, api.DeliveryList{Items: items})
 }
 
 func (s *Server) CreateDelivery(w http.ResponseWriter, r *http.Request) {

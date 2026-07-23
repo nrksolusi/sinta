@@ -65,18 +65,18 @@ func (s *Server) loadGoodsReceipt(ctx context.Context, q *store.Queries, tenantI
 	return goodsReceiptToAPI(gr, lines, actors), nil
 }
 
-func (s *Server) ListGoodsReceipts(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ListGoodsReceipts(w http.ResponseWriter, r *http.Request, _ api.ListGoodsReceiptsParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
-	var out []api.GoodsReceipt
+	var items []api.GoodsReceipt
 	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
 		rows, err := q.ListGoodsReceipts(r.Context(), tc.tenantID)
 		if err != nil {
 			return err
 		}
-		out = make([]api.GoodsReceipt, 0, len(rows))
+		items = make([]api.GoodsReceipt, 0, len(rows))
 		for _, gr := range rows {
 			lines, err := q.ListGoodsReceiptLines(r.Context(), store.ListGoodsReceiptLinesParams{TenantID: tc.tenantID, GoodsReceiptID: gr.ID})
 			if err != nil {
@@ -86,14 +86,14 @@ func (s *Server) ListGoodsReceipts(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, goodsReceiptToAPI(gr, lines, actors))
+			items = append(items, goodsReceiptToAPI(gr, lines, actors))
 		}
 		return nil
 	})
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, out)
+	writeJSON(w, http.StatusOK, api.GoodsReceiptList{Items: items})
 }
 
 func (s *Server) CreateGoodsReceipt(w http.ResponseWriter, r *http.Request) {

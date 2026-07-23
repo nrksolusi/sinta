@@ -62,18 +62,18 @@ func (s *Server) loadSalesOrder(ctx context.Context, q *store.Queries, tenantID,
 	return salesOrderToAPI(so, lines, actors), nil
 }
 
-func (s *Server) ListSalesOrders(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ListSalesOrders(w http.ResponseWriter, r *http.Request, _ api.ListSalesOrdersParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
-	var out []api.SalesOrder
+	var items []api.SalesOrder
 	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
 		rows, err := q.ListSalesOrders(r.Context(), tc.tenantID)
 		if err != nil {
 			return err
 		}
-		out = make([]api.SalesOrder, 0, len(rows))
+		items = make([]api.SalesOrder, 0, len(rows))
 		for _, so := range rows {
 			lines, err := q.ListSalesOrderLines(r.Context(), store.ListSalesOrderLinesParams{TenantID: tc.tenantID, SalesOrderID: so.ID})
 			if err != nil {
@@ -83,14 +83,14 @@ func (s *Server) ListSalesOrders(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, salesOrderToAPI(so, lines, actors))
+			items = append(items, salesOrderToAPI(so, lines, actors))
 		}
 		return nil
 	})
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, out)
+	writeJSON(w, http.StatusOK, api.SalesOrderList{Items: items})
 }
 
 func (s *Server) CreateSalesOrder(w http.ResponseWriter, r *http.Request) {
@@ -350,4 +350,8 @@ func (s *Server) ReverseSalesOrder(w http.ResponseWriter, r *http.Request, id op
 		return
 	}
 	writeJSON(w, http.StatusCreated, out)
+}
+
+func (s *Server) CancelSalesOrder(w http.ResponseWriter, r *http.Request, _ api.DocumentId) {
+	writeError(w, http.StatusConflict, "not_implemented", "cancel not yet implemented")
 }

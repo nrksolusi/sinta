@@ -17,7 +17,7 @@ export const salesOrdersQueryOptions = queryOptions({
   queryKey: ["sales-orders"],
   queryFn: async (): Promise<SalesOrder[]> => {
     const { data } = await api.GET("/sales-orders");
-    return data ?? [];
+    return data?.items ?? [];
   },
 });
 
@@ -40,7 +40,7 @@ export const deliveriesForOrdersQueryOptions = queryOptions({
   queryKey: ["deliveries"],
   queryFn: async (): Promise<Delivery[]> => {
     const { data } = await api.GET("/deliveries");
-    return data ?? [];
+    return data?.items ?? [];
   },
 });
 

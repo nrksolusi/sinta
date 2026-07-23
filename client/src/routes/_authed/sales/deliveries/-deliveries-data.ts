@@ -13,7 +13,7 @@ export const deliveriesQueryOptions = queryOptions({
   queryKey: ["deliveries"],
   queryFn: async (): Promise<Delivery[]> => {
     const { data } = await api.GET("/deliveries");
-    return data ?? [];
+    return data?.items ?? [];
   },
 });
 

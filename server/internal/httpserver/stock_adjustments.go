@@ -64,18 +64,18 @@ func (s *Server) loadStockAdjustment(ctx context.Context, q *store.Queries, tena
 	return stockAdjustmentToAPI(a, lines, actors), nil
 }
 
-func (s *Server) ListStockAdjustments(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ListStockAdjustments(w http.ResponseWriter, r *http.Request, _ api.ListStockAdjustmentsParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
-	var out []api.StockAdjustment
+	var items []api.StockAdjustment
 	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
 		rows, err := q.ListStockAdjustments(r.Context(), tc.tenantID)
 		if err != nil {
 			return err
 		}
-		out = make([]api.StockAdjustment, 0, len(rows))
+		items = make([]api.StockAdjustment, 0, len(rows))
 		for _, a := range rows {
 			lines, err := q.ListStockAdjustmentLines(r.Context(), store.ListStockAdjustmentLinesParams{TenantID: tc.tenantID, StockAdjustmentID: a.ID})
 			if err != nil {
@@ -85,14 +85,14 @@ func (s *Server) ListStockAdjustments(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, stockAdjustmentToAPI(a, lines, actors))
+			items = append(items, stockAdjustmentToAPI(a, lines, actors))
 		}
 		return nil
 	})
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, out)
+	writeJSON(w, http.StatusOK, api.StockAdjustmentList{Items: items})
 }
 
 func (s *Server) CreateStockAdjustment(w http.ResponseWriter, r *http.Request) {

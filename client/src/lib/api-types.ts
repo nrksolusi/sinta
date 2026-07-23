@@ -473,6 +473,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/purchase-orders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a draft purchase order (terminal status, ADR-0018) */
+        post: operations["cancelPurchaseOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/purchase-orders/{id}/post": {
         parameters: {
             query?: never;
@@ -605,6 +624,25 @@ export interface paths {
         post?: never;
         /** Delete a draft sales order (rejected once posted) */
         delete: operations["deleteSalesOrder"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sales-orders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a draft sales order (terminal status, ADR-0018) */
+        post: operations["cancelSalesOrder"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1041,6 +1079,9 @@ export interface components {
             /** Format: uuid */
             productId: string;
         };
+        CancelInput: {
+            reason: string;
+        };
         /** @enum {string} */
         CatalogStatus: "active" | "archived";
         /**
@@ -1151,16 +1192,20 @@ export interface components {
             salesOrderLineId?: string | null;
             uom: string;
         };
+        DeliveryList: {
+            items: components["schemas"]["Delivery"][];
+            nextCursor: string | null;
+        };
         DocumentActor: {
             displayName: string;
             /** Format: uuid */
             id: string;
         };
         /**
-         * @description draft is editable; posted is immutable; reversed was cancelled by a reversal
+         * @description draft is editable; posted is immutable; reversed was cancelled by a reversal; cancelled is terminal for PO/SO (ADR-0018)
          * @enum {string}
          */
-        DocumentStatus: "draft" | "posted" | "reversed";
+        DocumentStatus: "draft" | "posted" | "reversed" | "cancelled";
         Error: {
             code: string;
             /** @description Per-field validation messages, when applicable */
@@ -1169,6 +1214,11 @@ export interface components {
             };
             message: string;
         };
+        /**
+         * @description Server-computed per PO/SO line and document (ADR-0016); null until SN-0002 implements the rollup
+         * @enum {string}
+         */
+        FulfillmentState: "open" | "partial" | "closed";
         GoodsReceipt: {
             /** Format: date-time */
             createdAt: string;
@@ -1231,6 +1281,10 @@ export interface components {
             qty: components["schemas"]["DecimalString"];
             unitCost?: components["schemas"]["DecimalString"];
             uom: string;
+        };
+        GoodsReceiptList: {
+            items: components["schemas"]["GoodsReceipt"][];
+            nextCursor: string | null;
         };
         Health: {
             /** @enum {string} */
@@ -1298,12 +1352,16 @@ export interface components {
             uom: string;
         };
         PurchaseOrder: {
+            cancelReason?: string;
+            /** Format: date-time */
+            cancelledAt?: string;
             /** Format: date-time */
             createdAt: string;
             createdBy: components["schemas"]["DocumentActor"];
             /** Format: date */
             docDate: string;
             docNumber?: string | null;
+            fulfillmentState?: components["schemas"]["FulfillmentState"];
             /** Format: uuid */
             id: string;
             lines: components["schemas"]["PurchaseOrderLine"][];
@@ -1332,12 +1390,14 @@ export interface components {
             warehouseId: string;
         };
         PurchaseOrderLine: {
+            fulfillmentState?: components["schemas"]["FulfillmentState"];
             /** Format: uuid */
             id: string;
             lineNo: number;
             /** Format: uuid */
             productId: string;
             qty: components["schemas"]["DecimalString"];
+            receivedQty?: components["schemas"]["DecimalString"];
             unitCost: components["schemas"]["DecimalString"];
             uom: string;
         };
@@ -1347,6 +1407,10 @@ export interface components {
             qty: components["schemas"]["DecimalString"];
             unitCost?: components["schemas"]["DecimalString"];
             uom: string;
+        };
+        PurchaseOrderList: {
+            items: components["schemas"]["PurchaseOrder"][];
+            nextCursor: string | null;
         };
         RegisterRequest: {
             /** Format: email */
@@ -1358,6 +1422,9 @@ export interface components {
         /** @enum {string} */
         Role: "owner" | "admin" | "warehouse" | "sales" | "viewer";
         SalesOrder: {
+            cancelReason?: string;
+            /** Format: date-time */
+            cancelledAt?: string;
             /** Format: date-time */
             createdAt: string;
             createdBy: components["schemas"]["DocumentActor"];
@@ -1366,6 +1433,7 @@ export interface components {
             /** Format: date */
             docDate: string;
             docNumber?: string | null;
+            fulfillmentState?: components["schemas"]["FulfillmentState"];
             /** Format: uuid */
             id: string;
             lines: components["schemas"]["SalesOrderLine"][];
@@ -1392,6 +1460,8 @@ export interface components {
             warehouseId: string;
         };
         SalesOrderLine: {
+            deliveredQty?: components["schemas"]["DecimalString"];
+            fulfillmentState?: components["schemas"]["FulfillmentState"];
             /** Format: uuid */
             id: string;
             lineNo: number;
@@ -1407,6 +1477,10 @@ export interface components {
             qty: components["schemas"]["DecimalString"];
             unitPrice?: components["schemas"]["DecimalString"];
             uom: string;
+        };
+        SalesOrderList: {
+            items: components["schemas"]["SalesOrder"][];
+            nextCursor: string | null;
         };
         SessionInfo: {
             /**
@@ -1470,6 +1544,10 @@ export interface components {
             qty: components["schemas"]["DecimalString"];
             unitCost?: components["schemas"]["DecimalString"];
             uom: string;
+        };
+        StockAdjustmentList: {
+            items: components["schemas"]["StockAdjustment"][];
+            nextCursor: string | null;
         };
         StockCardEntry: {
             /**
@@ -1577,6 +1655,10 @@ export interface components {
             productId: string;
             uom: string;
         };
+        StockOpnameList: {
+            items: components["schemas"]["StockOpname"][];
+            nextCursor: string | null;
+        };
         StockTransfer: {
             /** Format: date-time */
             createdAt: string;
@@ -1629,6 +1711,10 @@ export interface components {
             productId: string;
             qty: components["schemas"]["DecimalString"];
             uom: string;
+        };
+        StockTransferList: {
+            items: components["schemas"]["StockTransfer"][];
+            nextCursor: string | null;
         };
         StockValuationReport: {
             rows: components["schemas"]["StockValuationRow"][];
@@ -1785,6 +1871,13 @@ export interface components {
         };
     };
     parameters: {
+        DocListCursor: string;
+        DocListDateFrom: string;
+        DocListDateTo: string;
+        DocListLimit: number;
+        DocListQ: string;
+        DocListStatus: string;
+        DocListWarehouseId: string;
         DocumentId: string;
         ProductFilter: string;
         ProductId: string;
@@ -1916,7 +2009,15 @@ export interface operations {
     };
     listDeliveries: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: components["parameters"]["DocListStatus"];
+                warehouseId?: components["parameters"]["DocListWarehouseId"];
+                dateFrom?: components["parameters"]["DocListDateFrom"];
+                dateTo?: components["parameters"]["DocListDateTo"];
+                q?: components["parameters"]["DocListQ"];
+                cursor?: components["parameters"]["DocListCursor"];
+                limit?: components["parameters"]["DocListLimit"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1929,7 +2030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Delivery"][];
+                    "application/json": components["schemas"]["DeliveryList"];
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -2097,7 +2198,15 @@ export interface operations {
     };
     listGoodsReceipts: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: components["parameters"]["DocListStatus"];
+                warehouseId?: components["parameters"]["DocListWarehouseId"];
+                dateFrom?: components["parameters"]["DocListDateFrom"];
+                dateTo?: components["parameters"]["DocListDateTo"];
+                q?: components["parameters"]["DocListQ"];
+                cursor?: components["parameters"]["DocListCursor"];
+                limit?: components["parameters"]["DocListLimit"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2110,7 +2219,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GoodsReceipt"][];
+                    "application/json": components["schemas"]["GoodsReceiptList"];
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -2733,7 +2842,15 @@ export interface operations {
     };
     listPurchaseOrders: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: components["parameters"]["DocListStatus"];
+                warehouseId?: components["parameters"]["DocListWarehouseId"];
+                dateFrom?: components["parameters"]["DocListDateFrom"];
+                dateTo?: components["parameters"]["DocListDateTo"];
+                q?: components["parameters"]["DocListQ"];
+                cursor?: components["parameters"]["DocListCursor"];
+                limit?: components["parameters"]["DocListLimit"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2746,7 +2863,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PurchaseOrder"][];
+                    "application/json": components["schemas"]["PurchaseOrderList"];
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -2853,6 +2970,36 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    cancelPurchaseOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelInput"];
+            };
+        };
+        responses: {
+            /** @description Cancelled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrder"];
+                };
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
@@ -2990,7 +3137,15 @@ export interface operations {
     };
     listSalesOrders: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: components["parameters"]["DocListStatus"];
+                warehouseId?: components["parameters"]["DocListWarehouseId"];
+                dateFrom?: components["parameters"]["DocListDateFrom"];
+                dateTo?: components["parameters"]["DocListDateTo"];
+                q?: components["parameters"]["DocListQ"];
+                cursor?: components["parameters"]["DocListCursor"];
+                limit?: components["parameters"]["DocListLimit"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3003,7 +3158,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SalesOrder"][];
+                    "application/json": components["schemas"]["SalesOrderList"];
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -3117,6 +3272,36 @@ export interface operations {
             409: components["responses"]["Conflict"];
         };
     };
+    cancelSalesOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelInput"];
+            };
+        };
+        responses: {
+            /** @description Cancelled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesOrder"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     postSalesOrder: {
         parameters: {
             query?: never;
@@ -3171,7 +3356,15 @@ export interface operations {
     };
     listStockAdjustments: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: components["parameters"]["DocListStatus"];
+                warehouseId?: components["parameters"]["DocListWarehouseId"];
+                dateFrom?: components["parameters"]["DocListDateFrom"];
+                dateTo?: components["parameters"]["DocListDateTo"];
+                q?: components["parameters"]["DocListQ"];
+                cursor?: components["parameters"]["DocListCursor"];
+                limit?: components["parameters"]["DocListLimit"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3184,7 +3377,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StockAdjustment"][];
+                    "application/json": components["schemas"]["StockAdjustmentList"];
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -3352,7 +3545,15 @@ export interface operations {
     };
     listStockOpnames: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: components["parameters"]["DocListStatus"];
+                warehouseId?: components["parameters"]["DocListWarehouseId"];
+                dateFrom?: components["parameters"]["DocListDateFrom"];
+                dateTo?: components["parameters"]["DocListDateTo"];
+                q?: components["parameters"]["DocListQ"];
+                cursor?: components["parameters"]["DocListCursor"];
+                limit?: components["parameters"]["DocListLimit"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3365,7 +3566,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StockOpname"][];
+                    "application/json": components["schemas"]["StockOpnameList"];
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -3533,7 +3734,15 @@ export interface operations {
     };
     listStockTransfers: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: components["parameters"]["DocListStatus"];
+                warehouseId?: components["parameters"]["DocListWarehouseId"];
+                dateFrom?: components["parameters"]["DocListDateFrom"];
+                dateTo?: components["parameters"]["DocListDateTo"];
+                q?: components["parameters"]["DocListQ"];
+                cursor?: components["parameters"]["DocListCursor"];
+                limit?: components["parameters"]["DocListLimit"];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3546,7 +3755,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StockTransfer"][];
+                    "application/json": components["schemas"]["StockTransferList"];
                 };
             };
             401: components["responses"]["Unauthorized"];

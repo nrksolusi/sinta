@@ -69,18 +69,18 @@ func (s *Server) loadStockTransfer(ctx context.Context, q *store.Queries, tenant
 	return stockTransferToAPI(tr, lines, actors), nil
 }
 
-func (s *Server) ListStockTransfers(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ListStockTransfers(w http.ResponseWriter, r *http.Request, _ api.ListStockTransfersParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
-	var out []api.StockTransfer
+	var items []api.StockTransfer
 	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
 		rows, err := q.ListStockTransfers(r.Context(), tc.tenantID)
 		if err != nil {
 			return err
 		}
-		out = make([]api.StockTransfer, 0, len(rows))
+		items = make([]api.StockTransfer, 0, len(rows))
 		for _, tr := range rows {
 			lines, err := q.ListStockTransferLines(r.Context(), store.ListStockTransferLinesParams{TenantID: tc.tenantID, StockTransferID: tr.ID})
 			if err != nil {
@@ -90,14 +90,14 @@ func (s *Server) ListStockTransfers(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, stockTransferToAPI(tr, lines, actors))
+			items = append(items, stockTransferToAPI(tr, lines, actors))
 		}
 		return nil
 	})
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, out)
+	writeJSON(w, http.StatusOK, api.StockTransferList{Items: items})
 }
 
 func (s *Server) CreateStockTransfer(w http.ResponseWriter, r *http.Request) {

@@ -12,14 +12,20 @@ paths:
       operationId: listPurchaseOrders
       summary: List purchase orders
       tags: [documents]
+      parameters:
+        - { $ref: "#/components/parameters/DocListStatus" }
+        - { $ref: "#/components/parameters/DocListWarehouseId" }
+        - { $ref: "#/components/parameters/DocListDateFrom" }
+        - { $ref: "#/components/parameters/DocListDateTo" }
+        - { $ref: "#/components/parameters/DocListQ" }
+        - { $ref: "#/components/parameters/DocListCursor" }
+        - { $ref: "#/components/parameters/DocListLimit" }
       responses:
         "200":
           description: Purchase orders
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/PurchaseOrder" }
+              schema: { $ref: "#/components/schemas/PurchaseOrderList" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
@@ -118,20 +124,47 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
+  /purchase-orders/{id}/cancel:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: cancelPurchaseOrder
+      summary: Cancel a draft purchase order (terminal status, ADR-0018)
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CancelInput" }
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PurchaseOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   /goods-receipts:
     get:
       operationId: listGoodsReceipts
       summary: List goods receipts
       tags: [documents]
+      parameters:
+        - { $ref: "#/components/parameters/DocListStatus" }
+        - { $ref: "#/components/parameters/DocListWarehouseId" }
+        - { $ref: "#/components/parameters/DocListDateFrom" }
+        - { $ref: "#/components/parameters/DocListDateTo" }
+        - { $ref: "#/components/parameters/DocListQ" }
+        - { $ref: "#/components/parameters/DocListCursor" }
+        - { $ref: "#/components/parameters/DocListLimit" }
       responses:
         "200":
           description: Goods receipts
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/GoodsReceipt" }
+              schema: { $ref: "#/components/schemas/GoodsReceiptList" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
@@ -236,14 +269,20 @@ paths:
       operationId: listSalesOrders
       summary: List sales orders
       tags: [documents]
+      parameters:
+        - { $ref: "#/components/parameters/DocListStatus" }
+        - { $ref: "#/components/parameters/DocListWarehouseId" }
+        - { $ref: "#/components/parameters/DocListDateFrom" }
+        - { $ref: "#/components/parameters/DocListDateTo" }
+        - { $ref: "#/components/parameters/DocListQ" }
+        - { $ref: "#/components/parameters/DocListCursor" }
+        - { $ref: "#/components/parameters/DocListLimit" }
       responses:
         "200":
           description: Sales orders
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/SalesOrder" }
+              schema: { $ref: "#/components/schemas/SalesOrderList" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
@@ -342,20 +381,47 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
+  /sales-orders/{id}/cancel:
+    parameters: [{ $ref: "#/components/parameters/DocumentId" }]
+    post:
+      operationId: cancelSalesOrder
+      summary: Cancel a draft sales order (terminal status, ADR-0018)
+      tags: [documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CancelInput" }
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SalesOrder" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   /deliveries:
     get:
       operationId: listDeliveries
       summary: List deliveries
       tags: [documents]
+      parameters:
+        - { $ref: "#/components/parameters/DocListStatus" }
+        - { $ref: "#/components/parameters/DocListWarehouseId" }
+        - { $ref: "#/components/parameters/DocListDateFrom" }
+        - { $ref: "#/components/parameters/DocListDateTo" }
+        - { $ref: "#/components/parameters/DocListQ" }
+        - { $ref: "#/components/parameters/DocListCursor" }
+        - { $ref: "#/components/parameters/DocListLimit" }
       responses:
         "200":
           description: Deliveries
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/Delivery" }
+              schema: { $ref: "#/components/schemas/DeliveryList" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
@@ -460,14 +526,20 @@ paths:
       operationId: listStockTransfers
       summary: List stock transfers
       tags: [documents]
+      parameters:
+        - { $ref: "#/components/parameters/DocListStatus" }
+        - { $ref: "#/components/parameters/DocListWarehouseId" }
+        - { $ref: "#/components/parameters/DocListDateFrom" }
+        - { $ref: "#/components/parameters/DocListDateTo" }
+        - { $ref: "#/components/parameters/DocListQ" }
+        - { $ref: "#/components/parameters/DocListCursor" }
+        - { $ref: "#/components/parameters/DocListLimit" }
       responses:
         "200":
           description: Stock transfers
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/StockTransfer" }
+              schema: { $ref: "#/components/schemas/StockTransferList" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
@@ -572,14 +644,20 @@ paths:
       operationId: listStockAdjustments
       summary: List stock adjustments
       tags: [documents]
+      parameters:
+        - { $ref: "#/components/parameters/DocListStatus" }
+        - { $ref: "#/components/parameters/DocListWarehouseId" }
+        - { $ref: "#/components/parameters/DocListDateFrom" }
+        - { $ref: "#/components/parameters/DocListDateTo" }
+        - { $ref: "#/components/parameters/DocListQ" }
+        - { $ref: "#/components/parameters/DocListCursor" }
+        - { $ref: "#/components/parameters/DocListLimit" }
       responses:
         "200":
           description: Stock adjustments
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/StockAdjustment" }
+              schema: { $ref: "#/components/schemas/StockAdjustmentList" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
@@ -684,14 +762,20 @@ paths:
       operationId: listStockOpnames
       summary: List stock opnames
       tags: [documents]
+      parameters:
+        - { $ref: "#/components/parameters/DocListStatus" }
+        - { $ref: "#/components/parameters/DocListWarehouseId" }
+        - { $ref: "#/components/parameters/DocListDateFrom" }
+        - { $ref: "#/components/parameters/DocListDateTo" }
+        - { $ref: "#/components/parameters/DocListQ" }
+        - { $ref: "#/components/parameters/DocListCursor" }
+        - { $ref: "#/components/parameters/DocListLimit" }
       responses:
         "200":
           description: Stock opnames
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/StockOpname" }
+              schema: { $ref: "#/components/schemas/StockOpnameList" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
@@ -800,6 +884,41 @@ components:
       schema:
         type: string
         format: uuid
+    DocListStatus:
+      name: status
+      in: query
+      required: false
+      schema: { type: string }
+    DocListWarehouseId:
+      name: warehouseId
+      in: query
+      required: false
+      schema: { type: string, format: uuid }
+    DocListDateFrom:
+      name: dateFrom
+      in: query
+      required: false
+      schema: { type: string, format: date }
+    DocListDateTo:
+      name: dateTo
+      in: query
+      required: false
+      schema: { type: string, format: date }
+    DocListQ:
+      name: q
+      in: query
+      required: false
+      schema: { type: string }
+    DocListCursor:
+      name: cursor
+      in: query
+      required: false
+      schema: { type: string }
+    DocListLimit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, default: 50 }
 
   responses:
     NotFound:
@@ -811,8 +930,19 @@ components:
   schemas:
     DocumentStatus:
       type: string
-      enum: [draft, posted, reversed]
-      description: draft is editable; posted is immutable; reversed was cancelled by a reversal
+      enum: [draft, posted, reversed, cancelled]
+      description: draft is editable; posted is immutable; reversed was cancelled by a reversal; cancelled is terminal for PO/SO (ADR-0018)
+
+    FulfillmentState:
+      type: string
+      enum: [open, partial, closed]
+      description: Server-computed per PO/SO line and document (ADR-0016); null until SN-0002 implements the rollup
+
+    CancelInput:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 1 }
 
     DocumentActor:
       type: object
@@ -844,6 +974,8 @@ components:
         uom: { type: string }
         qty: { $ref: "#/components/schemas/DecimalString" }
         unitCost: { $ref: "#/components/schemas/DecimalString" }
+        receivedQty: { $ref: "#/components/schemas/DecimalString" }
+        fulfillmentState: { $ref: "#/components/schemas/FulfillmentState" }
     PurchaseOrderInput:
       type: object
       required: [supplierId, warehouseId, docDate, lines]
@@ -873,9 +1005,20 @@ components:
         createdBy: { $ref: "#/components/schemas/DocumentActor" }
         postedAt: { type: string, format: date-time }
         postedBy: { $ref: "#/components/schemas/DocumentActor" }
+        fulfillmentState: { $ref: "#/components/schemas/FulfillmentState" }
+        cancelledAt: { type: string, format: date-time }
+        cancelReason: { type: string }
         lines:
           type: array
           items: { $ref: "#/components/schemas/PurchaseOrderLine" }
+    PurchaseOrderList:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/PurchaseOrder" }
+        nextCursor: { type: string, nullable: true }
 
     GoodsReceiptLineInput:
       type: object
@@ -933,6 +1076,14 @@ components:
         lines:
           type: array
           items: { $ref: "#/components/schemas/GoodsReceiptLine" }
+    GoodsReceiptList:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/GoodsReceipt" }
+        nextCursor: { type: string, nullable: true }
 
     SalesOrderLineInput:
       type: object
@@ -952,6 +1103,8 @@ components:
         uom: { type: string }
         qty: { $ref: "#/components/schemas/DecimalString" }
         unitPrice: { $ref: "#/components/schemas/DecimalString" }
+        deliveredQty: { $ref: "#/components/schemas/DecimalString" }
+        fulfillmentState: { $ref: "#/components/schemas/FulfillmentState" }
     SalesOrderInput:
       type: object
       required: [customerId, warehouseId, docDate, lines]
@@ -981,9 +1134,20 @@ components:
         createdBy: { $ref: "#/components/schemas/DocumentActor" }
         postedAt: { type: string, format: date-time }
         postedBy: { $ref: "#/components/schemas/DocumentActor" }
+        fulfillmentState: { $ref: "#/components/schemas/FulfillmentState" }
+        cancelledAt: { type: string, format: date-time }
+        cancelReason: { type: string }
         lines:
           type: array
           items: { $ref: "#/components/schemas/SalesOrderLine" }
+    SalesOrderList:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/SalesOrder" }
+        nextCursor: { type: string, nullable: true }
 
     DeliveryLineInput:
       type: object
@@ -1039,6 +1203,14 @@ components:
         lines:
           type: array
           items: { $ref: "#/components/schemas/DeliveryLine" }
+    DeliveryList:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Delivery" }
+        nextCursor: { type: string, nullable: true }
 
     StockTransferLineInput:
       type: object
@@ -1090,6 +1262,14 @@ components:
         lines:
           type: array
           items: { $ref: "#/components/schemas/StockTransferLine" }
+    StockTransferList:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/StockTransfer" }
+        nextCursor: { type: string, nullable: true }
 
     StockAdjustmentLineInput:
       type: object
@@ -1145,6 +1325,14 @@ components:
         lines:
           type: array
           items: { $ref: "#/components/schemas/StockAdjustmentLine" }
+    StockAdjustmentList:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/StockAdjustment" }
+        nextCursor: { type: string, nullable: true }
 
     StockOpnameLineInput:
       type: object
@@ -1195,3 +1383,11 @@ components:
         lines:
           type: array
           items: { $ref: "#/components/schemas/StockOpnameLine" }
+    StockOpnameList:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/StockOpname" }
+        nextCursor: { type: string, nullable: true }

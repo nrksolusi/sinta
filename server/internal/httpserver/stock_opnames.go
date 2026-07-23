@@ -73,18 +73,18 @@ func (s *Server) loadStockOpname(ctx context.Context, q *store.Queries, tenantID
 	return stockOpnameToAPI(o, lines, actors), nil
 }
 
-func (s *Server) ListStockOpnames(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ListStockOpnames(w http.ResponseWriter, r *http.Request, _ api.ListStockOpnamesParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
-	var out []api.StockOpname
+	var items []api.StockOpname
 	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
 		rows, err := q.ListStockOpnames(r.Context(), tc.tenantID)
 		if err != nil {
 			return err
 		}
-		out = make([]api.StockOpname, 0, len(rows))
+		items = make([]api.StockOpname, 0, len(rows))
 		for _, o := range rows {
 			lines, err := q.ListStockOpnameLines(r.Context(), store.ListStockOpnameLinesParams{TenantID: tc.tenantID, StockOpnameID: o.ID})
 			if err != nil {
@@ -94,14 +94,14 @@ func (s *Server) ListStockOpnames(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			out = append(out, stockOpnameToAPI(o, lines, actors))
+			items = append(items, stockOpnameToAPI(o, lines, actors))
 		}
 		return nil
 	})
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, out)
+	writeJSON(w, http.StatusOK, api.StockOpnameList{Items: items})
 }
 
 func (s *Server) CreateStockOpname(w http.ResponseWriter, r *http.Request) {

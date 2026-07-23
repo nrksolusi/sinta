@@ -248,6 +248,7 @@
   "status_draft": "Draf",
   "status_posted": "Diposting",
   "status_reversed": "Dibatalkan",
+  "status_cancelled": "Dibatalkan (Permanen)",
   "status_pending": "Menunggu Persetujuan",
   "empty_first_use_default_title": "Belum ada apa-apa di sini",
   "empty_filtered_default_title": "Tidak ada hasil yang cocok",

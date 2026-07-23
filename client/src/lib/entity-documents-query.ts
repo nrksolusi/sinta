@@ -15,10 +15,10 @@ export const entityDocumentsQueryOptions = queryOptions({
       api.GET("/deliveries"),
     ]);
     return {
-      purchaseOrders: po.data ?? [],
-      goodsReceipts: gr.data ?? [],
-      salesOrders: so.data ?? [],
-      deliveries: del.data ?? [],
+      purchaseOrders: po.data?.items ?? [],
+      goodsReceipts: gr.data?.items ?? [],
+      salesOrders: so.data?.items ?? [],
+      deliveries: del.data?.items ?? [],
     };
   },
 });

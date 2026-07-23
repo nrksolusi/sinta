@@ -60,19 +60,43 @@ func (e CostingMethod) Valid() bool {
 
 // Defines values for DocumentStatus.
 const (
-	Draft    DocumentStatus = "draft"
-	Posted   DocumentStatus = "posted"
-	Reversed DocumentStatus = "reversed"
+	Cancelled DocumentStatus = "cancelled"
+	Draft     DocumentStatus = "draft"
+	Posted    DocumentStatus = "posted"
+	Reversed  DocumentStatus = "reversed"
 )
 
 // Valid indicates whether the value is a known member of the DocumentStatus enum.
 func (e DocumentStatus) Valid() bool {
 	switch e {
+	case Cancelled:
+		return true
 	case Draft:
 		return true
 	case Posted:
 		return true
 	case Reversed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FulfillmentState.
+const (
+	Closed  FulfillmentState = "closed"
+	Open    FulfillmentState = "open"
+	Partial FulfillmentState = "partial"
+)
+
+// Valid indicates whether the value is a known member of the FulfillmentState enum.
+func (e FulfillmentState) Valid() bool {
+	switch e {
+	case Closed:
+		return true
+	case Open:
+		return true
+	case Partial:
 		return true
 	default:
 		return false
@@ -185,6 +209,11 @@ type Batch struct {
 	ProductId  openapi_types.UUID  `json:"productId"`
 }
 
+// CancelInput defines model for CancelInput.
+type CancelInput struct {
+	Reason string `json:"reason"`
+}
+
 // CatalogStatus defines model for CatalogStatus.
 type CatalogStatus string
 
@@ -257,7 +286,7 @@ type Delivery struct {
 	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
 	SalesOrderId *openapi_types.UUID `json:"salesOrderId,omitempty"`
 
-	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal; cancelled is terminal for PO/SO (ADR-0018)
 	Status      DocumentStatus     `json:"status"`
 	WarehouseId openapi_types.UUID `json:"warehouseId"`
 }
@@ -300,13 +329,19 @@ type DeliveryLineInput struct {
 	Uom              string              `json:"uom"`
 }
 
+// DeliveryList defines model for DeliveryList.
+type DeliveryList struct {
+	Items      []Delivery `json:"items"`
+	NextCursor *string    `json:"nextCursor"`
+}
+
 // DocumentActor defines model for DocumentActor.
 type DocumentActor struct {
 	DisplayName string             `json:"displayName"`
 	Id          openapi_types.UUID `json:"id"`
 }
 
-// DocumentStatus draft is editable; posted is immutable; reversed was cancelled by a reversal
+// DocumentStatus draft is editable; posted is immutable; reversed was cancelled by a reversal; cancelled is terminal for PO/SO (ADR-0018)
 type DocumentStatus string
 
 // Error defines model for Error.
@@ -317,6 +352,9 @@ type Error struct {
 	Fields  *map[string]string `json:"fields,omitempty"`
 	Message string             `json:"message"`
 }
+
+// FulfillmentState Server-computed per PO/SO line and document (ADR-0016); null until SN-0002 implements the rollup
+type FulfillmentState string
 
 // GoodsReceipt defines model for GoodsReceipt.
 type GoodsReceipt struct {
@@ -333,7 +371,7 @@ type GoodsReceipt struct {
 	ReversedById    *openapi_types.UUID `json:"reversedById,omitempty"`
 	ReversesId      *openapi_types.UUID `json:"reversesId,omitempty"`
 
-	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal; cancelled is terminal for PO/SO (ADR-0018)
 	Status      DocumentStatus     `json:"status"`
 	SupplierId  openapi_types.UUID `json:"supplierId"`
 	WarehouseId openapi_types.UUID `json:"warehouseId"`
@@ -385,6 +423,12 @@ type GoodsReceiptLineInput struct {
 	// Example: 12.500
 	UnitCost *DecimalString `json:"unitCost,omitempty"`
 	Uom      string         `json:"uom"`
+}
+
+// GoodsReceiptList defines model for GoodsReceiptList.
+type GoodsReceiptList struct {
+	Items      []GoodsReceipt `json:"items"`
+	NextCursor *string        `json:"nextCursor"`
 }
 
 // Health defines model for Health.
@@ -465,19 +509,24 @@ type ProductUom struct {
 
 // PurchaseOrder defines model for PurchaseOrder.
 type PurchaseOrder struct {
-	CreatedAt    time.Time           `json:"createdAt"`
-	CreatedBy    DocumentActor       `json:"createdBy"`
-	DocDate      openapi_types.Date  `json:"docDate"`
-	DocNumber    *string             `json:"docNumber,omitempty"`
-	Id           openapi_types.UUID  `json:"id"`
-	Lines        []PurchaseOrderLine `json:"lines"`
-	Notes        string              `json:"notes"`
-	PostedAt     *time.Time          `json:"postedAt,omitempty"`
-	PostedBy     *DocumentActor      `json:"postedBy,omitempty"`
-	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
-	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
+	CancelReason *string            `json:"cancelReason,omitempty"`
+	CancelledAt  *time.Time         `json:"cancelledAt,omitempty"`
+	CreatedAt    time.Time          `json:"createdAt"`
+	CreatedBy    DocumentActor      `json:"createdBy"`
+	DocDate      openapi_types.Date `json:"docDate"`
+	DocNumber    *string            `json:"docNumber,omitempty"`
 
-	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	// FulfillmentState Server-computed per PO/SO line and document (ADR-0016); null until SN-0002 implements the rollup
+	FulfillmentState *FulfillmentState   `json:"fulfillmentState,omitempty"`
+	Id               openapi_types.UUID  `json:"id"`
+	Lines            []PurchaseOrderLine `json:"lines"`
+	Notes            string              `json:"notes"`
+	PostedAt         *time.Time          `json:"postedAt,omitempty"`
+	PostedBy         *DocumentActor      `json:"postedBy,omitempty"`
+	ReversedById     *openapi_types.UUID `json:"reversedById,omitempty"`
+	ReversesId       *openapi_types.UUID `json:"reversesId,omitempty"`
+
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal; cancelled is terminal for PO/SO (ADR-0018)
 	Status      DocumentStatus     `json:"status"`
 	SupplierId  openapi_types.UUID `json:"supplierId"`
 	WarehouseId openapi_types.UUID `json:"warehouseId"`
@@ -494,14 +543,21 @@ type PurchaseOrderInput struct {
 
 // PurchaseOrderLine defines model for PurchaseOrderLine.
 type PurchaseOrderLine struct {
-	Id        openapi_types.UUID `json:"id"`
-	LineNo    int                `json:"lineNo"`
-	ProductId openapi_types.UUID `json:"productId"`
+	// FulfillmentState Server-computed per PO/SO line and document (ADR-0016); null until SN-0002 implements the rollup
+	FulfillmentState *FulfillmentState  `json:"fulfillmentState,omitempty"`
+	Id               openapi_types.UUID `json:"id"`
+	LineNo           int                `json:"lineNo"`
+	ProductId        openapi_types.UUID `json:"productId"`
 
 	// Qty A decimal quantity or money value, string-encoded to avoid float loss
 	//
 	// Example: 12.500
 	Qty DecimalString `json:"qty"`
+
+	// ReceivedQty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	ReceivedQty *DecimalString `json:"receivedQty,omitempty"`
 
 	// UnitCost A decimal quantity or money value, string-encoded to avoid float loss
 	//
@@ -526,6 +582,12 @@ type PurchaseOrderLineInput struct {
 	Uom      string         `json:"uom"`
 }
 
+// PurchaseOrderList defines model for PurchaseOrderList.
+type PurchaseOrderList struct {
+	Items      []PurchaseOrder `json:"items"`
+	NextCursor *string         `json:"nextCursor"`
+}
+
 // RegisterRequest defines model for RegisterRequest.
 type RegisterRequest struct {
 	Email    openapi_types.Email `json:"email"`
@@ -538,20 +600,25 @@ type Role string
 
 // SalesOrder defines model for SalesOrder.
 type SalesOrder struct {
-	CreatedAt    time.Time           `json:"createdAt"`
-	CreatedBy    DocumentActor       `json:"createdBy"`
-	CustomerId   openapi_types.UUID  `json:"customerId"`
-	DocDate      openapi_types.Date  `json:"docDate"`
-	DocNumber    *string             `json:"docNumber,omitempty"`
-	Id           openapi_types.UUID  `json:"id"`
-	Lines        []SalesOrderLine    `json:"lines"`
-	Notes        string              `json:"notes"`
-	PostedAt     *time.Time          `json:"postedAt,omitempty"`
-	PostedBy     *DocumentActor      `json:"postedBy,omitempty"`
-	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
-	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
+	CancelReason *string            `json:"cancelReason,omitempty"`
+	CancelledAt  *time.Time         `json:"cancelledAt,omitempty"`
+	CreatedAt    time.Time          `json:"createdAt"`
+	CreatedBy    DocumentActor      `json:"createdBy"`
+	CustomerId   openapi_types.UUID `json:"customerId"`
+	DocDate      openapi_types.Date `json:"docDate"`
+	DocNumber    *string            `json:"docNumber,omitempty"`
 
-	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	// FulfillmentState Server-computed per PO/SO line and document (ADR-0016); null until SN-0002 implements the rollup
+	FulfillmentState *FulfillmentState   `json:"fulfillmentState,omitempty"`
+	Id               openapi_types.UUID  `json:"id"`
+	Lines            []SalesOrderLine    `json:"lines"`
+	Notes            string              `json:"notes"`
+	PostedAt         *time.Time          `json:"postedAt,omitempty"`
+	PostedBy         *DocumentActor      `json:"postedBy,omitempty"`
+	ReversedById     *openapi_types.UUID `json:"reversedById,omitempty"`
+	ReversesId       *openapi_types.UUID `json:"reversesId,omitempty"`
+
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal; cancelled is terminal for PO/SO (ADR-0018)
 	Status      DocumentStatus     `json:"status"`
 	WarehouseId openapi_types.UUID `json:"warehouseId"`
 }
@@ -567,9 +634,16 @@ type SalesOrderInput struct {
 
 // SalesOrderLine defines model for SalesOrderLine.
 type SalesOrderLine struct {
-	Id        openapi_types.UUID `json:"id"`
-	LineNo    int                `json:"lineNo"`
-	ProductId openapi_types.UUID `json:"productId"`
+	// DeliveredQty A decimal quantity or money value, string-encoded to avoid float loss
+	//
+	// Example: 12.500
+	DeliveredQty *DecimalString `json:"deliveredQty,omitempty"`
+
+	// FulfillmentState Server-computed per PO/SO line and document (ADR-0016); null until SN-0002 implements the rollup
+	FulfillmentState *FulfillmentState  `json:"fulfillmentState,omitempty"`
+	Id               openapi_types.UUID `json:"id"`
+	LineNo           int                `json:"lineNo"`
+	ProductId        openapi_types.UUID `json:"productId"`
 
 	// Qty A decimal quantity or money value, string-encoded to avoid float loss
 	//
@@ -599,6 +673,12 @@ type SalesOrderLineInput struct {
 	Uom       string         `json:"uom"`
 }
 
+// SalesOrderList defines model for SalesOrderList.
+type SalesOrderList struct {
+	Items      []SalesOrder `json:"items"`
+	NextCursor *string      `json:"nextCursor"`
+}
+
 // SessionInfo defines model for SessionInfo.
 type SessionInfo struct {
 	// ActiveTenantId Absent until a tenant is selected
@@ -622,7 +702,7 @@ type StockAdjustment struct {
 	ReversedById *openapi_types.UUID   `json:"reversedById,omitempty"`
 	ReversesId   *openapi_types.UUID   `json:"reversesId,omitempty"`
 
-	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal; cancelled is terminal for PO/SO (ADR-0018)
 	Status      DocumentStatus     `json:"status"`
 	WarehouseId openapi_types.UUID `json:"warehouseId"`
 }
@@ -668,6 +748,12 @@ type StockAdjustmentLineInput struct {
 	// Example: 12.500
 	UnitCost *DecimalString `json:"unitCost,omitempty"`
 	Uom      string         `json:"uom"`
+}
+
+// StockAdjustmentList defines model for StockAdjustmentList.
+type StockAdjustmentList struct {
+	Items      []StockAdjustment `json:"items"`
+	NextCursor *string           `json:"nextCursor"`
 }
 
 // StockCardEntry defines model for StockCardEntry.
@@ -742,7 +828,7 @@ type StockOpname struct {
 	ReversedById *openapi_types.UUID `json:"reversedById,omitempty"`
 	ReversesId   *openapi_types.UUID `json:"reversesId,omitempty"`
 
-	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal; cancelled is terminal for PO/SO (ADR-0018)
 	Status      DocumentStatus     `json:"status"`
 	WarehouseId openapi_types.UUID `json:"warehouseId"`
 }
@@ -786,6 +872,12 @@ type StockOpnameLineInput struct {
 	Uom        string             `json:"uom"`
 }
 
+// StockOpnameList defines model for StockOpnameList.
+type StockOpnameList struct {
+	Items      []StockOpname `json:"items"`
+	NextCursor *string       `json:"nextCursor"`
+}
+
 // StockTransfer defines model for StockTransfer.
 type StockTransfer struct {
 	CreatedAt       time.Time           `json:"createdAt"`
@@ -801,7 +893,7 @@ type StockTransfer struct {
 	ReversedById    *openapi_types.UUID `json:"reversedById,omitempty"`
 	ReversesId      *openapi_types.UUID `json:"reversesId,omitempty"`
 
-	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal
+	// Status draft is editable; posted is immutable; reversed was cancelled by a reversal; cancelled is terminal for PO/SO (ADR-0018)
 	Status        DocumentStatus     `json:"status"`
 	ToWarehouseId openapi_types.UUID `json:"toWarehouseId"`
 }
@@ -839,6 +931,12 @@ type StockTransferLineInput struct {
 	// Example: 12.500
 	Qty DecimalString `json:"qty"`
 	Uom string        `json:"uom"`
+}
+
+// StockTransferList defines model for StockTransferList.
+type StockTransferList struct {
+	Items      []StockTransfer `json:"items"`
+	NextCursor *string         `json:"nextCursor"`
 }
 
 // StockValuationReport defines model for StockValuationReport.
@@ -956,6 +1054,27 @@ type WarehouseInput struct {
 	Name string `json:"name"`
 }
 
+// DocListCursor defines model for DocListCursor.
+type DocListCursor = string
+
+// DocListDateFrom defines model for DocListDateFrom.
+type DocListDateFrom = openapi_types.Date
+
+// DocListDateTo defines model for DocListDateTo.
+type DocListDateTo = openapi_types.Date
+
+// DocListLimit defines model for DocListLimit.
+type DocListLimit = int
+
+// DocListQ defines model for DocListQ.
+type DocListQ = string
+
+// DocListStatus defines model for DocListStatus.
+type DocListStatus = string
+
+// DocListWarehouseId defines model for DocListWarehouseId.
+type DocListWarehouseId = openapi_types.UUID
+
 // DocumentId defines model for DocumentId.
 type DocumentId = openapi_types.UUID
 
@@ -986,6 +1105,28 @@ type Unauthorized = Error
 // ValidationError defines model for ValidationError.
 type ValidationError = Error
 
+// ListDeliveriesParams defines parameters for ListDeliveries.
+type ListDeliveriesParams struct {
+	Status      *DocListStatus      `form:"status,omitempty" json:"status,omitempty"`
+	WarehouseId *DocListWarehouseId `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
+	DateFrom    *DocListDateFrom    `form:"dateFrom,omitempty" json:"dateFrom,omitempty"`
+	DateTo      *DocListDateTo      `form:"dateTo,omitempty" json:"dateTo,omitempty"`
+	Q           *DocListQ           `form:"q,omitempty" json:"q,omitempty"`
+	Cursor      *DocListCursor      `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit       *DocListLimit       `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListGoodsReceiptsParams defines parameters for ListGoodsReceipts.
+type ListGoodsReceiptsParams struct {
+	Status      *DocListStatus      `form:"status,omitempty" json:"status,omitempty"`
+	WarehouseId *DocListWarehouseId `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
+	DateFrom    *DocListDateFrom    `form:"dateFrom,omitempty" json:"dateFrom,omitempty"`
+	DateTo      *DocListDateTo      `form:"dateTo,omitempty" json:"dateTo,omitempty"`
+	Q           *DocListQ           `form:"q,omitempty" json:"q,omitempty"`
+	Cursor      *DocListCursor      `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit       *DocListLimit       `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListPartnersParams defines parameters for ListPartners.
 type ListPartnersParams struct {
 	// Role Filter to partners that are a supplier or a customer
@@ -999,6 +1140,17 @@ type ListPartnersParamsRole string
 // ListProductsParams defines parameters for ListProducts.
 type ListProductsParams struct {
 	Status *CatalogStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// ListPurchaseOrdersParams defines parameters for ListPurchaseOrders.
+type ListPurchaseOrdersParams struct {
+	Status      *DocListStatus      `form:"status,omitempty" json:"status,omitempty"`
+	WarehouseId *DocListWarehouseId `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
+	DateFrom    *DocListDateFrom    `form:"dateFrom,omitempty" json:"dateFrom,omitempty"`
+	DateTo      *DocListDateTo      `form:"dateTo,omitempty" json:"dateTo,omitempty"`
+	Q           *DocListQ           `form:"q,omitempty" json:"q,omitempty"`
+	Cursor      *DocListCursor      `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit       *DocListLimit       `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ReportStockCardParams defines parameters for ReportStockCard.
@@ -1017,6 +1169,50 @@ type ReportStockOnHandParams struct {
 type ReportStockValuationParams struct {
 	WarehouseId *WarehouseFilter `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
 	ProductId   *ProductFilter   `form:"productId,omitempty" json:"productId,omitempty"`
+}
+
+// ListSalesOrdersParams defines parameters for ListSalesOrders.
+type ListSalesOrdersParams struct {
+	Status      *DocListStatus      `form:"status,omitempty" json:"status,omitempty"`
+	WarehouseId *DocListWarehouseId `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
+	DateFrom    *DocListDateFrom    `form:"dateFrom,omitempty" json:"dateFrom,omitempty"`
+	DateTo      *DocListDateTo      `form:"dateTo,omitempty" json:"dateTo,omitempty"`
+	Q           *DocListQ           `form:"q,omitempty" json:"q,omitempty"`
+	Cursor      *DocListCursor      `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit       *DocListLimit       `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListStockAdjustmentsParams defines parameters for ListStockAdjustments.
+type ListStockAdjustmentsParams struct {
+	Status      *DocListStatus      `form:"status,omitempty" json:"status,omitempty"`
+	WarehouseId *DocListWarehouseId `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
+	DateFrom    *DocListDateFrom    `form:"dateFrom,omitempty" json:"dateFrom,omitempty"`
+	DateTo      *DocListDateTo      `form:"dateTo,omitempty" json:"dateTo,omitempty"`
+	Q           *DocListQ           `form:"q,omitempty" json:"q,omitempty"`
+	Cursor      *DocListCursor      `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit       *DocListLimit       `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListStockOpnamesParams defines parameters for ListStockOpnames.
+type ListStockOpnamesParams struct {
+	Status      *DocListStatus      `form:"status,omitempty" json:"status,omitempty"`
+	WarehouseId *DocListWarehouseId `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
+	DateFrom    *DocListDateFrom    `form:"dateFrom,omitempty" json:"dateFrom,omitempty"`
+	DateTo      *DocListDateTo      `form:"dateTo,omitempty" json:"dateTo,omitempty"`
+	Q           *DocListQ           `form:"q,omitempty" json:"q,omitempty"`
+	Cursor      *DocListCursor      `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit       *DocListLimit       `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListStockTransfersParams defines parameters for ListStockTransfers.
+type ListStockTransfersParams struct {
+	Status      *DocListStatus      `form:"status,omitempty" json:"status,omitempty"`
+	WarehouseId *DocListWarehouseId `form:"warehouseId,omitempty" json:"warehouseId,omitempty"`
+	DateFrom    *DocListDateFrom    `form:"dateFrom,omitempty" json:"dateFrom,omitempty"`
+	DateTo      *DocListDateTo      `form:"dateTo,omitempty" json:"dateTo,omitempty"`
+	Q           *DocListQ           `form:"q,omitempty" json:"q,omitempty"`
+	Cursor      *DocListCursor      `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit       *DocListLimit       `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
@@ -1064,11 +1260,17 @@ type CreatePurchaseOrderJSONRequestBody = PurchaseOrderInput
 // UpdatePurchaseOrderJSONRequestBody defines body for UpdatePurchaseOrder for application/json ContentType.
 type UpdatePurchaseOrderJSONRequestBody = PurchaseOrderInput
 
+// CancelPurchaseOrderJSONRequestBody defines body for CancelPurchaseOrder for application/json ContentType.
+type CancelPurchaseOrderJSONRequestBody = CancelInput
+
 // CreateSalesOrderJSONRequestBody defines body for CreateSalesOrder for application/json ContentType.
 type CreateSalesOrderJSONRequestBody = SalesOrderInput
 
 // UpdateSalesOrderJSONRequestBody defines body for UpdateSalesOrder for application/json ContentType.
 type UpdateSalesOrderJSONRequestBody = SalesOrderInput
+
+// CancelSalesOrderJSONRequestBody defines body for CancelSalesOrder for application/json ContentType.
+type CancelSalesOrderJSONRequestBody = CancelInput
 
 // CreateStockAdjustmentJSONRequestBody defines body for CreateStockAdjustment for application/json ContentType.
 type CreateStockAdjustmentJSONRequestBody = StockAdjustmentInput
@@ -1125,7 +1327,7 @@ type ServerInterface interface {
 	SwitchTenant(w http.ResponseWriter, r *http.Request)
 	// ListDeliveries List deliveries
 	// (GET /deliveries)
-	ListDeliveries(w http.ResponseWriter, r *http.Request)
+	ListDeliveries(w http.ResponseWriter, r *http.Request, params ListDeliveriesParams)
 	// CreateDelivery Create a draft delivery
 	// (POST /deliveries)
 	CreateDelivery(w http.ResponseWriter, r *http.Request)
@@ -1146,7 +1348,7 @@ type ServerInterface interface {
 	ReverseDelivery(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// ListGoodsReceipts List goods receipts
 	// (GET /goods-receipts)
-	ListGoodsReceipts(w http.ResponseWriter, r *http.Request)
+	ListGoodsReceipts(w http.ResponseWriter, r *http.Request, params ListGoodsReceiptsParams)
 	// CreateGoodsReceipt Create a draft goods receipt
 	// (POST /goods-receipts)
 	CreateGoodsReceipt(w http.ResponseWriter, r *http.Request)
@@ -1215,7 +1417,7 @@ type ServerInterface interface {
 	DeleteProductUom(w http.ResponseWriter, r *http.Request, productId ProductId, uomId openapi_types.UUID)
 	// ListPurchaseOrders List purchase orders
 	// (GET /purchase-orders)
-	ListPurchaseOrders(w http.ResponseWriter, r *http.Request)
+	ListPurchaseOrders(w http.ResponseWriter, r *http.Request, params ListPurchaseOrdersParams)
 	// CreatePurchaseOrder Create a draft purchase order
 	// (POST /purchase-orders)
 	CreatePurchaseOrder(w http.ResponseWriter, r *http.Request)
@@ -1228,6 +1430,9 @@ type ServerInterface interface {
 	// UpdatePurchaseOrder Replace a draft purchase order (rejected once posted)
 	// (PUT /purchase-orders/{id})
 	UpdatePurchaseOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// CancelPurchaseOrder Cancel a draft purchase order (terminal status, ADR-0018)
+	// (POST /purchase-orders/{id}/cancel)
+	CancelPurchaseOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// PostPurchaseOrder Post a draft purchase order (assigns the gapless number)
 	// (POST /purchase-orders/{id}/post)
 	PostPurchaseOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
@@ -1245,7 +1450,7 @@ type ServerInterface interface {
 	ReportStockValuation(w http.ResponseWriter, r *http.Request, params ReportStockValuationParams)
 	// ListSalesOrders List sales orders
 	// (GET /sales-orders)
-	ListSalesOrders(w http.ResponseWriter, r *http.Request)
+	ListSalesOrders(w http.ResponseWriter, r *http.Request, params ListSalesOrdersParams)
 	// CreateSalesOrder Create a draft sales order
 	// (POST /sales-orders)
 	CreateSalesOrder(w http.ResponseWriter, r *http.Request)
@@ -1258,6 +1463,9 @@ type ServerInterface interface {
 	// UpdateSalesOrder Replace a draft sales order (rejected once posted)
 	// (PUT /sales-orders/{id})
 	UpdateSalesOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
+	// CancelSalesOrder Cancel a draft sales order (terminal status, ADR-0018)
+	// (POST /sales-orders/{id}/cancel)
+	CancelSalesOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// PostSalesOrder Post a draft sales order (assigns the gapless number)
 	// (POST /sales-orders/{id}/post)
 	PostSalesOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
@@ -1266,7 +1474,7 @@ type ServerInterface interface {
 	ReverseSalesOrder(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// ListStockAdjustments List stock adjustments
 	// (GET /stock-adjustments)
-	ListStockAdjustments(w http.ResponseWriter, r *http.Request)
+	ListStockAdjustments(w http.ResponseWriter, r *http.Request, params ListStockAdjustmentsParams)
 	// CreateStockAdjustment Create a draft stock adjustment
 	// (POST /stock-adjustments)
 	CreateStockAdjustment(w http.ResponseWriter, r *http.Request)
@@ -1287,7 +1495,7 @@ type ServerInterface interface {
 	ReverseStockAdjustment(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// ListStockOpnames List stock opnames
 	// (GET /stock-opnames)
-	ListStockOpnames(w http.ResponseWriter, r *http.Request)
+	ListStockOpnames(w http.ResponseWriter, r *http.Request, params ListStockOpnamesParams)
 	// CreateStockOpname Create a draft stock opname
 	// (POST /stock-opnames)
 	CreateStockOpname(w http.ResponseWriter, r *http.Request)
@@ -1308,7 +1516,7 @@ type ServerInterface interface {
 	ReverseStockOpname(w http.ResponseWriter, r *http.Request, id DocumentId)
 	// ListStockTransfers List stock transfers
 	// (GET /stock-transfers)
-	ListStockTransfers(w http.ResponseWriter, r *http.Request)
+	ListStockTransfers(w http.ResponseWriter, r *http.Request, params ListStockTransfersParams)
 	// CreateStockTransfer Create a draft stock transfer
 	// (POST /stock-transfers)
 	CreateStockTransfer(w http.ResponseWriter, r *http.Request)
@@ -1447,8 +1655,105 @@ func (siw *ServerInterfaceWrapper) SwitchTenant(w http.ResponseWriter, r *http.R
 // ListDeliveries operation middleware
 func (siw *ServerInterfaceWrapper) ListDeliveries(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListDeliveriesParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "warehouseId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "warehouseId", r.URL.Query(), &params.WarehouseId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "warehouseId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "warehouseId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateFrom", r.URL.Query(), &params.DateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateFrom"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateFrom", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateTo", r.URL.Query(), &params.DateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateTo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateTo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListDeliveries(w, r)
+		siw.Handler.ListDeliveries(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1605,8 +1910,105 @@ func (siw *ServerInterfaceWrapper) ReverseDelivery(w http.ResponseWriter, r *htt
 // ListGoodsReceipts operation middleware
 func (siw *ServerInterfaceWrapper) ListGoodsReceipts(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGoodsReceiptsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "warehouseId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "warehouseId", r.URL.Query(), &params.WarehouseId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "warehouseId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "warehouseId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateFrom", r.URL.Query(), &params.DateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateFrom"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateFrom", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateTo", r.URL.Query(), &params.DateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateTo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateTo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListGoodsReceipts(w, r)
+		siw.Handler.ListGoodsReceipts(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2179,8 +2581,105 @@ func (siw *ServerInterfaceWrapper) DeleteProductUom(w http.ResponseWriter, r *ht
 // ListPurchaseOrders operation middleware
 func (siw *ServerInterfaceWrapper) ListPurchaseOrders(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPurchaseOrdersParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "warehouseId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "warehouseId", r.URL.Query(), &params.WarehouseId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "warehouseId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "warehouseId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateFrom", r.URL.Query(), &params.DateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateFrom"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateFrom", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateTo", r.URL.Query(), &params.DateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateTo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateTo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListPurchaseOrders(w, r)
+		siw.Handler.ListPurchaseOrders(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2273,6 +2772,32 @@ func (siw *ServerInterfaceWrapper) UpdatePurchaseOrder(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdatePurchaseOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CancelPurchaseOrder operation middleware
+func (siw *ServerInterfaceWrapper) CancelPurchaseOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CancelPurchaseOrder(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2475,8 +3000,105 @@ func (siw *ServerInterfaceWrapper) ReportStockValuation(w http.ResponseWriter, r
 // ListSalesOrders operation middleware
 func (siw *ServerInterfaceWrapper) ListSalesOrders(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListSalesOrdersParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "warehouseId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "warehouseId", r.URL.Query(), &params.WarehouseId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "warehouseId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "warehouseId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateFrom", r.URL.Query(), &params.DateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateFrom"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateFrom", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateTo", r.URL.Query(), &params.DateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateTo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateTo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListSalesOrders(w, r)
+		siw.Handler.ListSalesOrders(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2578,6 +3200,32 @@ func (siw *ServerInterfaceWrapper) UpdateSalesOrder(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// CancelSalesOrder operation middleware
+func (siw *ServerInterfaceWrapper) CancelSalesOrder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id DocumentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CancelSalesOrder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // PostSalesOrder operation middleware
 func (siw *ServerInterfaceWrapper) PostSalesOrder(w http.ResponseWriter, r *http.Request) {
 
@@ -2633,8 +3281,105 @@ func (siw *ServerInterfaceWrapper) ReverseSalesOrder(w http.ResponseWriter, r *h
 // ListStockAdjustments operation middleware
 func (siw *ServerInterfaceWrapper) ListStockAdjustments(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListStockAdjustmentsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "warehouseId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "warehouseId", r.URL.Query(), &params.WarehouseId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "warehouseId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "warehouseId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateFrom", r.URL.Query(), &params.DateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateFrom"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateFrom", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateTo", r.URL.Query(), &params.DateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateTo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateTo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListStockAdjustments(w, r)
+		siw.Handler.ListStockAdjustments(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2791,8 +3536,105 @@ func (siw *ServerInterfaceWrapper) ReverseStockAdjustment(w http.ResponseWriter,
 // ListStockOpnames operation middleware
 func (siw *ServerInterfaceWrapper) ListStockOpnames(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListStockOpnamesParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "warehouseId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "warehouseId", r.URL.Query(), &params.WarehouseId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "warehouseId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "warehouseId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateFrom", r.URL.Query(), &params.DateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateFrom"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateFrom", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateTo", r.URL.Query(), &params.DateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateTo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateTo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListStockOpnames(w, r)
+		siw.Handler.ListStockOpnames(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2949,8 +3791,105 @@ func (siw *ServerInterfaceWrapper) ReverseStockOpname(w http.ResponseWriter, r *
 // ListStockTransfers operation middleware
 func (siw *ServerInterfaceWrapper) ListStockTransfers(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListStockTransfersParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "warehouseId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "warehouseId", r.URL.Query(), &params.WarehouseId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "warehouseId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "warehouseId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateFrom", r.URL.Query(), &params.DateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateFrom"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateFrom", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "dateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "dateTo", r.URL.Query(), &params.DateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "dateTo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dateTo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListStockTransfers(w, r)
+		siw.Handler.ListStockTransfers(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3480,6 +4419,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/purchase-orders/{id}", wrapper.DeletePurchaseOrder)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/purchase-orders/{id}", wrapper.GetPurchaseOrder)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/purchase-orders/{id}", wrapper.UpdatePurchaseOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/purchase-orders/{id}/cancel", wrapper.CancelPurchaseOrder)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/purchase-orders/{id}/post", wrapper.PostPurchaseOrder)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/purchase-orders/{id}/reverse", wrapper.ReversePurchaseOrder)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports/stock-card", wrapper.ReportStockCard)
@@ -3490,6 +4430,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/sales-orders/{id}", wrapper.DeleteSalesOrder)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/sales-orders/{id}", wrapper.GetSalesOrder)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/sales-orders/{id}", wrapper.UpdateSalesOrder)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/sales-orders/{id}/cancel", wrapper.CancelSalesOrder)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/sales-orders/{id}/post", wrapper.PostSalesOrder)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/sales-orders/{id}/reverse", wrapper.ReverseSalesOrder)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stock-adjustments", wrapper.ListStockAdjustments)
@@ -3534,120 +4475,128 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

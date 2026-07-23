@@ -13,7 +13,7 @@ export const opnamesQueryOptions = queryOptions({
   queryKey: ["stock-opnames"],
   queryFn: async (): Promise<StockOpname[]> => {
     const { data } = await api.GET("/stock-opnames");
-    return data ?? [];
+    return data?.items ?? [];
   },
 });
 
