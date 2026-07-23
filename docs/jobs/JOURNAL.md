@@ -5,6 +5,7 @@
 Every log entry across all jobs and incidents, newest first. Generated. Protocol: [README.md](README.md).
 
 - `2026-07-23` · **SN-0001** · _filed_ — Migrated from fix-4 work order (was FIX4-01). Gates and scope fence above are the handoff contract.
+- `2026-07-23` · **SN-0001** · _done_ — Implemented as fix-4 slice 1 (commit 7c56f84), landed on main. Migration 0303 adds the cancelled PO/SO status CHECK, tenant_settings (tenant_id UNIQUE + RLS), and pg_trgm + trigram/FK indexes; the spec gains read-query params (cursor/limit/q/date/warehouse), the list {items,nextCursor} envelope, and cancel routes; api regenerated. Gates green: go build/vet/test, pnpm typecheck + 198 tests. Note: tenant_settings is a stub table - its own ADR is still a follow-up.
 - `2026-07-23` · **SN-0002** · _filed_ — Migrated from fix-4 work order (was FIX4-02). Blocked by SN-0001. Gates and scope fence above are the handoff contract.
 - `2026-07-23` · **SN-0003** · _filed_ — Migrated from fix-4 work order (was FIX4-03). Blocked by SN-0002. Gates and scope fence above are the handoff contract.
 - `2026-07-23` · **SN-0004** · _filed_ — Migrated from fix-4 work order (was FIX4-04). Blocked by SN-0001. Gates and scope fence above are the handoff contract.

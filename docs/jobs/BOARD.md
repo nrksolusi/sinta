@@ -6,7 +6,7 @@ Every job, current state, sorted by id. Generated from `wo/` — do not edit her
 
 | Updated | ID | Type | Pri | Status | Blocked by | Title | Branch |
 |---|---|---|---|---|---|---|---|
-| 2026-07-23 | [SN-0001](wo/SN-0001.md) | CHORE | P0 | ready | - | Contract & schema freeze | — |
+| 2026-07-23 | [SN-0001](wo/SN-0001.md) | CHORE | P0 | done | - | Contract & schema freeze | feat/fix-4-slice-1 |
 | 2026-07-23 | [SN-0002](wo/SN-0002.md) | FEAT | P0 | blocked | SN-0001 | Read-query + entity search (server) | — |
 | 2026-07-23 | [SN-0003](wo/SN-0003.md) | FEAT | P1 | blocked | SN-0002 | Read-query + search (client) | — |
 | 2026-07-23 | [SN-0004](wo/SN-0004.md) | FEAT | P0 | blocked | SN-0001 | Order fulfillment rollup + receiving rules (server) | — |
