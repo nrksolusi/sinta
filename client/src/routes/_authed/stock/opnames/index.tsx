@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
@@ -9,10 +9,15 @@ import {
 } from "@/components/doc-list";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import type { components } from "@/lib/api-types";
 import { warehousesQueryOptions } from "@/lib/catalog";
+import { buildDocListParams } from "@/lib/doc-list-params";
 import { formatDate } from "@/lib/format";
 import { m } from "@/paraglide/messages";
-import { badgeStatus, opnamesQueryOptions } from "./-opname-data";
+import { badgeStatus } from "./-opname-data";
+
+type StockOpname = components["schemas"]["StockOpname"];
 
 // Opname list rows carry the line count (opnames have no counterparty/total).
 interface OpnameRow extends DocRow {
@@ -33,7 +38,23 @@ function OpnameListPage() {
   const filters = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const { data: opnames = [], isPending } = useQuery(opnamesQueryOptions);
+  const { data, isPending, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ["stock-opnames", filters],
+    queryFn: async ({
+      pageParam,
+    }): Promise<{ items: StockOpname[]; nextCursor: string | null }> => {
+      const params = buildDocListParams(
+        filters,
+        pageParam as string | undefined,
+      );
+      return (
+        (await api.GET("/stock-opnames", { params: { query: params } }))
+          .data ?? { items: [], nextCursor: null }
+      );
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
   const { data: warehouses = [] } = useQuery(warehousesQueryOptions);
 
   const warehouseCode = useMemo(
@@ -41,24 +62,22 @@ function OpnameListPage() {
     [warehouses],
   );
 
-  const rows = useMemo<OpnameRow[]>(() => {
-    const filtered = opnames.filter((o) => {
-      if (filters.status && o.status !== filters.status) return false;
-      if (filters.warehouse && o.warehouseId !== filters.warehouse)
-        return false;
-      return true;
-    });
-    return filtered.map((o) => ({
-      id: o.id,
-      number: o.docNumber ?? null,
-      date: o.docDate,
-      counterparty: "",
-      warehouse: warehouseCode.get(o.warehouseId) ?? "",
-      total: null,
-      status: badgeStatus(o.status),
-      lineCount: o.lines.length,
-    }));
-  }, [opnames, filters, warehouseCode]);
+  const opnames: StockOpname[] = data?.pages.flatMap((p) => p.items) ?? [];
+
+  const rows = useMemo<OpnameRow[]>(
+    () =>
+      opnames.map((o) => ({
+        id: o.id,
+        number: o.docNumber ?? null,
+        date: o.docDate,
+        counterparty: "",
+        warehouse: warehouseCode.get(o.warehouseId) ?? "",
+        total: null,
+        status: badgeStatus(o.status),
+        lineCount: o.lines.length,
+      })),
+    [opnames, warehouseCode],
+  );
 
   const columns = useMemo<ColumnDef<OpnameRow>[]>(
     () => [
@@ -137,6 +156,13 @@ function OpnameListPage() {
           ),
         }}
       />
+      {hasNextPage && (
+        <div className="flex justify-center pt-2">
+          <Button variant="outline" onClick={() => fetchNextPage()}>
+            {m.doclist_load_more()}
+          </Button>
+        </div>
+      )}
     </main>
   );
 }

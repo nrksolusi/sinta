@@ -680,5 +680,9 @@
   "po_not_found": "Pesanan pembelian tidak ditemukan.",
   "po_save_failed": "Tidak dapat menyimpan draf. Silakan coba lagi.",
   "po_reverse_failed": "Tidak dapat membatalkan. Silakan coba lagi.",
-  "po_draft_saved": "Draf tersimpan."
+  "po_draft_saved": "Draf tersimpan.",
+  "doclist_load_more": "Muat lebih banyak",
+  "picker_select_product": "Pilih produk",
+  "picker_select_partner": "Pilih mitra",
+  "picker_select_warehouse": "Pilih gudang"
 }

@@ -97,19 +97,6 @@ export function deliveryTotalQty(lines: { qty: string }[]): number {
   return total;
 }
 
-// Client-side filter for the list (server has no filter params at M1). status
-// matches the DocumentStatus; warehouse matches the warehouse id.
-export function filterDeliveries(
-  deliveries: Delivery[],
-  filters: DeliveryFilters,
-): Delivery[] {
-  return deliveries.filter((d) => {
-    if (filters.status && d.status !== filters.status) return false;
-    if (filters.warehouse && d.warehouseId !== filters.warehouse) return false;
-    return true;
-  });
-}
-
 // Delivery lines -> editable GridLines. Products are resolved from the catalog;
 // a line whose product is missing from the catalog is dropped (it cannot be
 // rendered or re-posted without its base unit). withCost is always false for

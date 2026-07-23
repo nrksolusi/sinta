@@ -6,7 +6,6 @@ import {
   type Delivery,
   deliveredByLine,
   deliveryProgress,
-  filterSalesOrders,
   gridToSalesOrderLines,
   lineFulfillment,
   type SalesOrder,
@@ -131,23 +130,6 @@ test("salesOrderTotal sums qty * unitPrice, ignoring non-numeric", () => {
   ).toBe(11000);
   expect(salesOrderTotal([soLine("a", "p1", "3", "")])).toBe(0);
   expect(salesOrderTotal([])).toBe(0);
-});
-
-test("filterSalesOrders filters by status and warehouse", () => {
-  const rows = [
-    order({ id: "a", status: "draft", warehouseId: "w1" }),
-    order({ id: "b", status: "posted", warehouseId: "w1" }),
-    order({ id: "c", status: "posted", warehouseId: "w2" }),
-  ];
-  expect(filterSalesOrders(rows, {}).map((o) => o.id)).toEqual(["a", "b", "c"]);
-  expect(
-    filterSalesOrders(rows, { status: "posted" }).map((o) => o.id),
-  ).toEqual(["b", "c"]);
-  expect(
-    filterSalesOrders(rows, { status: "posted", warehouse: "w2" }).map(
-      (o) => o.id,
-    ),
-  ).toEqual(["c"]);
 });
 
 test("salesOrderLinesToGrid resolves products, carries price, drops unknown", () => {

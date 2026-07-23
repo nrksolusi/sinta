@@ -23,3 +23,19 @@ if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) {
 afterEach(() => {
   cleanup();
 });
+
+// jsdom lacks window.matchMedia, which useIsMobile uses for the mobile
+// breakpoint media query. Provide a stub that always returns not-matches
+// (desktop) so components using the hook render without errors.
+if (typeof window !== "undefined" && !window.matchMedia) {
+  window.matchMedia = (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+}

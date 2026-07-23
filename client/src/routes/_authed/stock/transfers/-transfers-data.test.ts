@@ -4,7 +4,6 @@ import type { Product } from "@/lib/pickers-data";
 import type { StockTransfer } from "./-transfers-data";
 import {
   buildTransferTimeline,
-  filterTransferRows,
   postConfirmSpecifics,
   sameWarehouse,
   toTransferInput,
@@ -103,43 +102,6 @@ test("transferDocRows shows null number for a draft", () => {
     (from, to) => `${from} -> ${to}`,
   );
   expect(rows[0].number).toBeNull();
-});
-
-test("filterTransferRows filters by status and by warehouse code", () => {
-  const rows = transferDocRows(
-    [
-      transfer({ id: "a", status: "draft", docNumber: null }),
-      transfer({ id: "b", status: "posted" }),
-      transfer({
-        id: "c",
-        status: "posted",
-        fromWarehouseId: "wh-2",
-        toWarehouseId: "wh-1",
-      }),
-    ],
-    warehouseName,
-    (from, to) => `${from} -> ${to}`,
-  );
-
-  expect(filterTransferRows(rows, {}).map((r) => r.id)).toEqual([
-    "a",
-    "b",
-    "c",
-  ]);
-  expect(
-    filterTransferRows(rows, { status: "draft" }).map((r) => r.id),
-  ).toEqual(["a"]);
-  // warehouse filter matches either side of the transfer (from GD-02 or to GD-02)
-  expect(
-    filterTransferRows(rows, { warehouse: "GD-02" })
-      .map((r) => r.id)
-      .sort(),
-  ).toEqual(["a", "b", "c"]);
-  expect(
-    filterTransferRows(rows, { warehouse: "GD-01", status: "posted" }).map(
-      (r) => r.id,
-    ),
-  ).toEqual(["b", "c"]);
 });
 
 test("toTransferInput builds the API body from form state and grid lines", () => {

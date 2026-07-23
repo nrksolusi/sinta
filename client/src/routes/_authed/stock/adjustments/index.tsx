@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
@@ -8,8 +8,9 @@ import {
   type DocRow,
 } from "@/components/doc-list";
 import { StatusBadge } from "@/components/status-badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { buildDocListParams } from "@/lib/doc-list-params";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { pickerWarehousesQueryOptions } from "@/lib/pickers-data";
 import { m } from "@/paraglide/messages";
@@ -86,12 +87,27 @@ function AdjustmentListPage() {
   const filters = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const { data: adjustments = [], isPending } = useQuery({
-    queryKey: ["stock-adjustments"],
-    queryFn: async (): Promise<StockAdjustment[]> =>
-      (await api.GET("/stock-adjustments")).data?.items ?? [],
+  const { data, isPending, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ["stock-adjustments", filters],
+    queryFn: async ({
+      pageParam,
+    }): Promise<{ items: StockAdjustment[]; nextCursor: string | null }> => {
+      const params = buildDocListParams(
+        filters,
+        pageParam as string | undefined,
+      );
+      return (
+        (await api.GET("/stock-adjustments", { params: { query: params } }))
+          .data ?? { items: [], nextCursor: null }
+      );
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
   const { data: warehouses = [] } = useQuery(pickerWarehousesQueryOptions);
+
+  const adjustments: StockAdjustment[] =
+    data?.pages.flatMap((p) => p.items) ?? [];
 
   const rows = useMemo(
     () => adjustmentDocRows(adjustments, warehouses),
@@ -140,6 +156,13 @@ function AdjustmentListPage() {
           ),
         }}
       />
+      {hasNextPage && (
+        <div className="flex justify-center pt-2">
+          <Button variant="outline" onClick={() => fetchNextPage()}>
+            {m.doclist_load_more()}
+          </Button>
+        </div>
+      )}
     </main>
   );
 }

@@ -11,7 +11,6 @@ import {
   poReceivedProgress,
   purchaseOrderToDocRow,
   receivedByPoLine,
-  sortPurchaseOrders,
 } from "./-order-data";
 
 type GoodsReceipt = components["schemas"]["GoodsReceipt"];
@@ -90,37 +89,6 @@ test("purchaseOrderToDocRow leaves number null for a draft", () => {
     warehouseCode: () => "y",
   });
   expect(row.number).toBeNull();
-});
-
-// ---- sortPurchaseOrders ------------------------------------------------------
-
-test("sortPurchaseOrders filters by status, warehouse and date, drafts first then newest", () => {
-  const orders: PurchaseOrder[] = [
-    po({ id: "a", docNumber: "PO-1", docDate: "2026-07-10", status: "posted" }),
-    po({ id: "b", docNumber: null, docDate: "2026-07-05", status: "draft" }),
-    po({
-      id: "c",
-      docNumber: "PO-2",
-      docDate: "2026-07-12",
-      status: "posted",
-      warehouseId: "wh-2",
-    }),
-  ];
-
-  expect(sortPurchaseOrders(orders, {}).map((o) => o.id)).toEqual([
-    "b",
-    "c",
-    "a",
-  ]);
-  expect(
-    sortPurchaseOrders(orders, { status: "draft" }).map((o) => o.id),
-  ).toEqual(["b"]);
-  expect(
-    sortPurchaseOrders(orders, { warehouse: "wh-2" }).map((o) => o.id),
-  ).toEqual(["c"]);
-  expect(
-    sortPurchaseOrders(orders, { dateRange: "2026-07-10" }).map((o) => o.id),
-  ).toEqual(["a"]);
 });
 
 // ---- gridLineFromPoLine ------------------------------------------------------

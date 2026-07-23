@@ -71,25 +71,6 @@ export function transferDocRows(
   });
 }
 
-// Client-side filtering behind the DocList filter interface (fix-2 API gap 3:
-// list endpoints have no server filters yet). Warehouse matches either side.
-export function filterTransferRows(
-  rows: TransferDocRow[],
-  filters: TransferFilters,
-): TransferDocRow[] {
-  return rows.filter((row) => {
-    if (filters.status && row.status !== filters.status) return false;
-    if (
-      filters.warehouse &&
-      row.fromCode !== filters.warehouse &&
-      row.toCode !== filters.warehouse
-    ) {
-      return false;
-    }
-    return true;
-  });
-}
-
 export interface TransferFormState {
   fromWarehouseId: string;
   toWarehouseId: string;

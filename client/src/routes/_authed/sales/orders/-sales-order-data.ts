@@ -106,19 +106,6 @@ export function salesOrderToDocRow(
   };
 }
 
-// Client-side filter for the list (server has no filter params at M1). status
-// matches the DocumentStatus; warehouse matches the warehouse id.
-export function filterSalesOrders(
-  orders: SalesOrder[],
-  filters: SalesOrderFilters,
-): SalesOrder[] {
-  return orders.filter((o) => {
-    if (filters.status && o.status !== filters.status) return false;
-    if (filters.warehouse && o.warehouseId !== filters.warehouse) return false;
-    return true;
-  });
-}
-
 // Sales order lines -> editable GridLines. Products are resolved from the
 // catalog; a line whose product is missing is dropped (it cannot be rendered or
 // re-posted without its base unit). withCost is true - unitPrice rides on the

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
@@ -7,18 +7,17 @@ import { type DocumentStatus, StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { warehousesQueryOptions } from "@/lib/catalog";
+import { buildDocListParams } from "@/lib/doc-list-params";
 import { formatDate, formatNumber } from "@/lib/format";
 import { m } from "@/paraglide/messages";
 import {
-  filterTransferRows,
   type StockTransfer,
   type TransferDocRow,
   type TransferFilters,
   transferDocRows,
 } from "./-transfers-data";
 
-// List filters live in the URL (shareable, survive back-nav per UX-D10). The
-// filter values are matched client-side (fix-2 API gap 3).
+// List filters live in the URL (shareable, survive back-nav per UX-D10).
 interface TransferSearch {
   status?: string;
   warehouse?: string;
@@ -32,14 +31,6 @@ export const Route = createFileRoute("/_authed/stock/transfers/")({
   }),
   component: TransferListPage,
 });
-
-const transfersQueryOptions = {
-  queryKey: ["stock-transfers"] as const,
-  queryFn: async (): Promise<StockTransfer[]> => {
-    const { data } = await api.GET("/stock-transfers");
-    return data?.items ?? [];
-  },
-};
 
 // Transfer columns (prototype D1, transfer variant): No. / Tanggal /
 // Dari -> Ke gudang / Total qty / Status. Total is a quantity, not money, so it
@@ -97,7 +88,26 @@ function TransferListPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
 
-  const { data: transfers = [], isLoading } = useQuery(transfersQueryOptions);
+  const filters = useMemo<TransferFilters>(
+    () => ({ status: search.status, warehouse: search.warehouse }),
+    [search.status, search.warehouse],
+  );
+
+  const { data, isLoading, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ["stock-transfers", filters],
+    queryFn: async ({ pageParam }) => {
+      const params = buildDocListParams(
+        filters,
+        pageParam as string | undefined,
+      );
+      const { data } = await api.GET("/stock-transfers", {
+        params: { query: params },
+      });
+      return data ?? { items: [], nextCursor: null };
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
   const { data: warehouses = [] } = useQuery(warehousesQueryOptions);
 
   const warehouseName = useMemo(() => {
@@ -105,21 +115,14 @@ function TransferListPage() {
     return (id: string) => byId.get(id) ?? id;
   }, [warehouses]);
 
+  const transfers: StockTransfer[] = data?.pages.flatMap((p) => p.items) ?? [];
+
   const rows = useMemo(
     () =>
       transferDocRows(transfers, warehouseName, (from, to) =>
         m.transfer_route({ from, to }),
       ),
     [transfers, warehouseName],
-  );
-
-  const filters = useMemo<TransferFilters>(
-    () => ({ status: search.status, warehouse: search.warehouse }),
-    [search.status, search.warehouse],
-  );
-  const visible = useMemo(
-    () => filterTransferRows(rows, filters),
-    [rows, filters],
   );
 
   const onFiltersChange = (next: DocListFilters) => {
@@ -147,7 +150,7 @@ function TransferListPage() {
 
       <DocList<TransferDocRow>
         docType="transfer"
-        rows={visible}
+        rows={rows}
         columns={columns}
         filters={filters}
         onFiltersChange={onFiltersChange}
@@ -171,6 +174,13 @@ function TransferListPage() {
           ),
         }}
       />
+      {hasNextPage && (
+        <div className="flex justify-center pt-2">
+          <Button variant="outline" onClick={() => fetchNextPage()}>
+            {m.doclist_load_more()}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -57,32 +57,6 @@ export function purchaseOrderToDocRow(
   };
 }
 
-// Drafts sort first, then newest docDate.
-function sortDraftsFirst(a: PurchaseOrder, b: PurchaseOrder): number {
-  const aDraft = a.status === "draft" ? 0 : 1;
-  const bDraft = b.status === "draft" ? 0 : 1;
-  if (aDraft !== bDraft) return aDraft - bDraft;
-  return new Date(b.docDate).getTime() - new Date(a.docDate).getTime();
-}
-
-// listPurchaseOrders takes no query params, so status/warehouse/date filtering
-// is client-side. `dateRange` matches the exact docDate (single-day filter, M1).
-export function sortPurchaseOrders(
-  orders: PurchaseOrder[],
-  filters: { status?: string; warehouse?: string; dateRange?: string },
-): PurchaseOrder[] {
-  return orders
-    .filter((po) => {
-      if (filters.status && po.status !== filters.status) return false;
-      if (filters.warehouse && po.warehouseId !== filters.warehouse) {
-        return false;
-      }
-      if (filters.dateRange && po.docDate !== filters.dateRange) return false;
-      return true;
-    })
-    .sort(sortDraftsFirst);
-}
-
 let keySeq = 0;
 function nextKey(): string {
   keySeq += 1;

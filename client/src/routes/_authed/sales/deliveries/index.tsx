@@ -1,20 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { DocList, type DocListFilters } from "@/components/doc-list";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 import { partnersQueryOptions, warehousesQueryOptions } from "@/lib/catalog";
+import { buildDocListParams } from "@/lib/doc-list-params";
 import { m } from "@/paraglide/messages";
-import {
-  type DeliveryFilters,
-  deliveriesQueryOptions,
-  deliveryToDocRow,
-  filterDeliveries,
-} from "./-deliveries-data";
+import { type DeliveryFilters, deliveryToDocRow } from "./-deliveries-data";
 
-// Filter state lives in the URL (shareable, survives back-nav per UX-D10). The
-// list endpoint has no filter params at M1, so filtering is client-side behind
-// the same URL-param interface (fix-2 API gap 3).
+// Filter state lives in the URL (shareable, survives back-nav per UX-D10).
 export const Route = createFileRoute("/_authed/sales/deliveries/")({
   validateSearch: (search: Record<string, unknown>): DeliveryFilters => ({
     status: typeof search.status === "string" ? search.status : undefined,
@@ -28,16 +23,29 @@ function DeliveryListPage() {
   const filters = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const { data: deliveries = [], isPending } = useQuery(deliveriesQueryOptions);
+  const { data, isPending, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ["deliveries", filters],
+    queryFn: async ({ pageParam }) => {
+      const params = buildDocListParams(
+        filters,
+        pageParam as string | undefined,
+      );
+      const { data } = await api.GET("/deliveries", {
+        params: { query: params },
+      });
+      return data ?? { items: [], nextCursor: null };
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
   const { data: customers = [] } = useQuery(partnersQueryOptions("customer"));
   const { data: warehouses = [] } = useQuery(warehousesQueryOptions);
 
+  const deliveries = data?.pages.flatMap((p) => p.items) ?? [];
+
   const rows = useMemo(
-    () =>
-      filterDeliveries(deliveries, filters).map((d) =>
-        deliveryToDocRow(d, customers, warehouses),
-      ),
-    [deliveries, filters, customers, warehouses],
+    () => deliveries.map((d) => deliveryToDocRow(d, customers, warehouses)),
+    [deliveries, customers, warehouses],
   );
 
   const goToNew = () => navigate({ to: "/sales/deliveries/new" });
@@ -68,6 +76,13 @@ function DeliveryListPage() {
           action: <Button onClick={goToNew}>{m.delivery_list_new()}</Button>,
         }}
       />
+      {hasNextPage && (
+        <div className="flex justify-center pt-2">
+          <Button variant="outline" onClick={() => fetchNextPage()}>
+            {m.doclist_load_more()}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

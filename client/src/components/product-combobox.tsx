@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { formatNumber } from "@/lib/format";
+import { PickerDialog } from "@/lib/picker-dialog";
 import type { Product, ProductOption } from "@/lib/pickers-data";
 import {
   pickerProductsQueryOptions,
@@ -28,6 +29,9 @@ export interface ProductComboboxProps {
   // Async override for the option source (client-side filter at M1). When
   // absent, the combobox fetches active products itself.
   onSearch?: Searcher<Product>;
+  // Display name for the trigger button. When absent and value is set, the
+  // default variant resolves it from its local product list.
+  selectedLabel?: string;
 }
 
 // Product picker (UX-D5). cmdk Command with shouldFilter off, debounced search
@@ -35,7 +39,9 @@ export interface ProductComboboxProps {
 // (right-aligned, via format.ts) when a warehouse is known.
 export function ProductCombobox(props: ProductComboboxProps) {
   if (props.onSearch) {
-    return <ProductComboboxBody {...props} searcher={props.onSearch} />;
+    return (
+      <ProductComboboxBody {...props} searcher={props.onSearch} products={[]} />
+    );
   }
   return <ProductComboboxDefault {...props} />;
 }
@@ -83,7 +89,20 @@ function ProductComboboxDefault(props: ProductComboboxProps) {
     [products, stockRows, props.warehouseId, props.recentIds],
   );
 
-  return <ProductComboboxBody {...props} searcher={searcher} />;
+  const resolvedLabel =
+    props.selectedLabel ??
+    (props.value
+      ? products.find((p) => p.id === props.value)?.name
+      : undefined);
+
+  return (
+    <ProductComboboxBody
+      {...props}
+      searcher={searcher}
+      products={products}
+      selectedLabel={resolvedLabel}
+    />
+  );
 }
 
 function ProductComboboxBody({
@@ -95,38 +114,48 @@ function ProductComboboxBody({
   recentIds,
   warehouseId,
   searcher,
-}: ProductComboboxProps & { searcher: Searcher<Product> }) {
+  selectedLabel,
+}: ProductComboboxProps & {
+  searcher: Searcher<Product>;
+  products: Product[];
+}) {
   return (
-    <ComboboxCore<Product>
-      value={value}
-      onSelect={onSelect}
+    <PickerDialog
+      label={m.picker_select_product()}
+      selectedLabel={selectedLabel}
       disabled={disabled}
-      searcher={searcher}
-      placeholder={m.combobox_search_product()}
-      recentsLabel={m.combobox_recents()}
-      recentIds={recentIds}
-      resultsLabel={m.combobox_results()}
-      renderTrailing={
-        warehouseId
-          ? (option) =>
-              option.stock === undefined ? null : formatNumber(option.stock)
-          : undefined
-      }
-      noMatch={
-        allowCreate
-          ? (query) => (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => onCreate?.(query)}
-              >
-                {m.combobox_create({ query })}
-              </Button>
-            )
-          : undefined
-      }
-    />
+    >
+      <ComboboxCore<Product>
+        value={value}
+        onSelect={onSelect}
+        disabled={disabled}
+        searcher={searcher}
+        placeholder={m.combobox_search_product()}
+        recentsLabel={m.combobox_recents()}
+        recentIds={recentIds}
+        resultsLabel={m.combobox_results()}
+        renderTrailing={
+          warehouseId
+            ? (option) =>
+                option.stock === undefined ? null : formatNumber(option.stock)
+            : undefined
+        }
+        noMatch={
+          allowCreate
+            ? (query) => (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => onCreate?.(query)}
+                >
+                  {m.combobox_create({ query })}
+                </Button>
+              )
+            : undefined
+        }
+      />
+    </PickerDialog>
   );
 }

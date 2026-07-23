@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { PickerDialog } from "@/lib/picker-dialog";
 import type { Partner } from "@/lib/pickers-data";
 import {
   partnerToOption,
@@ -16,13 +17,18 @@ export interface PartnerComboboxProps {
   // onSearch is supplied.
   role?: "supplier" | "customer";
   onSearch?: Searcher<Partner>;
+  // Display name for the trigger button. When absent, resolved from the local
+  // partner list.
+  selectedLabel?: string;
 }
 
 // Partner picker: same skeleton as ProductCombobox with a simpler row (name /
 // mono code, no stock column).
 export function PartnerCombobox(props: PartnerComboboxProps) {
   if (props.onSearch) {
-    return <PartnerComboboxBody {...props} searcher={props.onSearch} />;
+    return (
+      <PartnerComboboxBody {...props} searcher={props.onSearch} partners={[]} />
+    );
   }
   return <PartnerComboboxDefault {...props} />;
 }
@@ -48,7 +54,20 @@ function PartnerComboboxDefault(props: PartnerComboboxProps) {
     [partners],
   );
 
-  return <PartnerComboboxBody {...props} searcher={searcher} />;
+  const resolvedLabel =
+    props.selectedLabel ??
+    (props.value
+      ? partners.find((p) => p.id === props.value)?.name
+      : undefined);
+
+  return (
+    <PartnerComboboxBody
+      {...props}
+      searcher={searcher}
+      partners={partners}
+      selectedLabel={resolvedLabel}
+    />
+  );
 }
 
 function PartnerComboboxBody({
@@ -56,15 +75,25 @@ function PartnerComboboxBody({
   onSelect,
   disabled,
   searcher,
-}: PartnerComboboxProps & { searcher: Searcher<Partner> }) {
+  selectedLabel,
+}: PartnerComboboxProps & {
+  searcher: Searcher<Partner>;
+  partners: Partner[];
+}) {
   return (
-    <ComboboxCore<Partner>
-      value={value}
-      onSelect={onSelect}
+    <PickerDialog
+      label={m.picker_select_partner()}
+      selectedLabel={selectedLabel}
       disabled={disabled}
-      searcher={searcher}
-      placeholder={m.combobox_search_partner()}
-      resultsLabel={m.combobox_results()}
-    />
+    >
+      <ComboboxCore<Partner>
+        value={value}
+        onSelect={onSelect}
+        disabled={disabled}
+        searcher={searcher}
+        placeholder={m.combobox_search_partner()}
+        resultsLabel={m.combobox_results()}
+      />
+    </PickerDialog>
   );
 }

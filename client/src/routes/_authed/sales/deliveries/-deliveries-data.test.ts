@@ -7,7 +7,6 @@ import {
   deliveryLinesToGrid,
   deliveryToDocRow,
   deliveryTotalQty,
-  filterDeliveries,
   gridToDeliveryLines,
   type SalesOrder,
   salesOrderToDraftSeed,
@@ -94,23 +93,6 @@ test("deliveryTotalQty sums line quantities, ignoring non-numeric", () => {
   expect(deliveryTotalQty([{ qty: "3" }, { qty: "4.5" }])).toBe(7.5);
   expect(deliveryTotalQty([{ qty: "2" }, { qty: "" }])).toBe(2);
   expect(deliveryTotalQty([])).toBe(0);
-});
-
-test("filterDeliveries filters by status and warehouse", () => {
-  const rows = [
-    delivery({ id: "a", status: "draft", warehouseId: "w1" }),
-    delivery({ id: "b", status: "posted", warehouseId: "w1" }),
-    delivery({ id: "c", status: "posted", warehouseId: "w2" }),
-  ];
-  expect(filterDeliveries(rows, {}).map((d) => d.id)).toEqual(["a", "b", "c"]);
-  expect(filterDeliveries(rows, { status: "posted" }).map((d) => d.id)).toEqual(
-    ["b", "c"],
-  );
-  expect(
-    filterDeliveries(rows, { status: "posted", warehouse: "w2" }).map(
-      (d) => d.id,
-    ),
-  ).toEqual(["c"]);
 });
 
 test("deliveryLinesToGrid resolves products and drops unknown ones", () => {

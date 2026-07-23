@@ -52,33 +52,6 @@ export function receiptToDocRow(
   };
 }
 
-// Drafts sort first, then newest docDate (DocList also sorts, but sorting here
-// keeps the filtered list stable and testable without the component).
-function sortDraftsFirst(a: GoodsReceipt, b: GoodsReceipt): number {
-  const aDraft = a.status === "draft" ? 0 : 1;
-  const bDraft = b.status === "draft" ? 0 : 1;
-  if (aDraft !== bDraft) return aDraft - bDraft;
-  return new Date(b.docDate).getTime() - new Date(a.docDate).getTime();
-}
-
-// listGoodsReceipts has no query params, so status/warehouse/date filtering is
-// client-side. `dateRange` matches the exact docDate (single-day filter at M1).
-export function sortReceipts(
-  receipts: GoodsReceipt[],
-  filters: { status?: string; warehouse?: string; dateRange?: string },
-): GoodsReceipt[] {
-  return receipts
-    .filter((gr) => {
-      if (filters.status && gr.status !== filters.status) return false;
-      if (filters.warehouse && gr.warehouseId !== filters.warehouse) {
-        return false;
-      }
-      if (filters.dateRange && gr.docDate !== filters.dateRange) return false;
-      return true;
-    })
-    .sort(sortDraftsFirst);
-}
-
 let keySeq = 0;
 function nextKey(): string {
   keySeq += 1;

@@ -44,7 +44,8 @@ test("filters and selects a partner", async () => {
   const onSelect = vi.fn();
   render(<PartnerCombobox onSelect={onSelect} onSearch={search} />);
 
-  await user.type(screen.getByRole("combobox"), "Maju");
+  await user.click(screen.getByRole("button", { name: "Select partner" }));
+  await user.type(await screen.findByRole("combobox"), "Maju");
   await user.click(await screen.findByText("PT Maju Jaya"));
 
   expect(onSelect).toHaveBeenCalledTimes(1);

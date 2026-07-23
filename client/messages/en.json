@@ -680,5 +680,9 @@
   "po_not_found": "Purchase order not found.",
   "po_save_failed": "Could not save the draft. Please try again.",
   "po_reverse_failed": "Could not cancel. Please try again.",
-  "po_draft_saved": "Draft saved."
+  "po_draft_saved": "Draft saved.",
+  "doclist_load_more": "Load more",
+  "picker_select_product": "Select product",
+  "picker_select_partner": "Select partner",
+  "picker_select_warehouse": "Select warehouse"
 }

@@ -8,7 +8,6 @@ import {
   poToDraftLines,
   receiptFilterState,
   receiptToDocRow,
-  sortReceipts,
 } from "./-receipt-data";
 
 type GoodsReceipt = components["schemas"]["GoodsReceipt"];
@@ -78,66 +77,6 @@ test("receiptToDocRow leaves number null for a draft", () => {
     warehouseCode: () => "GD-01",
   });
   expect(row.number).toBeNull();
-});
-
-// ---- sortReceipts ------------------------------------------------------------
-
-test("sortReceipts filters by status, warehouse and date, drafts first then newest", () => {
-  const receipts: GoodsReceipt[] = [
-    {
-      id: "a",
-      docNumber: "GR-1",
-      docDate: "2026-07-10",
-      status: "posted",
-      supplierId: "s",
-      warehouseId: "wh-1",
-      notes: "",
-      lines: [],
-      createdAt: "2026-07-10T00:00:00Z",
-      createdBy: { id: "u1", displayName: "Test User" },
-    },
-    {
-      id: "b",
-      docDate: "2026-07-05",
-      status: "draft",
-      supplierId: "s",
-      warehouseId: "wh-1",
-      notes: "",
-      lines: [],
-      createdAt: "2026-07-05T00:00:00Z",
-      createdBy: { id: "u1", displayName: "Test User" },
-    },
-    {
-      id: "c",
-      docNumber: "GR-2",
-      docDate: "2026-07-12",
-      status: "posted",
-      supplierId: "s",
-      warehouseId: "wh-2",
-      notes: "",
-      lines: [],
-      createdAt: "2026-07-12T00:00:00Z",
-      createdBy: { id: "u1", displayName: "Test User" },
-    },
-  ];
-
-  // No filters: draft first, then newest posted (c on 07-12 before a on 07-10).
-  expect(sortReceipts(receipts, {}).map((r) => r.id)).toEqual(["b", "c", "a"]);
-
-  // Status filter.
-  expect(sortReceipts(receipts, { status: "draft" }).map((r) => r.id)).toEqual([
-    "b",
-  ]);
-
-  // Warehouse filter.
-  expect(
-    sortReceipts(receipts, { warehouse: "wh-2" }).map((r) => r.id),
-  ).toEqual(["c"]);
-
-  // Date filter (exact docDate match).
-  expect(
-    sortReceipts(receipts, { dateRange: "2026-07-10" }).map((r) => r.id),
-  ).toEqual(["a"]);
 });
 
 // ---- poToDraftLines ----------------------------------------------------------

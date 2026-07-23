@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { buildDocListParams } from "@/lib/doc-list-params";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   pickerPartnersQueryOptions,
@@ -18,7 +19,6 @@ import {
   orderFilterState,
   poReceivedProgress,
   purchaseOrderToDocRow,
-  sortPurchaseOrders,
 } from "./-order-data";
 
 // A PO list row is a DocRow plus a client-computed received-progress figure
@@ -43,12 +43,22 @@ function OrderListPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
 
-  const { data: orders = [], isPending } = useQuery({
-    queryKey: ["purchase-orders"],
-    queryFn: async () => {
-      const { data } = await api.GET("/purchase-orders");
-      return data?.items ?? [];
+  const filters = orderFilterState(search);
+
+  const { data, isPending, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ["purchase-orders", filters],
+    queryFn: async ({ pageParam }) => {
+      const params = buildDocListParams(
+        filters,
+        pageParam as string | undefined,
+      );
+      const { data } = await api.GET("/purchase-orders", {
+        params: { query: params },
+      });
+      return data ?? { items: [], nextCursor: null };
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
   // Linked receipts drive the client-side received-progress column.
   const { data: receipts = [] } = useQuery({
@@ -63,8 +73,6 @@ function OrderListPage() {
   );
   const { data: warehouses = [] } = useQuery(pickerWarehousesQueryOptions);
 
-  const filters = orderFilterState(search);
-
   const supplierName = useMemo(() => {
     const byId = new Map(suppliers.map((s) => [s.id, s.name]));
     return (id: string) => byId.get(id) ?? id;
@@ -74,9 +82,11 @@ function OrderListPage() {
     return (id: string) => byId.get(id) ?? id;
   }, [warehouses]);
 
+  const orders = data?.pages.flatMap((p) => p.items) ?? [];
+
   const rows = useMemo<OrderRow[]>(
     () =>
-      sortPurchaseOrders(orders, filters).map((po) => {
+      orders.map((po) => {
         const progress = poReceivedProgress(po, receipts);
         return {
           ...purchaseOrderToDocRow(po, { supplierName, warehouseCode }),
@@ -84,7 +94,7 @@ function OrderListPage() {
           progressTotal: progress.total,
         };
       }),
-    [orders, receipts, filters, supplierName, warehouseCode],
+    [orders, receipts, supplierName, warehouseCode],
   );
 
   return (
@@ -130,6 +140,13 @@ function OrderListPage() {
           ),
         }}
       />
+      {hasNextPage && (
+        <div className="flex justify-center pt-2">
+          <Button variant="outline" onClick={() => fetchNextPage()}>
+            {m.doclist_load_more()}
+          </Button>
+        </div>
+      )}
     </main>
   );
 }

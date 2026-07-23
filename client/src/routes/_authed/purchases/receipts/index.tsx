@@ -1,9 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { DocList, type DocRow } from "@/components/doc-list";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { buildDocListParams } from "@/lib/doc-list-params";
 import {
   pickerPartnersQueryOptions,
   pickerWarehousesQueryOptions,
@@ -13,7 +14,6 @@ import {
   type ReceiptSearch,
   receiptFilterState,
   receiptToDocRow,
-  sortReceipts,
 } from "./-receipt-data";
 
 // Filter state lives in the URL (shareable, survives back-nav per UX-D10).
@@ -31,19 +31,27 @@ function ReceiptListPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
 
-  const { data: receipts = [], isPending } = useQuery({
-    queryKey: ["goods-receipts"],
-    queryFn: async () => {
-      const { data } = await api.GET("/goods-receipts");
-      return data?.items ?? [];
+  const filters = receiptFilterState(search);
+
+  const { data, isPending, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ["goods-receipts", filters],
+    queryFn: async ({ pageParam }) => {
+      const params = buildDocListParams(
+        filters,
+        pageParam as string | undefined,
+      );
+      const { data } = await api.GET("/goods-receipts", {
+        params: { query: params },
+      });
+      return data ?? { items: [], nextCursor: null };
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
   const { data: suppliers = [] } = useQuery(
     pickerPartnersQueryOptions("supplier"),
   );
   const { data: warehouses = [] } = useQuery(pickerWarehousesQueryOptions);
-
-  const filters = receiptFilterState(search);
 
   const supplierName = useMemo(() => {
     const byId = new Map(suppliers.map((s) => [s.id, s.name]));
@@ -56,10 +64,10 @@ function ReceiptListPage() {
 
   const rows = useMemo<DocRow[]>(
     () =>
-      sortReceipts(receipts, filters).map((gr) =>
+      (data?.pages.flatMap((p) => p.items) ?? []).map((gr) =>
         receiptToDocRow(gr, { supplierName, warehouseCode }),
       ),
-    [receipts, filters, supplierName, warehouseCode],
+    [data, supplierName, warehouseCode],
   );
 
   return (
@@ -104,6 +112,13 @@ function ReceiptListPage() {
           ),
         }}
       />
+      {hasNextPage && (
+        <div className="flex justify-center pt-2">
+          <Button variant="outline" onClick={() => fetchNextPage()}>
+            {m.doclist_load_more()}
+          </Button>
+        </div>
+      )}
     </main>
   );
 }
