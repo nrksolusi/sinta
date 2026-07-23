@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import {
   type DocKind,
@@ -10,7 +10,7 @@ import {
 } from "@/components/dashboard/documents";
 import { DraftList } from "@/components/dashboard/draft-list";
 import { RecentDocs } from "@/components/dashboard/recent-docs";
-import { buttonVariants } from "@/components/ui/button";
+import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { formatCurrency, formatNumber } from "@/lib/format";
@@ -21,10 +21,6 @@ export const Route = createFileRoute("/_authed/")({
 });
 
 const RECENT_LIMIT = 10;
-
-// Route targets built by other engineers; may 404 until their wave lands
-// (task brief). Escape-hatch string type mirrors nav-config's NavPath.
-type LinkPath = string & {};
 
 // Each document kind's list endpoint. Lists have no filters/pagination at
 // pilot scale (design doc "API gaps" #3), so we fetch each in full and union
@@ -126,24 +122,31 @@ function Dashboard() {
 
   return (
     <main className="flex flex-col gap-6 p-4 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold">
-          {m.dashboard_welcome({ name: session.user.name })}
-        </h1>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to={"/purchases/receipts/new" as LinkPath}
-            className={buttonVariants({ size: "lg" })}
-          >
-            {m.dashboard_action_new_receipt()}
-          </Link>
-          <Link
-            to={"/sales/deliveries/new" as LinkPath}
-            className={buttonVariants({ variant: "outline", size: "lg" })}
-          >
-            {m.dashboard_action_new_delivery()}
-          </Link>
-        </div>
+      <h1 className="text-xl font-semibold">
+        {m.dashboard_welcome({ name: session.user.name })}
+      </h1>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard
+          label={m.dashboard_stat_products()}
+          value={formatNumber(products.length)}
+          href="/catalog/products"
+        />
+        <StatCard
+          label={m.dashboard_stat_partners()}
+          value={formatNumber(partners.length)}
+          href="/catalog/partners"
+        />
+        <StatCard
+          label={m.dashboard_stat_warehouses()}
+          value={formatNumber(warehouses.length)}
+          href="/catalog/warehouses"
+        />
+        <StatCard
+          label={m.dashboard_stat_valuation()}
+          value={valuation ? formatCurrency(valuation.totalValue) : "-"}
+          href="/reports/valuation"
+        />
       </div>
 
       <Card>
@@ -155,25 +158,6 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          label={m.dashboard_stat_products()}
-          value={formatNumber(products.length)}
-        />
-        <StatCard
-          label={m.dashboard_stat_partners()}
-          value={formatNumber(partners.length)}
-        />
-        <StatCard
-          label={m.dashboard_stat_warehouses()}
-          value={formatNumber(warehouses.length)}
-        />
-        <StatCard
-          label={m.dashboard_stat_valuation()}
-          value={valuation ? formatCurrency(valuation.totalValue) : "-"}
-        />
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>{m.dashboard_recent_title()}</CardTitle>
@@ -183,16 +167,5 @@ function Dashboard() {
         </CardContent>
       </Card>
     </main>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card size="sm">
-      <CardContent className="flex flex-col gap-1">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <span className="text-2xl font-semibold tabular-nums">{value}</span>
-      </CardContent>
-    </Card>
   );
 }

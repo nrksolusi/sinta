@@ -12,12 +12,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { m } from "@/paraglide/messages";
-import {
-  dashboardItem,
-  type NavItem,
-  navGroups,
-  settingsItem,
-} from "./nav-config";
+import { type NavItem, navGroups, settingsItem } from "./nav-config";
+import { DraftsNavButton } from "./nav-drafts";
 
 // A single nav row. Active highlight uses the router match so it survives
 // tenant switches and deep links; `fuzzy` matches nested detail/new routes
@@ -51,8 +47,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Dashboard is "/", so it must match exactly, not fuzzily. */}
-              <NavMenuItem item={dashboardItem} exact />
+              <DraftsNavButton />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
