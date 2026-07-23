@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/shopspring/decimal"
 
@@ -73,17 +74,36 @@ func (s *Server) loadStockOpname(ctx context.Context, q *store.Queries, tenantID
 	return stockOpnameToAPI(o, lines, actors), nil
 }
 
-func (s *Server) ListStockOpnames(w http.ResponseWriter, r *http.Request, _ api.ListStockOpnamesParams) {
+func (s *Server) ListStockOpnames(w http.ResponseWriter, r *http.Request, params api.ListStockOpnamesParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
+	f, err := resolveDocListFilter(params.Status, params.WarehouseId, params.DateFrom, params.DateTo, params.Q, params.Cursor, params.Limit)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_cursor", "cursor is invalid")
+		return
+	}
 	var items []api.StockOpname
-	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
-		rows, err := q.ListStockOpnames(r.Context(), tc.tenantID)
+	var nextCursor *string
+	err = s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		rows, err := q.ListStockOpnames(r.Context(), store.ListStockOpnamesParams{
+			TenantID:          tc.tenantID,
+			FilterStatus:      f.FilterStatus,
+			FilterWarehouseID: f.FilterWarehouseID,
+			FilterDateFrom:    f.FilterDateFrom,
+			FilterDateTo:      f.FilterDateTo,
+			FilterQ:           f.FilterQ,
+			CursorTs:          f.CursorTs,
+			CursorID:          f.CursorID,
+			PageLimit:         f.PageLimit + 1,
+		})
 		if err != nil {
 			return err
 		}
+		rows, nextCursor = nextCursorIfMore(rows, f.PageLimit,
+			func(o store.StockOpname) pgtype.Timestamptz { return o.CreatedAt },
+			func(o store.StockOpname) uuid.UUID { return o.ID })
 		items = make([]api.StockOpname, 0, len(rows))
 		for _, o := range rows {
 			lines, err := q.ListStockOpnameLines(r.Context(), store.ListStockOpnameLinesParams{TenantID: tc.tenantID, StockOpnameID: o.ID})
@@ -101,7 +121,7 @@ func (s *Server) ListStockOpnames(w http.ResponseWriter, r *http.Request, _ api.
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, api.StockOpnameList{Items: items})
+	writeJSON(w, http.StatusOK, api.StockOpnameList{Items: items, NextCursor: nextCursor})
 }
 
 func (s *Server) CreateStockOpname(w http.ResponseWriter, r *http.Request) {

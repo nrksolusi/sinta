@@ -84,16 +84,24 @@ const listProducts = `-- name: ListProducts :many
 SELECT id, tenant_id, sku, name, base_uom, is_batch_tracked, barcode, status, created_at, updated_at FROM products
 WHERE tenant_id = $1
   AND ($2::text IS NULL OR status = $2)
-ORDER BY sku
+  AND ($3::text IS NULL
+       OR name ILIKE '%' || $3 || '%'
+       OR sku  ILIKE '%' || $3 || '%')
+ORDER BY
+  CASE WHEN $3::text IS NOT NULL
+       THEN -GREATEST(similarity(name, $3::text), similarity(sku, $3::text))
+  END NULLS LAST,
+  sku
 `
 
 type ListProductsParams struct {
 	TenantID uuid.UUID
 	Status   pgtype.Text
+	Q        pgtype.Text
 }
 
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
-	rows, err := q.db.Query(ctx, listProducts, arg.TenantID, arg.Status)
+	rows, err := q.db.Query(ctx, listProducts, arg.TenantID, arg.Status, arg.Q)
 	if err != nil {
 		return nil, err
 	}

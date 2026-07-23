@@ -11,7 +11,14 @@ WHERE tenant_id = $1 AND id = $2;
 SELECT * FROM products
 WHERE tenant_id = $1
   AND (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status'))
-ORDER BY sku;
+  AND (sqlc.narg('q')::text IS NULL
+       OR name ILIKE '%' || sqlc.narg('q') || '%'
+       OR sku  ILIKE '%' || sqlc.narg('q') || '%')
+ORDER BY
+  CASE WHEN sqlc.narg('q')::text IS NOT NULL
+       THEN -GREATEST(similarity(name, sqlc.narg('q')::text), similarity(sku, sqlc.narg('q')::text))
+  END NULLS LAST,
+  sku;
 
 -- name: UpdateProduct :one
 UPDATE products

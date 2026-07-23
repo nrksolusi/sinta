@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getWarehouse = `-- name: GetWarehouse :one
@@ -39,13 +40,25 @@ const listWarehouses = `-- name: ListWarehouses :many
 
 SELECT id, tenant_id, code, name, created_at, updated_at FROM warehouses
 WHERE tenant_id = $1
-ORDER BY code
+  AND ($2::text IS NULL
+       OR name ILIKE '%' || $2 || '%'
+       OR code ILIKE '%' || $2 || '%')
+ORDER BY
+  CASE WHEN $2::text IS NOT NULL
+       THEN -GREATEST(similarity(name, $2::text), similarity(code, $2::text))
+  END NULLS LAST,
+  code
 `
+
+type ListWarehousesParams struct {
+	TenantID uuid.UUID
+	Q        pgtype.Text
+}
 
 // CreateWarehouse lives in tenants.sql (used by onboarding); the list/get/update
 // queries below round out warehouse management for the catalog track.
-func (q *Queries) ListWarehouses(ctx context.Context, tenantID uuid.UUID) ([]Warehouse, error) {
-	rows, err := q.db.Query(ctx, listWarehouses, tenantID)
+func (q *Queries) ListWarehouses(ctx context.Context, arg ListWarehousesParams) ([]Warehouse, error) {
+	rows, err := q.db.Query(ctx, listWarehouses, arg.TenantID, arg.Q)
 	if err != nil {
 		return nil, err
 	}

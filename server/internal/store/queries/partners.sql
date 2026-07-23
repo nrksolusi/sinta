@@ -13,7 +13,14 @@ WHERE tenant_id = $1
   AND (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status'))
   AND (NOT sqlc.arg('only_supplier')::boolean OR is_supplier)
   AND (NOT sqlc.arg('only_customer')::boolean OR is_customer)
-ORDER BY name;
+  AND (sqlc.narg('q')::text IS NULL
+       OR name ILIKE '%' || sqlc.narg('q') || '%'
+       OR code ILIKE '%' || sqlc.narg('q') || '%')
+ORDER BY
+  CASE WHEN sqlc.narg('q')::text IS NOT NULL
+       THEN -GREATEST(similarity(name, sqlc.narg('q')::text), similarity(code, sqlc.narg('q')::text))
+  END NULLS LAST,
+  name;
 
 -- name: UpdatePartner :one
 UPDATE partners

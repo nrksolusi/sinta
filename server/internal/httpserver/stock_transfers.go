@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/shopspring/decimal"
 
@@ -69,17 +70,36 @@ func (s *Server) loadStockTransfer(ctx context.Context, q *store.Queries, tenant
 	return stockTransferToAPI(tr, lines, actors), nil
 }
 
-func (s *Server) ListStockTransfers(w http.ResponseWriter, r *http.Request, _ api.ListStockTransfersParams) {
+func (s *Server) ListStockTransfers(w http.ResponseWriter, r *http.Request, params api.ListStockTransfersParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
+	f, err := resolveDocListFilter(params.Status, params.WarehouseId, params.DateFrom, params.DateTo, params.Q, params.Cursor, params.Limit)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_cursor", "cursor is invalid")
+		return
+	}
 	var items []api.StockTransfer
-	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
-		rows, err := q.ListStockTransfers(r.Context(), tc.tenantID)
+	var nextCursor *string
+	err = s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		rows, err := q.ListStockTransfers(r.Context(), store.ListStockTransfersParams{
+			TenantID:          tc.tenantID,
+			FilterStatus:      f.FilterStatus,
+			FilterWarehouseID: f.FilterWarehouseID,
+			FilterDateFrom:    f.FilterDateFrom,
+			FilterDateTo:      f.FilterDateTo,
+			FilterQ:           f.FilterQ,
+			CursorTs:          f.CursorTs,
+			CursorID:          f.CursorID,
+			PageLimit:         f.PageLimit + 1,
+		})
 		if err != nil {
 			return err
 		}
+		rows, nextCursor = nextCursorIfMore(rows, f.PageLimit,
+			func(tr store.StockTransfer) pgtype.Timestamptz { return tr.CreatedAt },
+			func(tr store.StockTransfer) uuid.UUID { return tr.ID })
 		items = make([]api.StockTransfer, 0, len(rows))
 		for _, tr := range rows {
 			lines, err := q.ListStockTransferLines(r.Context(), store.ListStockTransferLinesParams{TenantID: tc.tenantID, StockTransferID: tr.ID})
@@ -97,7 +117,7 @@ func (s *Server) ListStockTransfers(w http.ResponseWriter, r *http.Request, _ ap
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, api.StockTransferList{Items: items})
+	writeJSON(w, http.StatusOK, api.StockTransferList{Items: items, NextCursor: nextCursor})
 }
 
 func (s *Server) CreateStockTransfer(w http.ResponseWriter, r *http.Request) {

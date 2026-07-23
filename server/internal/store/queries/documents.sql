@@ -22,7 +22,18 @@ RETURNING *;
 SELECT * FROM purchase_orders WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 
 -- name: ListPurchaseOrders :many
-SELECT * FROM purchase_orders WHERE tenant_id = sqlc.arg(tenant_id) ORDER BY created_at DESC;
+SELECT * FROM purchase_orders
+WHERE tenant_id = sqlc.arg(tenant_id)
+  AND (sqlc.narg(filter_status)::text IS NULL OR status = sqlc.narg(filter_status)::text)
+  AND (sqlc.narg(filter_warehouse_id)::uuid IS NULL OR warehouse_id = sqlc.narg(filter_warehouse_id)::uuid)
+  AND (sqlc.narg(filter_date_from)::date IS NULL OR doc_date >= sqlc.narg(filter_date_from)::date)
+  AND (sqlc.narg(filter_date_to)::date IS NULL OR doc_date <= sqlc.narg(filter_date_to)::date)
+  AND (sqlc.narg(filter_q)::text IS NULL OR doc_number ILIKE '%' || sqlc.narg(filter_q) || '%')
+  AND (sqlc.narg(cursor_ts)::timestamptz IS NULL
+       OR created_at < sqlc.narg(cursor_ts)::timestamptz
+       OR (created_at = sqlc.narg(cursor_ts)::timestamptz AND id < sqlc.narg(cursor_id)::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: ListPurchaseOrderLines :many
 SELECT * FROM purchase_order_lines WHERE tenant_id = sqlc.arg(tenant_id) AND purchase_order_id = sqlc.arg(purchase_order_id) ORDER BY line_no;
@@ -68,7 +79,18 @@ RETURNING *;
 SELECT * FROM goods_receipts WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 
 -- name: ListGoodsReceipts :many
-SELECT * FROM goods_receipts WHERE tenant_id = sqlc.arg(tenant_id) ORDER BY created_at DESC;
+SELECT * FROM goods_receipts
+WHERE tenant_id = sqlc.arg(tenant_id)
+  AND (sqlc.narg(filter_status)::text IS NULL OR status = sqlc.narg(filter_status)::text)
+  AND (sqlc.narg(filter_warehouse_id)::uuid IS NULL OR warehouse_id = sqlc.narg(filter_warehouse_id)::uuid)
+  AND (sqlc.narg(filter_date_from)::date IS NULL OR doc_date >= sqlc.narg(filter_date_from)::date)
+  AND (sqlc.narg(filter_date_to)::date IS NULL OR doc_date <= sqlc.narg(filter_date_to)::date)
+  AND (sqlc.narg(filter_q)::text IS NULL OR doc_number ILIKE '%' || sqlc.narg(filter_q) || '%')
+  AND (sqlc.narg(cursor_ts)::timestamptz IS NULL
+       OR created_at < sqlc.narg(cursor_ts)::timestamptz
+       OR (created_at = sqlc.narg(cursor_ts)::timestamptz AND id < sqlc.narg(cursor_id)::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: ListGoodsReceiptLines :many
 SELECT * FROM goods_receipt_lines WHERE tenant_id = sqlc.arg(tenant_id) AND goods_receipt_id = sqlc.arg(goods_receipt_id) ORDER BY line_no;
@@ -114,7 +136,18 @@ RETURNING *;
 SELECT * FROM sales_orders WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 
 -- name: ListSalesOrders :many
-SELECT * FROM sales_orders WHERE tenant_id = sqlc.arg(tenant_id) ORDER BY created_at DESC;
+SELECT * FROM sales_orders
+WHERE tenant_id = sqlc.arg(tenant_id)
+  AND (sqlc.narg(filter_status)::text IS NULL OR status = sqlc.narg(filter_status)::text)
+  AND (sqlc.narg(filter_warehouse_id)::uuid IS NULL OR warehouse_id = sqlc.narg(filter_warehouse_id)::uuid)
+  AND (sqlc.narg(filter_date_from)::date IS NULL OR doc_date >= sqlc.narg(filter_date_from)::date)
+  AND (sqlc.narg(filter_date_to)::date IS NULL OR doc_date <= sqlc.narg(filter_date_to)::date)
+  AND (sqlc.narg(filter_q)::text IS NULL OR doc_number ILIKE '%' || sqlc.narg(filter_q) || '%')
+  AND (sqlc.narg(cursor_ts)::timestamptz IS NULL
+       OR created_at < sqlc.narg(cursor_ts)::timestamptz
+       OR (created_at = sqlc.narg(cursor_ts)::timestamptz AND id < sqlc.narg(cursor_id)::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: ListSalesOrderLines :many
 SELECT * FROM sales_order_lines WHERE tenant_id = sqlc.arg(tenant_id) AND sales_order_id = sqlc.arg(sales_order_id) ORDER BY line_no;
@@ -160,7 +193,18 @@ RETURNING *;
 SELECT * FROM deliveries WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 
 -- name: ListDeliveries :many
-SELECT * FROM deliveries WHERE tenant_id = sqlc.arg(tenant_id) ORDER BY created_at DESC;
+SELECT * FROM deliveries
+WHERE tenant_id = sqlc.arg(tenant_id)
+  AND (sqlc.narg(filter_status)::text IS NULL OR status = sqlc.narg(filter_status)::text)
+  AND (sqlc.narg(filter_warehouse_id)::uuid IS NULL OR warehouse_id = sqlc.narg(filter_warehouse_id)::uuid)
+  AND (sqlc.narg(filter_date_from)::date IS NULL OR doc_date >= sqlc.narg(filter_date_from)::date)
+  AND (sqlc.narg(filter_date_to)::date IS NULL OR doc_date <= sqlc.narg(filter_date_to)::date)
+  AND (sqlc.narg(filter_q)::text IS NULL OR doc_number ILIKE '%' || sqlc.narg(filter_q) || '%')
+  AND (sqlc.narg(cursor_ts)::timestamptz IS NULL
+       OR created_at < sqlc.narg(cursor_ts)::timestamptz
+       OR (created_at = sqlc.narg(cursor_ts)::timestamptz AND id < sqlc.narg(cursor_id)::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: ListDeliveryLines :many
 SELECT * FROM delivery_lines WHERE tenant_id = sqlc.arg(tenant_id) AND delivery_id = sqlc.arg(delivery_id) ORDER BY line_no;
@@ -206,7 +250,20 @@ RETURNING *;
 SELECT * FROM stock_transfers WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 
 -- name: ListStockTransfers :many
-SELECT * FROM stock_transfers WHERE tenant_id = sqlc.arg(tenant_id) ORDER BY created_at DESC;
+SELECT * FROM stock_transfers
+WHERE tenant_id = sqlc.arg(tenant_id)
+  AND (sqlc.narg(filter_status)::text IS NULL OR status = sqlc.narg(filter_status)::text)
+  AND (sqlc.narg(filter_warehouse_id)::uuid IS NULL
+       OR from_warehouse_id = sqlc.narg(filter_warehouse_id)::uuid
+       OR to_warehouse_id   = sqlc.narg(filter_warehouse_id)::uuid)
+  AND (sqlc.narg(filter_date_from)::date IS NULL OR doc_date >= sqlc.narg(filter_date_from)::date)
+  AND (sqlc.narg(filter_date_to)::date IS NULL OR doc_date <= sqlc.narg(filter_date_to)::date)
+  AND (sqlc.narg(filter_q)::text IS NULL OR doc_number ILIKE '%' || sqlc.narg(filter_q) || '%')
+  AND (sqlc.narg(cursor_ts)::timestamptz IS NULL
+       OR created_at < sqlc.narg(cursor_ts)::timestamptz
+       OR (created_at = sqlc.narg(cursor_ts)::timestamptz AND id < sqlc.narg(cursor_id)::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: ListStockTransferLines :many
 SELECT * FROM stock_transfer_lines WHERE tenant_id = sqlc.arg(tenant_id) AND stock_transfer_id = sqlc.arg(stock_transfer_id) ORDER BY line_no;
@@ -252,7 +309,18 @@ RETURNING *;
 SELECT * FROM stock_adjustments WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 
 -- name: ListStockAdjustments :many
-SELECT * FROM stock_adjustments WHERE tenant_id = sqlc.arg(tenant_id) ORDER BY created_at DESC;
+SELECT * FROM stock_adjustments
+WHERE tenant_id = sqlc.arg(tenant_id)
+  AND (sqlc.narg(filter_status)::text IS NULL OR status = sqlc.narg(filter_status)::text)
+  AND (sqlc.narg(filter_warehouse_id)::uuid IS NULL OR warehouse_id = sqlc.narg(filter_warehouse_id)::uuid)
+  AND (sqlc.narg(filter_date_from)::date IS NULL OR doc_date >= sqlc.narg(filter_date_from)::date)
+  AND (sqlc.narg(filter_date_to)::date IS NULL OR doc_date <= sqlc.narg(filter_date_to)::date)
+  AND (sqlc.narg(filter_q)::text IS NULL OR doc_number ILIKE '%' || sqlc.narg(filter_q) || '%')
+  AND (sqlc.narg(cursor_ts)::timestamptz IS NULL
+       OR created_at < sqlc.narg(cursor_ts)::timestamptz
+       OR (created_at = sqlc.narg(cursor_ts)::timestamptz AND id < sqlc.narg(cursor_id)::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: ListStockAdjustmentLines :many
 SELECT * FROM stock_adjustment_lines WHERE tenant_id = sqlc.arg(tenant_id) AND stock_adjustment_id = sqlc.arg(stock_adjustment_id) ORDER BY line_no;
@@ -303,7 +371,18 @@ WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 SELECT * FROM stock_opnames WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 
 -- name: ListStockOpnames :many
-SELECT * FROM stock_opnames WHERE tenant_id = sqlc.arg(tenant_id) ORDER BY created_at DESC;
+SELECT * FROM stock_opnames
+WHERE tenant_id = sqlc.arg(tenant_id)
+  AND (sqlc.narg(filter_status)::text IS NULL OR status = sqlc.narg(filter_status)::text)
+  AND (sqlc.narg(filter_warehouse_id)::uuid IS NULL OR warehouse_id = sqlc.narg(filter_warehouse_id)::uuid)
+  AND (sqlc.narg(filter_date_from)::date IS NULL OR doc_date >= sqlc.narg(filter_date_from)::date)
+  AND (sqlc.narg(filter_date_to)::date IS NULL OR doc_date <= sqlc.narg(filter_date_to)::date)
+  AND (sqlc.narg(filter_q)::text IS NULL OR doc_number ILIKE '%' || sqlc.narg(filter_q) || '%')
+  AND (sqlc.narg(cursor_ts)::timestamptz IS NULL
+       OR created_at < sqlc.narg(cursor_ts)::timestamptz
+       OR (created_at = sqlc.narg(cursor_ts)::timestamptz AND id < sqlc.narg(cursor_id)::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: ListStockOpnameLines :many
 SELECT * FROM stock_opname_lines WHERE tenant_id = sqlc.arg(tenant_id) AND stock_opname_id = sqlc.arg(stock_opname_id) ORDER BY line_no;

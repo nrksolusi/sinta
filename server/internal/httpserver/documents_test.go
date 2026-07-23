@@ -839,3 +839,116 @@ func TestDeliveryPostAndReverse(t *testing.T) {
 		t.Fatalf("on-hand after delivery reversal = %s, want 10", q)
 	}
 }
+
+// TestPOListFilterByStatus verifies status= filter narrows results.
+func TestPOListFilterByStatus(t *testing.T) {
+	f := seedDocFixture(t)
+
+	body := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-01-10",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitCost":"10"}]}`, f.supplier, f.whA, f.product)
+	_, po1 := f.do(t, http.MethodPost, "/v1/purchase-orders", body)
+	po1ID := po1["id"].(string)
+	f.do(t, http.MethodPost, "/v1/purchase-orders/"+po1ID+"/post", "")
+	f.do(t, http.MethodPost, "/v1/purchase-orders", body) // stays draft
+
+	st, resp := f.do(t, http.MethodGet, "/v1/purchase-orders?status=draft", "")
+	if st != http.StatusOK {
+		t.Fatalf("list?status=draft status = %d", st)
+	}
+	items := resp["items"].([]any)
+	if len(items) != 1 {
+		t.Fatalf("draft filter: want 1 item, got %d", len(items))
+	}
+	if items[0].(map[string]any)["status"] != "draft" {
+		t.Fatalf("draft filter: item status = %v, want draft", items[0].(map[string]any)["status"])
+	}
+
+	_, resp = f.do(t, http.MethodGet, "/v1/purchase-orders?status=posted", "")
+	items = resp["items"].([]any)
+	if len(items) != 1 {
+		t.Fatalf("posted filter: want 1 item, got %d", len(items))
+	}
+}
+
+// TestPOListFilterByWarehouse verifies warehouseId= filter narrows results.
+func TestPOListFilterByWarehouse(t *testing.T) {
+	f := seedDocFixture(t)
+
+	bodyA := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-01-10",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"1","unitCost":"1"}]}`, f.supplier, f.whA, f.product)
+	bodyB := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-01-11",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"1","unitCost":"1"}]}`, f.supplier, f.whB, f.product)
+	f.do(t, http.MethodPost, "/v1/purchase-orders", bodyA)
+	f.do(t, http.MethodPost, "/v1/purchase-orders", bodyB)
+
+	_, resp := f.do(t, http.MethodGet, "/v1/purchase-orders?warehouseId="+f.whA, "")
+	items := resp["items"].([]any)
+	if len(items) != 1 {
+		t.Fatalf("warehouseId filter: want 1 item, got %d", len(items))
+	}
+	if items[0].(map[string]any)["warehouseId"] != f.whA {
+		t.Fatalf("wrong warehouse in result: %v", items[0].(map[string]any)["warehouseId"])
+	}
+}
+
+// TestPOListCursorPagination verifies keyset pagination produces no duplicates.
+func TestPOListCursorPagination(t *testing.T) {
+	f := seedDocFixture(t)
+
+	body := func(date string) string {
+		return fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":%q,
+		  "lines":[{"productId":%q,"uom":"pcs","qty":"1","unitCost":"1"}]}`, f.supplier, f.whA, date, f.product)
+	}
+	_, p1 := f.do(t, http.MethodPost, "/v1/purchase-orders", body("2026-01-01"))
+	_, p2 := f.do(t, http.MethodPost, "/v1/purchase-orders", body("2026-01-02"))
+	_, p3 := f.do(t, http.MethodPost, "/v1/purchase-orders", body("2026-01-03"))
+	allIDs := map[string]bool{
+		p1["id"].(string): true,
+		p2["id"].(string): true,
+		p3["id"].(string): true,
+	}
+
+	// Page 1: limit=2
+	st, resp := f.do(t, http.MethodGet, "/v1/purchase-orders?limit=2", "")
+	if st != http.StatusOK {
+		t.Fatalf("page1 status = %d", st)
+	}
+	page1Items := resp["items"].([]any)
+	if len(page1Items) != 2 {
+		t.Fatalf("page1: want 2 items, got %d", len(page1Items))
+	}
+	cursor, ok := resp["nextCursor"].(string)
+	if !ok || cursor == "" {
+		t.Fatalf("page1: nextCursor missing or empty, got %v", resp["nextCursor"])
+	}
+
+	// Page 2: use cursor
+	_, resp = f.do(t, http.MethodGet, "/v1/purchase-orders?limit=2&cursor="+cursor, "")
+	page2Items := resp["items"].([]any)
+	if len(page2Items) != 1 {
+		t.Fatalf("page2: want 1 item, got %d", len(page2Items))
+	}
+	if resp["nextCursor"] != nil {
+		t.Fatalf("page2: nextCursor should be nil, got %v", resp["nextCursor"])
+	}
+
+	// No duplicates across pages.
+	seen := map[string]int{}
+	for _, pg := range [][]any{page1Items, page2Items} {
+		for _, it := range pg {
+			id := it.(map[string]any)["id"].(string)
+			seen[id]++
+			if !allIDs[id] {
+				t.Fatalf("unexpected id %s in results", id)
+			}
+		}
+	}
+	for id, count := range seen {
+		if count > 1 {
+			t.Fatalf("duplicate id %s across pages", id)
+		}
+	}
+	if len(seen) != 3 {
+		t.Fatalf("total unique items across pages = %d, want 3", len(seen))
+	}
+}

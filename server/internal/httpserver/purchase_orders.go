@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/shopspring/decimal"
 
@@ -106,17 +107,36 @@ func poLineRollup(ctx context.Context, q *store.Queries, tenantID, poID uuid.UUI
 	return m, nil
 }
 
-func (s *Server) ListPurchaseOrders(w http.ResponseWriter, r *http.Request, _ api.ListPurchaseOrdersParams) {
+func (s *Server) ListPurchaseOrders(w http.ResponseWriter, r *http.Request, params api.ListPurchaseOrdersParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
+	f, err := resolveDocListFilter(params.Status, params.WarehouseId, params.DateFrom, params.DateTo, params.Q, params.Cursor, params.Limit)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_cursor", "cursor is invalid")
+		return
+	}
 	var items []api.PurchaseOrder
-	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
-		rows, err := q.ListPurchaseOrders(r.Context(), tc.tenantID)
+	var nextCursor *string
+	err = s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		rows, err := q.ListPurchaseOrders(r.Context(), store.ListPurchaseOrdersParams{
+			TenantID:          tc.tenantID,
+			FilterStatus:      f.FilterStatus,
+			FilterWarehouseID: f.FilterWarehouseID,
+			FilterDateFrom:    f.FilterDateFrom,
+			FilterDateTo:      f.FilterDateTo,
+			FilterQ:           f.FilterQ,
+			CursorTs:          f.CursorTs,
+			CursorID:          f.CursorID,
+			PageLimit:         f.PageLimit + 1,
+		})
 		if err != nil {
 			return err
 		}
+		rows, nextCursor = nextCursorIfMore(rows, f.PageLimit,
+			func(po store.PurchaseOrder) pgtype.Timestamptz { return po.CreatedAt },
+			func(po store.PurchaseOrder) uuid.UUID { return po.ID })
 		items = make([]api.PurchaseOrder, 0, len(rows))
 		for _, po := range rows {
 			lines, err := q.ListPurchaseOrderLines(r.Context(), store.ListPurchaseOrderLinesParams{TenantID: tc.tenantID, PurchaseOrderID: po.ID})
@@ -134,7 +154,7 @@ func (s *Server) ListPurchaseOrders(w http.ResponseWriter, r *http.Request, _ ap
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, api.PurchaseOrderList{Items: items})
+	writeJSON(w, http.StatusOK, api.PurchaseOrderList{Items: items, NextCursor: nextCursor})
 }
 
 func (s *Server) CreatePurchaseOrder(w http.ResponseWriter, r *http.Request) {

@@ -2,6 +2,8 @@ package httpserver
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -256,6 +258,117 @@ func (e errOverReceipt) Error() string { return e.msg }
 type errOverDelivery struct{ msg string }
 
 func (e errOverDelivery) Error() string { return e.msg }
+
+// cursorPayload is the JSON body of a keyset cursor.
+type cursorPayload struct {
+	Ts string `json:"ts"`
+	ID string `json:"id"`
+}
+
+// encodeCursor encodes a (created_at, id) pair as an opaque base64url string.
+func encodeCursor(ts pgtype.Timestamptz, id uuid.UUID) string {
+	b, _ := json.Marshal(cursorPayload{
+		Ts: ts.Time.UTC().Format(time.RFC3339Nano),
+		ID: id.String(),
+	})
+	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+// decodeCursor decodes the opaque cursor back into pgtype values for the SQL keyset condition.
+func decodeCursor(s string) (pgtype.Timestamptz, pgtype.UUID, error) {
+	raw, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return pgtype.Timestamptz{}, pgtype.UUID{}, err
+	}
+	var p cursorPayload
+	if err := json.Unmarshal(raw, &p); err != nil {
+		return pgtype.Timestamptz{}, pgtype.UUID{}, err
+	}
+	t, err := time.Parse(time.RFC3339Nano, p.Ts)
+	if err != nil {
+		return pgtype.Timestamptz{}, pgtype.UUID{}, err
+	}
+	id, err := uuid.Parse(p.ID)
+	if err != nil {
+		return pgtype.Timestamptz{}, pgtype.UUID{}, err
+	}
+	return pgtype.Timestamptz{Time: t, Valid: true}, pgtype.UUID{Bytes: id, Valid: true}, nil
+}
+
+// docListFilter holds the resolved filter + cursor + limit for any document list query.
+type docListFilter struct {
+	FilterStatus      pgtype.Text
+	FilterWarehouseID pgtype.UUID
+	FilterDateFrom    pgtype.Date
+	FilterDateTo      pgtype.Date
+	FilterQ           pgtype.Text
+	CursorTs          pgtype.Timestamptz
+	CursorID          pgtype.UUID
+	PageLimit         int32
+}
+
+// resolveDocListFilter converts the generated API params into the docListFilter the SQL queries use.
+func resolveDocListFilter(
+	status *string,
+	warehouseID *openapi_types.UUID,
+	dateFrom, dateTo *openapi_types.Date,
+	q, cursor *string,
+	limit *int,
+) (docListFilter, error) {
+	f := docListFilter{PageLimit: 50}
+	if limit != nil && *limit > 0 {
+		if *limit > 200 {
+			f.PageLimit = 200
+		} else {
+			f.PageLimit = int32(*limit)
+		}
+	}
+	if status != nil {
+		f.FilterStatus = pgtype.Text{String: *status, Valid: true}
+	}
+	if warehouseID != nil {
+		f.FilterWarehouseID = pgtype.UUID{Bytes: *warehouseID, Valid: true}
+	}
+	if dateFrom != nil {
+		f.FilterDateFrom = pgtype.Date{Time: dateFrom.Time, Valid: true}
+	}
+	if dateTo != nil {
+		f.FilterDateTo = pgtype.Date{Time: dateTo.Time, Valid: true}
+	}
+	if q != nil && *q != "" {
+		f.FilterQ = pgtype.Text{String: *q, Valid: true}
+	}
+	if cursor != nil && *cursor != "" {
+		ts, id, err := decodeCursor(*cursor)
+		if err != nil {
+			return docListFilter{}, err
+		}
+		f.CursorTs = ts
+		f.CursorID = id
+	}
+	return f, nil
+}
+
+// nextCursorIfMore returns a cursor string for the next page when rows > limit, and
+// trims the slice to limit. The cursor encodes the last row's created_at and id.
+// rows must be sorted created_at DESC, id DESC.
+func nextCursorIfMore[T any](rows []T, limit int32, ts func(T) pgtype.Timestamptz, id func(T) uuid.UUID) ([]T, *string) {
+	if int32(len(rows)) <= limit {
+		return rows, nil
+	}
+	rows = rows[:limit]
+	last := rows[len(rows)-1]
+	c := encodeCursor(ts(last), id(last))
+	return rows, &c
+}
+
+// pgTextFrom converts an optional string pointer to pgtype.Text.
+func pgTextFrom(s *string) pgtype.Text {
+	if s == nil {
+		return pgtype.Text{}
+	}
+	return pgtype.Text{String: *s, Valid: true}
+}
 
 // writeStoreError maps common store errors to HTTP responses. Returns true when
 // it wrote a response.

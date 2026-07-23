@@ -67,17 +67,36 @@ func (s *Server) loadGoodsReceipt(ctx context.Context, q *store.Queries, tenantI
 	return goodsReceiptToAPI(gr, lines, actors), nil
 }
 
-func (s *Server) ListGoodsReceipts(w http.ResponseWriter, r *http.Request, _ api.ListGoodsReceiptsParams) {
+func (s *Server) ListGoodsReceipts(w http.ResponseWriter, r *http.Request, params api.ListGoodsReceiptsParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
+	f, err := resolveDocListFilter(params.Status, params.WarehouseId, params.DateFrom, params.DateTo, params.Q, params.Cursor, params.Limit)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_cursor", "cursor is invalid")
+		return
+	}
 	var items []api.GoodsReceipt
-	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
-		rows, err := q.ListGoodsReceipts(r.Context(), tc.tenantID)
+	var nextCursor *string
+	err = s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		rows, err := q.ListGoodsReceipts(r.Context(), store.ListGoodsReceiptsParams{
+			TenantID:          tc.tenantID,
+			FilterStatus:      f.FilterStatus,
+			FilterWarehouseID: f.FilterWarehouseID,
+			FilterDateFrom:    f.FilterDateFrom,
+			FilterDateTo:      f.FilterDateTo,
+			FilterQ:           f.FilterQ,
+			CursorTs:          f.CursorTs,
+			CursorID:          f.CursorID,
+			PageLimit:         f.PageLimit + 1,
+		})
 		if err != nil {
 			return err
 		}
+		rows, nextCursor = nextCursorIfMore(rows, f.PageLimit,
+			func(gr store.GoodsReceipt) pgtype.Timestamptz { return gr.CreatedAt },
+			func(gr store.GoodsReceipt) uuid.UUID { return gr.ID })
 		items = make([]api.GoodsReceipt, 0, len(rows))
 		for _, gr := range rows {
 			lines, err := q.ListGoodsReceiptLines(r.Context(), store.ListGoodsReceiptLinesParams{TenantID: tc.tenantID, GoodsReceiptID: gr.ID})
@@ -95,7 +114,7 @@ func (s *Server) ListGoodsReceipts(w http.ResponseWriter, r *http.Request, _ api
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, api.GoodsReceiptList{Items: items})
+	writeJSON(w, http.StatusOK, api.GoodsReceiptList{Items: items, NextCursor: nextCursor})
 }
 
 func (s *Server) CreateGoodsReceipt(w http.ResponseWriter, r *http.Request) {

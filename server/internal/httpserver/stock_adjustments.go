@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/nrksolusi/sinta/internal/api"
@@ -64,17 +65,36 @@ func (s *Server) loadStockAdjustment(ctx context.Context, q *store.Queries, tena
 	return stockAdjustmentToAPI(a, lines, actors), nil
 }
 
-func (s *Server) ListStockAdjustments(w http.ResponseWriter, r *http.Request, _ api.ListStockAdjustmentsParams) {
+func (s *Server) ListStockAdjustments(w http.ResponseWriter, r *http.Request, params api.ListStockAdjustmentsParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
+	f, err := resolveDocListFilter(params.Status, params.WarehouseId, params.DateFrom, params.DateTo, params.Q, params.Cursor, params.Limit)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_cursor", "cursor is invalid")
+		return
+	}
 	var items []api.StockAdjustment
-	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
-		rows, err := q.ListStockAdjustments(r.Context(), tc.tenantID)
+	var nextCursor *string
+	err = s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		rows, err := q.ListStockAdjustments(r.Context(), store.ListStockAdjustmentsParams{
+			TenantID:          tc.tenantID,
+			FilterStatus:      f.FilterStatus,
+			FilterWarehouseID: f.FilterWarehouseID,
+			FilterDateFrom:    f.FilterDateFrom,
+			FilterDateTo:      f.FilterDateTo,
+			FilterQ:           f.FilterQ,
+			CursorTs:          f.CursorTs,
+			CursorID:          f.CursorID,
+			PageLimit:         f.PageLimit + 1,
+		})
 		if err != nil {
 			return err
 		}
+		rows, nextCursor = nextCursorIfMore(rows, f.PageLimit,
+			func(a store.StockAdjustment) pgtype.Timestamptz { return a.CreatedAt },
+			func(a store.StockAdjustment) uuid.UUID { return a.ID })
 		items = make([]api.StockAdjustment, 0, len(rows))
 		for _, a := range rows {
 			lines, err := q.ListStockAdjustmentLines(r.Context(), store.ListStockAdjustmentLinesParams{TenantID: tc.tenantID, StockAdjustmentID: a.ID})
@@ -92,7 +112,7 @@ func (s *Server) ListStockAdjustments(w http.ResponseWriter, r *http.Request, _ 
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, api.StockAdjustmentList{Items: items})
+	writeJSON(w, http.StatusOK, api.StockAdjustmentList{Items: items, NextCursor: nextCursor})
 }
 
 func (s *Server) CreateStockAdjustment(w http.ResponseWriter, r *http.Request) {

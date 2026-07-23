@@ -4,7 +4,14 @@
 -- name: ListWarehouses :many
 SELECT * FROM warehouses
 WHERE tenant_id = $1
-ORDER BY code;
+  AND (sqlc.narg('q')::text IS NULL
+       OR name ILIKE '%' || sqlc.narg('q') || '%'
+       OR code ILIKE '%' || sqlc.narg('q') || '%')
+ORDER BY
+  CASE WHEN sqlc.narg('q')::text IS NOT NULL
+       THEN -GREATEST(similarity(name, sqlc.narg('q')::text), similarity(code, sqlc.narg('q')::text))
+  END NULLS LAST,
+  code;
 
 -- name: GetWarehouse :one
 SELECT * FROM warehouses

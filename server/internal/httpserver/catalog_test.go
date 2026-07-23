@@ -441,3 +441,84 @@ func TestProductTenantIsolation(t *testing.T) {
 		t.Fatalf("cross-tenant get status = %d, want 404", status)
 	}
 }
+
+// TestProductSearchByQ verifies trigram-ranked product search.
+func TestProductSearchByQ(t *testing.T) {
+	ts := newTestServer(t)
+	cookie, _ := activeTenant(t, ts, "cari@toko.co.id")
+
+	do(t, ts, cookie, http.MethodPost, "/v1/products", `{"sku":"GULA","name":"Gula Pasir","baseUom":"kg"}`)
+	do(t, ts, cookie, http.MethodPost, "/v1/products", `{"sku":"GAR","name":"Garam Dapur","baseUom":"kg"}`)
+	do(t, ts, cookie, http.MethodPost, "/v1/products", `{"sku":"MER","name":"Merica Hitam","baseUom":"gr"}`)
+
+	status, body := do(t, ts, cookie, http.MethodGet, "/v1/products?q=Gula", "")
+	if status != http.StatusOK {
+		t.Fatalf("search status = %d, body: %s", status, body)
+	}
+	var products []struct {
+		Sku string `json:"sku"`
+	}
+	if err := json.Unmarshal(body, &products); err != nil {
+		t.Fatalf("decode: %v; body: %s", err, body)
+	}
+	if len(products) == 0 {
+		t.Fatalf("product search by q=Gula: got 0 results, want >= 1")
+	}
+	if products[0].Sku != "GULA" {
+		t.Fatalf("product search q=Gula: first result sku = %q, want GULA", products[0].Sku)
+	}
+}
+
+// TestPartnerSearchByQ verifies trigram-ranked partner search.
+func TestPartnerSearchByQ(t *testing.T) {
+	ts := newTestServer(t)
+	cookie, _ := activeTenant(t, ts, "mitra@toko.co.id")
+
+	do(t, ts, cookie, http.MethodPost, "/v1/partners",
+		`{"code":"SUP-01","name":"PT Indofood Sukses","isSupplier":true,"isCustomer":false}`)
+	do(t, ts, cookie, http.MethodPost, "/v1/partners",
+		`{"code":"SUP-02","name":"CV Maju Jaya","isSupplier":true,"isCustomer":false}`)
+
+	status, body := do(t, ts, cookie, http.MethodGet, "/v1/partners?q=indofood", "")
+	if status != http.StatusOK {
+		t.Fatalf("partner search status = %d, body: %s", status, body)
+	}
+	var partners []struct {
+		Code string `json:"code"`
+	}
+	if err := json.Unmarshal(body, &partners); err != nil {
+		t.Fatalf("decode: %v; body: %s", err, body)
+	}
+	if len(partners) != 1 {
+		t.Fatalf("partner search q=indofood: got %d results, want 1", len(partners))
+	}
+	if partners[0].Code != "SUP-01" {
+		t.Fatalf("partner search q=indofood: first result code = %q, want SUP-01", partners[0].Code)
+	}
+}
+
+// TestWarehouseSearchByQ verifies warehouse search.
+func TestWarehouseSearchByQ(t *testing.T) {
+	ts := newTestServer(t)
+	cookie, _ := activeTenant(t, ts, "gudang@toko2.co.id")
+
+	do(t, ts, cookie, http.MethodPost, "/v1/warehouses", `{"code":"GDG-01","name":"Gudang Utama"}`)
+	do(t, ts, cookie, http.MethodPost, "/v1/warehouses", `{"code":"GDG-02","name":"Toko Cabang"}`)
+
+	status, body := do(t, ts, cookie, http.MethodGet, "/v1/warehouses?q=utama", "")
+	if status != http.StatusOK {
+		t.Fatalf("warehouse search status = %d, body: %s", status, body)
+	}
+	var warehouses []struct {
+		Code string `json:"code"`
+	}
+	if err := json.Unmarshal(body, &warehouses); err != nil {
+		t.Fatalf("decode: %v; body: %s", err, body)
+	}
+	if len(warehouses) != 1 {
+		t.Fatalf("warehouse search q=utama: got %d results, want 1", len(warehouses))
+	}
+	if warehouses[0].Code != "GDG-01" {
+		t.Fatalf("warehouse search q=utama: result code = %q, want GDG-01", warehouses[0].Code)
+	}
+}

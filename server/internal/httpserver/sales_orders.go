@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"github.com/nrksolusi/sinta/internal/api"
@@ -92,17 +93,36 @@ func soLineRollup(ctx context.Context, q *store.Queries, tenantID, soID uuid.UUI
 	return m, nil
 }
 
-func (s *Server) ListSalesOrders(w http.ResponseWriter, r *http.Request, _ api.ListSalesOrdersParams) {
+func (s *Server) ListSalesOrders(w http.ResponseWriter, r *http.Request, params api.ListSalesOrdersParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
+	f, err := resolveDocListFilter(params.Status, params.WarehouseId, params.DateFrom, params.DateTo, params.Q, params.Cursor, params.Limit)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_cursor", "cursor is invalid")
+		return
+	}
 	var items []api.SalesOrder
-	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
-		rows, err := q.ListSalesOrders(r.Context(), tc.tenantID)
+	var nextCursor *string
+	err = s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		rows, err := q.ListSalesOrders(r.Context(), store.ListSalesOrdersParams{
+			TenantID:          tc.tenantID,
+			FilterStatus:      f.FilterStatus,
+			FilterWarehouseID: f.FilterWarehouseID,
+			FilterDateFrom:    f.FilterDateFrom,
+			FilterDateTo:      f.FilterDateTo,
+			FilterQ:           f.FilterQ,
+			CursorTs:          f.CursorTs,
+			CursorID:          f.CursorID,
+			PageLimit:         f.PageLimit + 1,
+		})
 		if err != nil {
 			return err
 		}
+		rows, nextCursor = nextCursorIfMore(rows, f.PageLimit,
+			func(so store.SalesOrder) pgtype.Timestamptz { return so.CreatedAt },
+			func(so store.SalesOrder) uuid.UUID { return so.ID })
 		items = make([]api.SalesOrder, 0, len(rows))
 		for _, so := range rows {
 			lines, err := q.ListSalesOrderLines(r.Context(), store.ListSalesOrderLinesParams{TenantID: tc.tenantID, SalesOrderID: so.ID})
@@ -120,7 +140,7 @@ func (s *Server) ListSalesOrders(w http.ResponseWriter, r *http.Request, _ api.L
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, api.SalesOrderList{Items: items})
+	writeJSON(w, http.StatusOK, api.SalesOrderList{Items: items, NextCursor: nextCursor})
 }
 
 func (s *Server) CreateSalesOrder(w http.ResponseWriter, r *http.Request) {

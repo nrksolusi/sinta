@@ -156,6 +156,7 @@ func (s *Server) ListProducts(w http.ResponseWriter, r *http.Request, params api
 		rows, err = q.ListProducts(r.Context(), store.ListProductsParams{
 			TenantID: tc.tenantID,
 			Status:   statusFilter,
+			Q:        pgTextFrom(params.Q),
 		})
 		return err
 	})
@@ -517,6 +518,7 @@ func (s *Server) ListPartners(w http.ResponseWriter, r *http.Request, params api
 			Status:       statusFilter,
 			OnlySupplier: onlySupplier,
 			OnlyCustomer: onlyCustomer,
+			Q:            pgTextFrom(params.Q),
 		})
 		return err
 	})
@@ -670,7 +672,7 @@ func (s *Server) UpdatePartner(w http.ResponseWriter, r *http.Request, partnerId
 // Warehouses
 // ---------------------------------------------------------------------------
 
-func (s *Server) ListWarehouses(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ListWarehouses(w http.ResponseWriter, r *http.Request, params api.ListWarehousesParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
@@ -678,7 +680,10 @@ func (s *Server) ListWarehouses(w http.ResponseWriter, r *http.Request) {
 	var rows []store.Warehouse
 	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
 		var err error
-		rows, err = q.ListWarehouses(r.Context(), tc.tenantID)
+		rows, err = q.ListWarehouses(r.Context(), store.ListWarehousesParams{
+			TenantID: tc.tenantID,
+			Q:        pgTextFrom(params.Q),
+		})
 		return err
 	})
 	if err != nil {

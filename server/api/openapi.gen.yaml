@@ -2305,6 +2305,11 @@ paths:
                   required: false
                   schema:
                     $ref: '#/components/schemas/CatalogStatus'
+                - in: query
+                  name: q
+                  required: false
+                  schema:
+                    type: string
             responses:
                 "200":
                     content:
@@ -2402,6 +2407,11 @@ paths:
                   required: false
                   schema:
                     $ref: '#/components/schemas/CatalogStatus'
+                - in: query
+                  name: q
+                  required: false
+                  schema:
+                    type: string
             responses:
                 "200":
                     content:
@@ -3702,6 +3712,12 @@ paths:
     /warehouses:
         get:
             operationId: listWarehouses
+            parameters:
+                - in: query
+                  name: q
+                  required: false
+                  schema:
+                    type: string
             responses:
                 "200":
                     content:

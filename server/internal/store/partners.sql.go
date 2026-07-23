@@ -82,7 +82,14 @@ WHERE tenant_id = $1
   AND ($2::text IS NULL OR status = $2)
   AND (NOT $3::boolean OR is_supplier)
   AND (NOT $4::boolean OR is_customer)
-ORDER BY name
+  AND ($5::text IS NULL
+       OR name ILIKE '%' || $5 || '%'
+       OR code ILIKE '%' || $5 || '%')
+ORDER BY
+  CASE WHEN $5::text IS NOT NULL
+       THEN -GREATEST(similarity(name, $5::text), similarity(code, $5::text))
+  END NULLS LAST,
+  name
 `
 
 type ListPartnersParams struct {
@@ -90,6 +97,7 @@ type ListPartnersParams struct {
 	Status       pgtype.Text
 	OnlySupplier bool
 	OnlyCustomer bool
+	Q            pgtype.Text
 }
 
 func (q *Queries) ListPartners(ctx context.Context, arg ListPartnersParams) ([]Partner, error) {
@@ -98,6 +106,7 @@ func (q *Queries) ListPartners(ctx context.Context, arg ListPartnersParams) ([]P
 		arg.Status,
 		arg.OnlySupplier,
 		arg.OnlyCustomer,
+		arg.Q,
 	)
 	if err != nil {
 		return nil, err

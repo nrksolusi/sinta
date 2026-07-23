@@ -1298,11 +1298,44 @@ func (q *Queries) InsertStockTransferLine(ctx context.Context, arg InsertStockTr
 }
 
 const listDeliveries = `-- name: ListDeliveries :many
-SELECT id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM deliveries WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, sales_order_id, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM deliveries
+WHERE tenant_id = $1
+  AND ($2::text IS NULL OR status = $2::text)
+  AND ($3::uuid IS NULL OR warehouse_id = $3::uuid)
+  AND ($4::date IS NULL OR doc_date >= $4::date)
+  AND ($5::date IS NULL OR doc_date <= $5::date)
+  AND ($6::text IS NULL OR doc_number ILIKE '%' || $6 || '%')
+  AND ($7::timestamptz IS NULL
+       OR created_at < $7::timestamptz
+       OR (created_at = $7::timestamptz AND id < $8::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT $9
 `
 
-func (q *Queries) ListDeliveries(ctx context.Context, tenantID uuid.UUID) ([]Delivery, error) {
-	rows, err := q.db.Query(ctx, listDeliveries, tenantID)
+type ListDeliveriesParams struct {
+	TenantID          uuid.UUID
+	FilterStatus      pgtype.Text
+	FilterWarehouseID pgtype.UUID
+	FilterDateFrom    pgtype.Date
+	FilterDateTo      pgtype.Date
+	FilterQ           pgtype.Text
+	CursorTs          pgtype.Timestamptz
+	CursorID          pgtype.UUID
+	PageLimit         int32
+}
+
+func (q *Queries) ListDeliveries(ctx context.Context, arg ListDeliveriesParams) ([]Delivery, error) {
+	rows, err := q.db.Query(ctx, listDeliveries,
+		arg.TenantID,
+		arg.FilterStatus,
+		arg.FilterWarehouseID,
+		arg.FilterDateFrom,
+		arg.FilterDateTo,
+		arg.FilterQ,
+		arg.CursorTs,
+		arg.CursorID,
+		arg.PageLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1417,11 +1450,44 @@ func (q *Queries) ListGoodsReceiptLines(ctx context.Context, arg ListGoodsReceip
 }
 
 const listGoodsReceipts = `-- name: ListGoodsReceipts :many
-SELECT id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM goods_receipts WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, purchase_order_id, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM goods_receipts
+WHERE tenant_id = $1
+  AND ($2::text IS NULL OR status = $2::text)
+  AND ($3::uuid IS NULL OR warehouse_id = $3::uuid)
+  AND ($4::date IS NULL OR doc_date >= $4::date)
+  AND ($5::date IS NULL OR doc_date <= $5::date)
+  AND ($6::text IS NULL OR doc_number ILIKE '%' || $6 || '%')
+  AND ($7::timestamptz IS NULL
+       OR created_at < $7::timestamptz
+       OR (created_at = $7::timestamptz AND id < $8::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT $9
 `
 
-func (q *Queries) ListGoodsReceipts(ctx context.Context, tenantID uuid.UUID) ([]GoodsReceipt, error) {
-	rows, err := q.db.Query(ctx, listGoodsReceipts, tenantID)
+type ListGoodsReceiptsParams struct {
+	TenantID          uuid.UUID
+	FilterStatus      pgtype.Text
+	FilterWarehouseID pgtype.UUID
+	FilterDateFrom    pgtype.Date
+	FilterDateTo      pgtype.Date
+	FilterQ           pgtype.Text
+	CursorTs          pgtype.Timestamptz
+	CursorID          pgtype.UUID
+	PageLimit         int32
+}
+
+func (q *Queries) ListGoodsReceipts(ctx context.Context, arg ListGoodsReceiptsParams) ([]GoodsReceipt, error) {
+	rows, err := q.db.Query(ctx, listGoodsReceipts,
+		arg.TenantID,
+		arg.FilterStatus,
+		arg.FilterWarehouseID,
+		arg.FilterDateFrom,
+		arg.FilterDateTo,
+		arg.FilterQ,
+		arg.CursorTs,
+		arg.CursorID,
+		arg.PageLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1495,11 +1561,44 @@ func (q *Queries) ListPurchaseOrderLines(ctx context.Context, arg ListPurchaseOr
 }
 
 const listPurchaseOrders = `-- name: ListPurchaseOrders :many
-SELECT id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM purchase_orders WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, supplier_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM purchase_orders
+WHERE tenant_id = $1
+  AND ($2::text IS NULL OR status = $2::text)
+  AND ($3::uuid IS NULL OR warehouse_id = $3::uuid)
+  AND ($4::date IS NULL OR doc_date >= $4::date)
+  AND ($5::date IS NULL OR doc_date <= $5::date)
+  AND ($6::text IS NULL OR doc_number ILIKE '%' || $6 || '%')
+  AND ($7::timestamptz IS NULL
+       OR created_at < $7::timestamptz
+       OR (created_at = $7::timestamptz AND id < $8::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT $9
 `
 
-func (q *Queries) ListPurchaseOrders(ctx context.Context, tenantID uuid.UUID) ([]PurchaseOrder, error) {
-	rows, err := q.db.Query(ctx, listPurchaseOrders, tenantID)
+type ListPurchaseOrdersParams struct {
+	TenantID          uuid.UUID
+	FilterStatus      pgtype.Text
+	FilterWarehouseID pgtype.UUID
+	FilterDateFrom    pgtype.Date
+	FilterDateTo      pgtype.Date
+	FilterQ           pgtype.Text
+	CursorTs          pgtype.Timestamptz
+	CursorID          pgtype.UUID
+	PageLimit         int32
+}
+
+func (q *Queries) ListPurchaseOrders(ctx context.Context, arg ListPurchaseOrdersParams) ([]PurchaseOrder, error) {
+	rows, err := q.db.Query(ctx, listPurchaseOrders,
+		arg.TenantID,
+		arg.FilterStatus,
+		arg.FilterWarehouseID,
+		arg.FilterDateFrom,
+		arg.FilterDateTo,
+		arg.FilterQ,
+		arg.CursorTs,
+		arg.CursorID,
+		arg.PageLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1572,11 +1671,44 @@ func (q *Queries) ListSalesOrderLines(ctx context.Context, arg ListSalesOrderLin
 }
 
 const listSalesOrders = `-- name: ListSalesOrders :many
-SELECT id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM sales_orders WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, customer_id, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM sales_orders
+WHERE tenant_id = $1
+  AND ($2::text IS NULL OR status = $2::text)
+  AND ($3::uuid IS NULL OR warehouse_id = $3::uuid)
+  AND ($4::date IS NULL OR doc_date >= $4::date)
+  AND ($5::date IS NULL OR doc_date <= $5::date)
+  AND ($6::text IS NULL OR doc_number ILIKE '%' || $6 || '%')
+  AND ($7::timestamptz IS NULL
+       OR created_at < $7::timestamptz
+       OR (created_at = $7::timestamptz AND id < $8::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT $9
 `
 
-func (q *Queries) ListSalesOrders(ctx context.Context, tenantID uuid.UUID) ([]SalesOrder, error) {
-	rows, err := q.db.Query(ctx, listSalesOrders, tenantID)
+type ListSalesOrdersParams struct {
+	TenantID          uuid.UUID
+	FilterStatus      pgtype.Text
+	FilterWarehouseID pgtype.UUID
+	FilterDateFrom    pgtype.Date
+	FilterDateTo      pgtype.Date
+	FilterQ           pgtype.Text
+	CursorTs          pgtype.Timestamptz
+	CursorID          pgtype.UUID
+	PageLimit         int32
+}
+
+func (q *Queries) ListSalesOrders(ctx context.Context, arg ListSalesOrdersParams) ([]SalesOrder, error) {
+	rows, err := q.db.Query(ctx, listSalesOrders,
+		arg.TenantID,
+		arg.FilterStatus,
+		arg.FilterWarehouseID,
+		arg.FilterDateFrom,
+		arg.FilterDateTo,
+		arg.FilterQ,
+		arg.CursorTs,
+		arg.CursorID,
+		arg.PageLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1650,11 +1782,44 @@ func (q *Queries) ListStockAdjustmentLines(ctx context.Context, arg ListStockAdj
 }
 
 const listStockAdjustments = `-- name: ListStockAdjustments :many
-SELECT id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_adjustments WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, warehouse_id, reason, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_adjustments
+WHERE tenant_id = $1
+  AND ($2::text IS NULL OR status = $2::text)
+  AND ($3::uuid IS NULL OR warehouse_id = $3::uuid)
+  AND ($4::date IS NULL OR doc_date >= $4::date)
+  AND ($5::date IS NULL OR doc_date <= $5::date)
+  AND ($6::text IS NULL OR doc_number ILIKE '%' || $6 || '%')
+  AND ($7::timestamptz IS NULL
+       OR created_at < $7::timestamptz
+       OR (created_at = $7::timestamptz AND id < $8::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT $9
 `
 
-func (q *Queries) ListStockAdjustments(ctx context.Context, tenantID uuid.UUID) ([]StockAdjustment, error) {
-	rows, err := q.db.Query(ctx, listStockAdjustments, tenantID)
+type ListStockAdjustmentsParams struct {
+	TenantID          uuid.UUID
+	FilterStatus      pgtype.Text
+	FilterWarehouseID pgtype.UUID
+	FilterDateFrom    pgtype.Date
+	FilterDateTo      pgtype.Date
+	FilterQ           pgtype.Text
+	CursorTs          pgtype.Timestamptz
+	CursorID          pgtype.UUID
+	PageLimit         int32
+}
+
+func (q *Queries) ListStockAdjustments(ctx context.Context, arg ListStockAdjustmentsParams) ([]StockAdjustment, error) {
+	rows, err := q.db.Query(ctx, listStockAdjustments,
+		arg.TenantID,
+		arg.FilterStatus,
+		arg.FilterWarehouseID,
+		arg.FilterDateFrom,
+		arg.FilterDateTo,
+		arg.FilterQ,
+		arg.CursorTs,
+		arg.CursorID,
+		arg.PageLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1728,11 +1893,44 @@ func (q *Queries) ListStockOpnameLines(ctx context.Context, arg ListStockOpnameL
 }
 
 const listStockOpnames = `-- name: ListStockOpnames :many
-SELECT id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_opnames WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_opnames
+WHERE tenant_id = $1
+  AND ($2::text IS NULL OR status = $2::text)
+  AND ($3::uuid IS NULL OR warehouse_id = $3::uuid)
+  AND ($4::date IS NULL OR doc_date >= $4::date)
+  AND ($5::date IS NULL OR doc_date <= $5::date)
+  AND ($6::text IS NULL OR doc_number ILIKE '%' || $6 || '%')
+  AND ($7::timestamptz IS NULL
+       OR created_at < $7::timestamptz
+       OR (created_at = $7::timestamptz AND id < $8::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT $9
 `
 
-func (q *Queries) ListStockOpnames(ctx context.Context, tenantID uuid.UUID) ([]StockOpname, error) {
-	rows, err := q.db.Query(ctx, listStockOpnames, tenantID)
+type ListStockOpnamesParams struct {
+	TenantID          uuid.UUID
+	FilterStatus      pgtype.Text
+	FilterWarehouseID pgtype.UUID
+	FilterDateFrom    pgtype.Date
+	FilterDateTo      pgtype.Date
+	FilterQ           pgtype.Text
+	CursorTs          pgtype.Timestamptz
+	CursorID          pgtype.UUID
+	PageLimit         int32
+}
+
+func (q *Queries) ListStockOpnames(ctx context.Context, arg ListStockOpnamesParams) ([]StockOpname, error) {
+	rows, err := q.db.Query(ctx, listStockOpnames,
+		arg.TenantID,
+		arg.FilterStatus,
+		arg.FilterWarehouseID,
+		arg.FilterDateFrom,
+		arg.FilterDateTo,
+		arg.FilterQ,
+		arg.CursorTs,
+		arg.CursorID,
+		arg.PageLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1804,11 +2002,46 @@ func (q *Queries) ListStockTransferLines(ctx context.Context, arg ListStockTrans
 }
 
 const listStockTransfers = `-- name: ListStockTransfers :many
-SELECT id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_transfers WHERE tenant_id = $1 ORDER BY created_at DESC
+SELECT id, tenant_id, doc_number, status, from_warehouse_id, to_warehouse_id, doc_date, notes, posted_at, created_at, created_by, reverses_id, reversed_by_id, posted_by FROM stock_transfers
+WHERE tenant_id = $1
+  AND ($2::text IS NULL OR status = $2::text)
+  AND ($3::uuid IS NULL
+       OR from_warehouse_id = $3::uuid
+       OR to_warehouse_id   = $3::uuid)
+  AND ($4::date IS NULL OR doc_date >= $4::date)
+  AND ($5::date IS NULL OR doc_date <= $5::date)
+  AND ($6::text IS NULL OR doc_number ILIKE '%' || $6 || '%')
+  AND ($7::timestamptz IS NULL
+       OR created_at < $7::timestamptz
+       OR (created_at = $7::timestamptz AND id < $8::uuid))
+ORDER BY created_at DESC, id DESC
+LIMIT $9
 `
 
-func (q *Queries) ListStockTransfers(ctx context.Context, tenantID uuid.UUID) ([]StockTransfer, error) {
-	rows, err := q.db.Query(ctx, listStockTransfers, tenantID)
+type ListStockTransfersParams struct {
+	TenantID          uuid.UUID
+	FilterStatus      pgtype.Text
+	FilterWarehouseID pgtype.UUID
+	FilterDateFrom    pgtype.Date
+	FilterDateTo      pgtype.Date
+	FilterQ           pgtype.Text
+	CursorTs          pgtype.Timestamptz
+	CursorID          pgtype.UUID
+	PageLimit         int32
+}
+
+func (q *Queries) ListStockTransfers(ctx context.Context, arg ListStockTransfersParams) ([]StockTransfer, error) {
+	rows, err := q.db.Query(ctx, listStockTransfers,
+		arg.TenantID,
+		arg.FilterStatus,
+		arg.FilterWarehouseID,
+		arg.FilterDateFrom,
+		arg.FilterDateTo,
+		arg.FilterQ,
+		arg.CursorTs,
+		arg.CursorID,
+		arg.PageLimit,
+	)
 	if err != nil {
 		return nil, err
 	}

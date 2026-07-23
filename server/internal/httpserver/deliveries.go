@@ -68,17 +68,36 @@ func (s *Server) loadDelivery(ctx context.Context, q *store.Queries, tenantID, i
 	return deliveryToAPI(d, lines, actors), nil
 }
 
-func (s *Server) ListDeliveries(w http.ResponseWriter, r *http.Request, _ api.ListDeliveriesParams) {
+func (s *Server) ListDeliveries(w http.ResponseWriter, r *http.Request, params api.ListDeliveriesParams) {
 	tc, ok := s.requireTenant(w, r)
 	if !ok {
 		return
 	}
+	f, err := resolveDocListFilter(params.Status, params.WarehouseId, params.DateFrom, params.DateTo, params.Q, params.Cursor, params.Limit)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_cursor", "cursor is invalid")
+		return
+	}
 	var items []api.Delivery
-	err := s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
-		rows, err := q.ListDeliveries(r.Context(), tc.tenantID)
+	var nextCursor *string
+	err = s.tenantTx(r.Context(), tc.tenantID, func(q *store.Queries) error {
+		rows, err := q.ListDeliveries(r.Context(), store.ListDeliveriesParams{
+			TenantID:          tc.tenantID,
+			FilterStatus:      f.FilterStatus,
+			FilterWarehouseID: f.FilterWarehouseID,
+			FilterDateFrom:    f.FilterDateFrom,
+			FilterDateTo:      f.FilterDateTo,
+			FilterQ:           f.FilterQ,
+			CursorTs:          f.CursorTs,
+			CursorID:          f.CursorID,
+			PageLimit:         f.PageLimit + 1,
+		})
 		if err != nil {
 			return err
 		}
+		rows, nextCursor = nextCursorIfMore(rows, f.PageLimit,
+			func(d store.Delivery) pgtype.Timestamptz { return d.CreatedAt },
+			func(d store.Delivery) uuid.UUID { return d.ID })
 		items = make([]api.Delivery, 0, len(rows))
 		for _, d := range rows {
 			lines, err := q.ListDeliveryLines(r.Context(), store.ListDeliveryLinesParams{TenantID: tc.tenantID, DeliveryID: d.ID})
@@ -96,7 +115,7 @@ func (s *Server) ListDeliveries(w http.ResponseWriter, r *http.Request, _ api.Li
 	if writeStoreError(w, err) {
 		return
 	}
-	writeJSON(w, http.StatusOK, api.DeliveryList{Items: items})
+	writeJSON(w, http.StatusOK, api.DeliveryList{Items: items, NextCursor: nextCursor})
 }
 
 func (s *Server) CreateDelivery(w http.ResponseWriter, r *http.Request) {
