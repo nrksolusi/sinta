@@ -45,6 +45,26 @@ pace - keep changes small and scoped.
   `BOARD.md`/`INCIDENTS.md`/`JOURNAL.md` are generated - never hand-edit them; run
   `python3 docs/jobs/_jobs.py gen`. A change lands with its job file, not just a
   commit. Plans in `docs/plans/` are the thinking a job cites - never a handoff.
+- `docs/jobs/_jobs.py` command surface and when to trigger each (invoke the
+  `jobs` skill, or run directly):
+  - `new --type <T> --title "..."` - file a job. Run on **main**, before writing
+    any code for it.
+  - `gen` - regenerate `BOARD.md`/`INCIDENTS.md`/`JOURNAL.md`. Run after **any**
+    hand-edit to a job file (status, `branch`, a `## Log` entry). Those three
+    files are generated - never hand-edit them.
+  - `done SN-#### [--note "..."]` - run when a job's acceptance gate + lane gate
+    are green. Sets `done`, appends the log entry, and **cascade-unblocks**
+    dependents (`blocked → ready`). Never hand-set `status: done` - that skips the
+    cascade.
+  - `check` - report blocking-rule drift (exit 1 if any). Run before committing
+    job changes, or whenever the board looks off.
+  - `reconcile` - auto-promote `blocked → ready` where all blockers are done
+    (heals manual drift). The unsafe cases stay for `check` to surface.
+  - `guard` (PreToolUse/Write) and `onread` (PostToolUse/Read) are **internal
+    hooks** wired in `.claude/settings.json` - never run them by hand.
+  Blocking rule the tooling enforces: a job is workable only when its status is
+  `ready` (every `blocked_by` is `done`); a `blocked` job cannot proceed, and the
+  `onread` hook refuses to let one be started.
 - The `stock_movements` journal is append-only and the sole source of truth
   for stock. Never update or delete journal rows; corrections are new entries
   (ADR-0001, ADR-0003).

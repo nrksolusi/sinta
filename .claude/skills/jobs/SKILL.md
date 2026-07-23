@@ -36,10 +36,20 @@ front-matter (`lane` BE/FE/Joint, `size`, `risk`, `priority` P0-P2; leave
 `branch` empty until start). Then `python3 docs/jobs/_jobs.py gen` and commit the
 job file.
 
+## Blocking rule (enforced)
+
+A job is workable only when its status is `ready` - every id in `blocked_by` is
+`done`. A job with an unmet blocker is `blocked` and **must not be started**; the
+`onread` hook refuses it. Never hand-edit a `blocked → ready` flip: finish the
+blocker with `python3 docs/jobs/_jobs.py done <blocker-id>`, which cascades every
+dependent whose blockers are now all done to `ready`. `check` reports drift
+(exit 1); `reconcile` heals the safe `blocked → ready` case.
+
 ## Working a job
 
-1. **Definition of Ready** before coding: every `blocked_by` job is `done`; you
-   have read the References and can restate the Scope fence in your own words.
+1. **Definition of Ready** before coding: status is `ready` (every `blocked_by`
+   job is `done`); you have read the References and can restate the Scope fence in
+   your own words. If it's `blocked`, stop - work the blocker first.
 2. **Move to a worktree**, set `status: in-progress` and `branch:`, log `start`.
 3. **Test-first** (invoke `/tdd`) - red before green, per CLAUDE.md.
 4. **Stay inside the Scope fence.** STOP and escalate (don't improvise) if the
@@ -59,8 +69,10 @@ job file.
   test && pnpm lint`, with `pnpm generate-i18n` / `generate-api` clean.
 - Test-first evidence in the log; no generated file hand-edited; glossary
   vocabulary honored (`docs/reference/CONTEXT.md`, banned words).
-- `status: done`, branch merged (squash), `main` deployable.
-- `python3 docs/jobs/_jobs.py gen`; commit the job file with its code.
+- Mark done with `python3 docs/jobs/_jobs.py done SN-#### --note "..."` (sets
+  `done`, appends the log entry, and cascade-unblocks dependents). Do not just
+  hand-set `status: done` - that skips the cascade.
+- Branch merged (squash), `main` deployable; commit the job file with its code.
 
 ## Never
 
