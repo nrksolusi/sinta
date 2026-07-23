@@ -31,7 +31,9 @@ pace - keep changes small and scoped.
 
 ## Load-bearing rules
 
-- Work is tracked per `docs/jobs/README.md`: before writing code, mint a job
+- Work is tracked per `docs/jobs/README.md`; invoke the **`jobs` skill** (`.claude/skills/jobs`)
+  when filing, working, logging, or closing a job - it drives this protocol.
+  Before writing code, mint a job
   with `python3 docs/jobs/_jobs.py new --type <TYPE> --title "..."` (ids are a
   global `SN-####` sequence; job files live in `docs/jobs/wo/`). Jobs/incidents
   may only be created in the **main working tree**, never a `.wt/` worktree - a
