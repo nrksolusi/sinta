@@ -20,6 +20,7 @@ Every job, current state, sorted by id. Generated from `wo/` — do not edit her
 | 2026-07-23 | [SN-0012](wo/SN-0012.md) | FEAT | P1 | done | - | fix-3 Slice 1: draft delete, lifecycle actors, opname systemQty | feat/fix-3-slice-1 |
 | 2026-07-23 | [SN-0013](wo/SN-0013.md) | FEAT | P2 | backlog | - | Tenant default warehouse + stock-by-warehouse view | — |
 | 2026-07-23 | [SN-0014](wo/SN-0014.md) | FEAT | high | done | SN-0001 | fix-4 Slice 2: server fulfillment rollup and over-receipt guard | feat/sn-0014-fulfillment-rollup |
+| 2026-07-23 | [SN-0015](wo/SN-0015.md) | FEAT | P1 | ready | SN-0012 | fix-3 Slice 2: document approval gate (submit/approve/reject) | — |
 
 ## Consistency
 
