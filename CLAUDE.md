@@ -105,9 +105,11 @@ pace - keep changes small and scoped.
   change or merge touching `messages/id.json`/`en.json`, run `pnpm generate-i18n`
   first - Paraglide output is gitignored and goes stale, which breaks typecheck
   with confusing missing-message errors.
-- Parallel work uses git worktrees under `.wt/` (see global rules). The only
-  recurring merge conflicts are the additive `messages/*.json` and the generated
-  `client/src/routeTree.gen.ts` (take theirs, then `pnpm generate-routes`).
+- All work implementation uses git worktrees under `.wt/` (see load-bearing rule
+  and global rules). Mint job ids on main, then switch to a worktree to
+  implement. The only recurring merge conflicts are the additive
+  `messages/*.json` and the generated `client/src/routeTree.gen.ts` (take
+  theirs, then `pnpm generate-routes`).
 
 ## Git
 
