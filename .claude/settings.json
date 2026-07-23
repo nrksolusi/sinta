@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 docs/jobs/_jobs.py guard"
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/docs/jobs/_jobs.py\" guard"
           }
         ]
       }
@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 docs/jobs/_jobs.py onread"
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/docs/jobs/_jobs.py\" onread"
           }
         ]
       }
