@@ -75,6 +75,11 @@ INSERT INTO goods_receipt_lines (tenant_id, goods_receipt_id, line_no, purchase_
 VALUES (sqlc.arg(tenant_id), sqlc.arg(goods_receipt_id), sqlc.arg(line_no), sqlc.narg(purchase_order_line_id), sqlc.arg(product_id), sqlc.narg(batch_id), sqlc.arg(uom), sqlc.arg(qty), sqlc.arg(unit_cost))
 RETURNING *;
 
+-- name: InsertGoodsReceiptLineCostOverride :exec
+INSERT INTO goods_receipt_line_cost_overrides
+    (tenant_id, goods_receipt_line_id, po_line_unit_cost, override_unit_cost, actor_user_id)
+VALUES (sqlc.arg(tenant_id), sqlc.arg(goods_receipt_line_id), sqlc.arg(po_line_unit_cost), sqlc.arg(override_unit_cost), sqlc.arg(actor_user_id));
+
 -- name: GetGoodsReceipt :one
 SELECT * FROM goods_receipts WHERE tenant_id = sqlc.arg(tenant_id) AND id = sqlc.arg(id);
 

@@ -1093,6 +1093,31 @@ func (q *Queries) InsertGoodsReceiptLine(ctx context.Context, arg InsertGoodsRec
 	return i, err
 }
 
+const insertGoodsReceiptLineCostOverride = `-- name: InsertGoodsReceiptLineCostOverride :exec
+INSERT INTO goods_receipt_line_cost_overrides
+    (tenant_id, goods_receipt_line_id, po_line_unit_cost, override_unit_cost, actor_user_id)
+VALUES ($1, $2, $3, $4, $5)
+`
+
+type InsertGoodsReceiptLineCostOverrideParams struct {
+	TenantID           uuid.UUID
+	GoodsReceiptLineID uuid.UUID
+	PoLineUnitCost     pgtype.Numeric
+	OverrideUnitCost   pgtype.Numeric
+	ActorUserID        uuid.UUID
+}
+
+func (q *Queries) InsertGoodsReceiptLineCostOverride(ctx context.Context, arg InsertGoodsReceiptLineCostOverrideParams) error {
+	_, err := q.db.Exec(ctx, insertGoodsReceiptLineCostOverride,
+		arg.TenantID,
+		arg.GoodsReceiptLineID,
+		arg.PoLineUnitCost,
+		arg.OverrideUnitCost,
+		arg.ActorUserID,
+	)
+	return err
+}
+
 const insertPurchaseOrderLine = `-- name: InsertPurchaseOrderLine :one
 INSERT INTO purchase_order_lines (tenant_id, purchase_order_id, line_no, product_id, uom, qty, unit_cost)
 VALUES ($1, $2, $3, $4, $5, $6, $7)

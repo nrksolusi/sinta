@@ -952,3 +952,169 @@ func TestPOListCursorPagination(t *testing.T) {
 		t.Fatalf("total unique items across pages = %d, want 3", len(seen))
 	}
 }
+
+// ---------------------------------------------------------------------------
+// ADR-0017: receipt line unit_cost defaults from PO line; override is role-gated
+// ---------------------------------------------------------------------------
+
+// grCostFixture extends docFixture with a posted PO and returns the PO line id.
+func grCostFixture(t *testing.T) (docFixture, string, string) {
+	t.Helper()
+	f := seedDocFixture(t)
+
+	// Create and post a PO with unit_cost = 200.
+	body := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-09-01",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"50","unitCost":"200"}]}`, f.supplier, f.whA, f.product)
+	_, po := f.do(t, http.MethodPost, "/v1/purchase-orders", body)
+	poID := po["id"].(string)
+	_, po = f.do(t, http.MethodPost, "/v1/purchase-orders/"+poID+"/post", "")
+	lines := po["lines"].([]any)
+	poLineID := lines[0].(map[string]any)["id"].(string)
+	return f, poID, poLineID
+}
+
+// TestGoodsReceiptCostDefaultsFromPOLine checks that when a GR line references a
+// PO line and sends no unitCost (or zero), the server fills in the PO line's price.
+func TestGoodsReceiptCostDefaultsFromPOLine(t *testing.T) {
+	f, _, poLineID := grCostFixture(t)
+
+	// Create GR linked to the PO line with no unitCost supplied.
+	body := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-09-02",
+	  "lines":[{"purchaseOrderLineId":%q,"productId":%q,"uom":"pcs","qty":"5"}]}`,
+		f.supplier, f.whA, poLineID, f.product)
+	status, gr := f.do(t, http.MethodPost, "/v1/goods-receipts", body)
+	if status != http.StatusCreated {
+		t.Fatalf("create GR status = %d, body %v", status, gr)
+	}
+	lines := gr["lines"].([]any)
+	line := lines[0].(map[string]any)
+	if line["unitCost"] != "200" {
+		t.Errorf("unitCost = %v, want 200 (defaulted from PO line)", line["unitCost"])
+	}
+}
+
+// TestGoodsReceiptCostOverrideRejectedForNonOwner checks that a non-owner/admin
+// role cannot set a unit_cost that differs from the linked PO line price.
+func TestGoodsReceiptCostOverrideRejectedForNonOwner(t *testing.T) {
+	f, _, poLineID := grCostFixture(t)
+
+	// Add a warehouse-role member and log in as them.
+	registerUser(t, f.ts, "staff@toko.co.id", "kata-sandi-panjang")
+	seedMembership(t, "staff@toko.co.id", f.tenantID, "warehouse")
+	staffCookie := login(t, f.ts, "staff@toko.co.id", "kata-sandi-panjang")
+	switchTenant(t, f.ts, staffCookie, f.tenantID)
+
+	body := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-09-03",
+	  "lines":[{"purchaseOrderLineId":%q,"productId":%q,"uom":"pcs","qty":"5","unitCost":"999"}]}`,
+		f.supplier, f.whA, poLineID, f.product)
+	req, _ := http.NewRequest(http.MethodPost, f.ts.URL+"/v1/goods-receipts", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(staffCookie)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("cost override by non-owner status = %d, want 403 or 422", resp.StatusCode)
+	}
+	var out map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&out)
+	if out["code"] != "cost_override_forbidden" {
+		t.Errorf("error code = %v, want cost_override_forbidden", out["code"])
+	}
+}
+
+// TestGoodsReceiptCostOverrideAllowedForOwner checks that an owner can override
+// the unit_cost and that the override is stored in the audit table.
+func TestGoodsReceiptCostOverrideAllowedForOwner(t *testing.T) {
+	f, _, poLineID := grCostFixture(t)
+
+	// Owner sets a different cost (PO price is 200, override to 180).
+	body := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-09-04",
+	  "lines":[{"purchaseOrderLineId":%q,"productId":%q,"uom":"pcs","qty":"5","unitCost":"180"}]}`,
+		f.supplier, f.whA, poLineID, f.product)
+	status, gr := f.do(t, http.MethodPost, "/v1/goods-receipts", body)
+	if status != http.StatusCreated {
+		t.Fatalf("create GR with override status = %d, body %v", status, gr)
+	}
+	lines := gr["lines"].([]any)
+	line := lines[0].(map[string]any)
+	if line["unitCost"] != "180" {
+		t.Errorf("unitCost = %v, want 180", line["unitCost"])
+	}
+	grLineID := line["id"].(string)
+
+	// The override must appear in the audit table.
+	var count int
+	err := testPool.QueryRow(context.Background(),
+		`SELECT count(*) FROM goods_receipt_line_cost_overrides
+		 WHERE goods_receipt_line_id = $1
+		   AND po_line_unit_cost::text = '200'
+		   AND override_unit_cost::text = '180'`,
+		grLineID).Scan(&count)
+	if err != nil {
+		t.Fatalf("query overrides: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("override rows = %d, want 1", count)
+	}
+}
+
+// TestGoodsReceiptNoPOLinkCostRejectedForNonOwner checks that a non-owner/admin
+// gets a rejection when they supply a non-zero cost on a receipt with no PO link.
+func TestGoodsReceiptNoPOLinkCostRejectedForNonOwner(t *testing.T) {
+	f := seedDocFixture(t)
+
+	registerUser(t, f.ts, "staff2@toko.co.id", "kata-sandi-panjang")
+	seedMembership(t, "staff2@toko.co.id", f.tenantID, "warehouse")
+	staffCookie := login(t, f.ts, "staff2@toko.co.id", "kata-sandi-panjang")
+	switchTenant(t, f.ts, staffCookie, f.tenantID)
+
+	body := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-09-05",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5","unitCost":"100"}]}`,
+		f.supplier, f.whA, f.product)
+	req, _ := http.NewRequest(http.MethodPost, f.ts.URL+"/v1/goods-receipts", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(staffCookie)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("no-PO cost by non-owner status = %d, want 403 or 422", resp.StatusCode)
+	}
+	var out map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&out)
+	if out["code"] != "cost_override_forbidden" {
+		t.Errorf("error code = %v, want cost_override_forbidden", out["code"])
+	}
+}
+
+// TestGoodsReceiptNoPOLinkZeroCostAllowedForNonOwner checks that a non-owner/admin
+// can still create a GR with no cost on a line that has no PO link (cost defaults to zero).
+func TestGoodsReceiptNoPOLinkZeroCostAllowedForNonOwner(t *testing.T) {
+	f := seedDocFixture(t)
+
+	registerUser(t, f.ts, "staff3@toko.co.id", "kata-sandi-panjang")
+	seedMembership(t, "staff3@toko.co.id", f.tenantID, "warehouse")
+	staffCookie := login(t, f.ts, "staff3@toko.co.id", "kata-sandi-panjang")
+	switchTenant(t, f.ts, staffCookie, f.tenantID)
+
+	body := fmt.Sprintf(`{"supplierId":%q,"warehouseId":%q,"docDate":"2026-09-06",
+	  "lines":[{"productId":%q,"uom":"pcs","qty":"5"}]}`,
+		f.supplier, f.whA, f.product)
+	req, _ := http.NewRequest(http.MethodPost, f.ts.URL+"/v1/goods-receipts", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(staffCookie)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusCreated {
+		raw, _ := io.ReadAll(resp.Body)
+		t.Fatalf("no-PO no-cost by non-owner status = %d, body %s", resp.StatusCode, raw)
+	}
+}

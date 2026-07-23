@@ -145,7 +145,7 @@ func (s *Server) CreateGoodsReceipt(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return err
 		}
-		if err := s.insertGoodsReceiptLines(r.Context(), q, tc.tenantID, gr.ID, req.Lines); err != nil {
+		if err := s.insertGoodsReceiptLines(r.Context(), q, tc, gr.ID, req.Lines); err != nil {
 			return err
 		}
 		out, err = s.loadGoodsReceipt(r.Context(), q, tc.tenantID, gr.ID)
@@ -157,17 +157,57 @@ func (s *Server) CreateGoodsReceipt(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, out)
 }
 
-func (s *Server) insertGoodsReceiptLines(ctx context.Context, q *store.Queries, tenantID, grID uuid.UUID, lines []api.GoodsReceiptLineInput) error {
+func (s *Server) insertGoodsReceiptLines(ctx context.Context, q *store.Queries, tc tenantCtx, grID uuid.UUID, lines []api.GoodsReceiptLineInput) error {
 	for i, l := range lines {
 		qty, err := parseDecimal(l.Qty)
 		if err != nil || !qty.IsPositive() {
 			return errValidation{"line qty must be a positive decimal"}
 		}
 		qtyNum, _ := store.Numeric(qty)
-		costNum, _ := store.Numeric(decimalOrZero(l.UnitCost))
+
+		// Determine effective unit cost applying ADR-0017 rules:
+		//   - line linked to a PO line: default from PO price; override requires owner/admin
+		//   - no PO link: non-zero cost requires owner/admin; zero/omitted is always ok
+		requestedCost := decimalOrZero(l.UnitCost)
+		effectiveCost := requestedCost
+		var poCost decimal.Decimal // zero value = no PO link
+
+		if l.PurchaseOrderLineId != nil {
+			poLineID := uuid.UUID(*l.PurchaseOrderLineId)
+			pol, err := q.GetPurchaseOrderLineByID(ctx, store.GetPurchaseOrderLineByIDParams{
+				TenantID: tc.tenantID,
+				ID:       poLineID,
+			})
+			if err != nil {
+				return err
+			}
+			poCost, err = store.Decimal(pol.UnitCost)
+			if err != nil {
+				return err
+			}
+			if requestedCost.IsZero() {
+				// No cost supplied - default to PO line price (no override recorded).
+				effectiveCost = poCost
+			} else if !requestedCost.Equal(poCost) {
+				// Caller is explicitly changing cost away from PO price.
+				if !tc.canOverrideCost() {
+					return errForbidden{"cost_override_forbidden", "only owner or admin may override the unit cost"}
+				}
+				// Override is allowed; the audit row is inserted below after the line is created.
+			} else {
+				// Caller supplied the same cost as PO - treated as confirmation, no override.
+			}
+		} else {
+			// No PO link: non-zero cost requires elevated role.
+			if !requestedCost.IsZero() && !tc.canOverrideCost() {
+				return errForbidden{"cost_override_forbidden", "only owner or admin may set a unit cost without a linked purchase order"}
+			}
+		}
+
+		costNum, _ := store.Numeric(effectiveCost)
 		batch, _ := optBatch(l.BatchId)
-		if _, err := q.InsertGoodsReceiptLine(ctx, store.InsertGoodsReceiptLineParams{
-			TenantID:            tenantID,
+		grLine, err := q.InsertGoodsReceiptLine(ctx, store.InsertGoodsReceiptLineParams{
+			TenantID:            tc.tenantID,
 			GoodsReceiptID:      grID,
 			LineNo:              int32(i + 1),
 			PurchaseOrderLineID: optUUID(l.PurchaseOrderLineId),
@@ -176,8 +216,24 @@ func (s *Server) insertGoodsReceiptLines(ctx context.Context, q *store.Queries, 
 			Uom:                 l.Uom,
 			Qty:                 qtyNum,
 			UnitCost:            costNum,
-		}); err != nil {
+		})
+		if err != nil {
 			return err
+		}
+
+		// Record override audit row when an owner/admin changed cost away from PO price.
+		if l.PurchaseOrderLineId != nil && !requestedCost.IsZero() && !requestedCost.Equal(poCost) {
+			poNum, _ := store.Numeric(poCost)
+			overNum, _ := store.Numeric(requestedCost)
+			if err := q.InsertGoodsReceiptLineCostOverride(ctx, store.InsertGoodsReceiptLineCostOverrideParams{
+				TenantID:           tc.tenantID,
+				GoodsReceiptLineID: grLine.ID,
+				PoLineUnitCost:     poNum,
+				OverrideUnitCost:   overNum,
+				ActorUserID:        tc.user.ID,
+			}); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -238,7 +294,7 @@ func (s *Server) UpdateGoodsReceipt(w http.ResponseWriter, r *http.Request, id o
 		if err := q.DeleteGoodsReceiptLines(r.Context(), store.DeleteGoodsReceiptLinesParams{TenantID: tc.tenantID, GoodsReceiptID: id}); err != nil {
 			return err
 		}
-		if err := s.insertGoodsReceiptLines(r.Context(), q, tc.tenantID, id, req.Lines); err != nil {
+		if err := s.insertGoodsReceiptLines(r.Context(), q, tc, id, req.Lines); err != nil {
 			return err
 		}
 		out, err = s.loadGoodsReceipt(r.Context(), q, tc.tenantID, id)

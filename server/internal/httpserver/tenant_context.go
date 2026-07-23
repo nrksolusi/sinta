@@ -25,6 +25,12 @@ func (tc tenantCtx) canManageInvites() bool {
 	return tc.role == "owner" || tc.role == "admin"
 }
 
+// canOverrideCost reports whether the caller may set a unit_cost on a goods
+// receipt line that differs from the linked PO line's price (ADR-0017).
+func (tc tenantCtx) canOverrideCost() bool {
+	return tc.role == "owner" || tc.role == "admin"
+}
+
 // requireTenant authenticates the request and resolves the active tenant
 // membership. On failure it writes the response and returns ok=false.
 func (s *Server) requireTenant(w http.ResponseWriter, r *http.Request) (tenantCtx, bool) {

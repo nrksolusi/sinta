@@ -86,6 +86,16 @@ type GoodsReceiptLine struct {
 	UnitCost            pgtype.Numeric
 }
 
+type GoodsReceiptLineCostOverride struct {
+	ID                 uuid.UUID
+	TenantID           uuid.UUID
+	GoodsReceiptLineID uuid.UUID
+	PoLineUnitCost     pgtype.Numeric
+	OverrideUnitCost   pgtype.Numeric
+	ActorUserID        uuid.UUID
+	CreatedAt          pgtype.Timestamptz
+}
+
 type Invitation struct {
 	ID        uuid.UUID
 	TenantID  uuid.UUID

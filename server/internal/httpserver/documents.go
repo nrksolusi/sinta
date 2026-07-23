@@ -25,6 +25,16 @@ type errValidation struct{ msg string }
 
 func (e errValidation) Error() string { return e.msg }
 
+// errForbidden is a store-callback error that maps to a 403. Use it for business
+// rule rejections that are semantically "you don't have permission" rather than
+// "your input is malformed" (which would be errValidation).
+type errForbidden struct {
+	code string
+	msg  string
+}
+
+func (e errForbidden) Error() string { return e.msg }
+
 // decimalOrZero parses an optional decimal string, defaulting to zero.
 func decimalOrZero(s *string) decimal.Decimal {
 	if s == nil || *s == "" {
@@ -48,6 +58,11 @@ func pgTextOf(s string) pgtype.Text {
 func handleWriteErr(w http.ResponseWriter, err error) bool {
 	if err == nil {
 		return false
+	}
+	var fe errForbidden
+	if errors.As(err, &fe) {
+		writeError(w, http.StatusForbidden, fe.code, fe.msg)
+		return true
 	}
 	var ve errValidation
 	if errors.As(err, &ve) {
